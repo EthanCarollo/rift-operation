@@ -16,6 +16,12 @@ export class Server {
       const client = new Client(socket);
       this.clients.add(client);
 
+      // Log client connection with id and remote address when available
+      const remoteAddress = (socket as any)._socket && (socket as any)._socket.remoteAddress
+        ? (socket as any)._socket.remoteAddress
+        : undefined;
+      console.log(`Client connected: id=${client.id}${remoteAddress ? ` remote=${remoteAddress}` : ""}`);
+
       client.send({ type: "welcome", id: client.id, time: Date.now() });
 
       socket.on("message", (msg) => {
@@ -29,6 +35,8 @@ export class Server {
 
       socket.on("close", () => {
         this.clients.delete(client);
+        // Log client disconnection
+        console.log(`Client disconnected: id=${client.id}${remoteAddress ? ` remote=${remoteAddress}` : ""}`);
       });
     });
   }
