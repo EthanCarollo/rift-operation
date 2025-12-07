@@ -1,9 +1,7 @@
-import { WebSocketServer, WebSocket, RawData } from "ws";
+import { RawData } from "ws";
 import { Client } from "../../Framework/Server/Client";
 import ServerState from "./State/ServerState";
 import StrangerState from "./State/StrangerState";
-import Logger from "../Utils/Logger";
-import JsonFactory from "../Utils/Json/JsonFactory";
 import { Server } from "../../Framework/Server/Server";
 
 export class RiftOperationServer extends Server {

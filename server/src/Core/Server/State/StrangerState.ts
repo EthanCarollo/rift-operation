@@ -1,4 +1,4 @@
-import Logger from "../../Utils/Logger";
+import Logger from "../../../Framework/Utils/Logger";
 import { Client } from "../../../Framework/Server/Client";
 import ServerState from "./ServerState";
 

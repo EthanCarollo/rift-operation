@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket, RawData } from "ws";
 import { Client } from "../../Framework/Server/Client";
+import Logger from "../Utils/Logger";
 
 export abstract class Server {
     wss: WebSocketServer;
@@ -7,6 +8,7 @@ export abstract class Server {
     
     constructor(port: number) {
         this.wss = new WebSocketServer({ port });
+        Logger.log(`Server is running on port ${port}`);
         this.clients = new Set();
         
         this.wss.on("connection", (socket: WebSocket) => {
