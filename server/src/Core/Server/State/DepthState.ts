@@ -3,11 +3,11 @@ import { Client } from "../../../Framework/Server/Client";
 import ServerState from "./ServerState";
 
 /**
- * Stranger State is the first state
+ * Imagination State is the secondary state
  * 
- * Responsability of : Ethan
+ * Responsability of : Anthony
  */
-export default class StrangerState extends ServerState {
+export default class DepthState extends ServerState {
     public onConnection(client: Client): void {
         Logger.error("Not already implemented")
     }
