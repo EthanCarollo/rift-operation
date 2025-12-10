@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>WS Test</title>
+<button id="start">Start forest</button>
+<pre id="log"></pre>
+<script>
+  const log = (m) => (document.querySelector("#log").textContent += m + "\n");
+  const ws = new WebSocket("ws://192.168.1.23:8080");
+
+  ws.onopen = () => log("WS open");
+  ws.onmessage = (e) => log("<< " + e.data);
+  ws.onclose = () => log("WS closed");
+  ws.onerror = (e) => log("WS error");
+
+  document.querySelector("#start").onclick = () => {
+    const msg = { type: "workshop", value: { name: "forest", action: "start" } };
+    ws.send(JSON.stringify(msg));
+    log(">> " + JSON.stringify(msg));
+  };
+</script>
