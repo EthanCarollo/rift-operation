@@ -17,7 +17,18 @@ export class RiftOperationServer extends Server {
   }
 
   onMessage(client: Client, msg: RawData) {
-    this.state.onMessage(client, msg.toString())
+    const text = msg.toString();
+    console.log("[WS IN]", client.id, text);
+
+    // TEMP: relay any JSON message to all other clients (ESP will receive it)
+    try {
+      const parsed = JSON.parse(text);
+      this.broadcast(parsed, client);
+      console.log("[WS OUT broadcast]", parsed);
+    } catch {
+      // ignore non-JSON
+    }
+    this.state.onMessage(client, text);
   }
   
   onClose(client: Client): void {
