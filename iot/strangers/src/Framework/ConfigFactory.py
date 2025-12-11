@@ -5,7 +5,7 @@ class ConfigFactory:
     def create_ethan_house_config():
         """Create configuration for Ethan's house network"""
         wifi_config = WifiConfig(
-            ssid="Bbox-49679A5A",
+            ssid="methilwifi",
             password="DhEubKPM96xd4yp3Pp",
             timeout=15,
             auto_reconnect=True
