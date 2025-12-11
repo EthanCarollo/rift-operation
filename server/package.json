@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "ts-node src/main.ts",
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "build-serve": "tsc && node dist/main.js"
   },
   "dependencies": {
     "stacktrace-parser": "^0.1.11",
