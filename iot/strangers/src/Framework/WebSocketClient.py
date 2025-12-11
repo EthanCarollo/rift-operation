@@ -1,4 +1,4 @@
-import uwebsocket
+import libs.uwebsocket.client
 import uasyncio as asyncio
 import ujson as json
 
@@ -13,7 +13,7 @@ class WebSocketClient:
             self.logger.info(f"Connecting to WebSocket: {self.config.server}{self.config.path}")
         
         try:
-            self.websocket = await uwebsocket.connect(self.config.server + self.config.path)
+            self.websocket = libs.uwebsocket.client.connect(self.config.server + self.config.path)
             if self.logger:
                 self.logger.info("WebSocket connected successfully")
             return True

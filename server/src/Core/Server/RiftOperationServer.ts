@@ -9,6 +9,7 @@ export class RiftOperationServer extends Server {
   }
   
   onConnection(client: Client): void {
+      Logger.log("New client connection")
     // Execute logics for onConnection, currently useless
   }
 

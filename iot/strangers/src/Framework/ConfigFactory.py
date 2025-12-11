@@ -12,8 +12,8 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="ws://YOUR_WEBSOCKET_SERVER_ADDRESS",
-            path="/YOUR_WEBSOCKET_PATH",
+            server="wss://rift-operation.ethan-folio.fr",
+            path="/",
             reconnect_delay=10,
             ping_interval=60
         )

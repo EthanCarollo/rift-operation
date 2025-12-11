@@ -6,9 +6,9 @@ export abstract class Server {
     wss: WebSocketServer;
     clients: Set<Client>;
     
-    constructor(port: number) {
-        this.wss = new WebSocketServer({ port });
-        Logger.log(`Server is running on port ${port}`);
+    constructor(port: number, private path = "/") {
+        this.wss = new WebSocketServer({ port: port, path: path });
+        Logger.log(`Server is running on port ${port} at path : ${path}`);
         this.clients = new Set();
         
         this.wss.on("connection", (socket: WebSocket) => {
