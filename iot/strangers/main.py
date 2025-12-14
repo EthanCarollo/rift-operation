@@ -1,7 +1,7 @@
 import gc
 import uasyncio as asyncio
 from src.Core.EspController import EspController
-from src.Framework.ConfigFactory import ConfigFactory
+from src.Framework.Config.ConfigFactory import ConfigFactory
 
 gc.collect()
 

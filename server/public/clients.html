@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rift Operation Server - Clients</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">Rift Operation Server - Connected Clients</h1>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Client Overview</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Total Clients:</span>
+                        <span id="total-clients" class="text-lg font-bold text-blue-600">0</span>
+                    </div>
+                </div>
+
+                <div id="clients-table" class="overflow-x-auto">
+                    <!-- Clients will be loaded here -->
+                </div>
+            </div>
+
+            <div class="text-center text-gray-600">
+                <p>Auto-refreshing every 5 seconds</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateClients() {
+            fetch('/api/clients')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('total-clients').textContent = data.total;
+
+                    const tableContainer = document.getElementById('clients-table');
+
+                    if (data.clients.length === 0) {
+                        tableContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No clients connected</p>';
+                        return;
+                    }
+
+                    const table = `
+                        <table class="min-w-full table-auto">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connection State</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${data.clients.map(client => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm font-mono text-gray-900">${client.id}</td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                                ${client.role === 'unknown' ? 'bg-gray-100 text-gray-800' :
+                                                  client.role === 'depth' ? 'bg-blue-100 text-blue-800' :
+                                                  client.role === 'stranger' ? 'bg-green-100 text-green-800' :
+                                                  'bg-purple-100 text-purple-800'}">
+                                                ${client.role}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                                ${client.readyState === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                                ${client.readyStateText}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">${client.readyStateText}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    tableContainer.innerHTML = table;
+                })
+                .catch(error => {
+                    console.error('Error fetching clients:', error);
+                    document.getElementById('clients-table').innerHTML =
+                        '<p class="text-red-500 text-center py-8">Error loading clients data</p>';
+                });
+        }
+
+        // Initial load
+        updateClients();
+
+        // Auto-refresh every 5 seconds
+        setInterval(updateClients, 5000);
+    </script>
+</body>
+</html>

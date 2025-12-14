@@ -1,4 +1,4 @@
-from src.Framework.Config import Config, WifiConfig, WebsocketConfig
+from .Config import Config, WifiConfig, WebsocketConfig
 
 class ConfigFactory:
     @staticmethod
@@ -12,8 +12,8 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="ws://YOUR_WEBSOCKET_SERVER_ADDRESS",
-            path="/YOUR_WEBSOCKET_PATH",
+            server="wss://backend.riftoperation.ethan-folio.fr/ws",
+            path="/",
             reconnect_delay=10,
             ping_interval=60
         )
@@ -22,6 +22,30 @@ class ConfigFactory:
             wifi=wifi_config,
             websocket=websocket_config,
             device_id="ETHAN_HOUSE_ESP32",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+    @staticmethod
+    def create_ethan_house_config():
+        """Create configuration for Ethan's house network"""
+        wifi_config = WifiConfig(
+            ssid="fourmiphone",
+            password="fourmiduterroir74",
+            timeout=15,
+            auto_reconnect=True
+        )
+        
+        websocket_config = WebsocketConfig(
+            server="wss://backend.riftoperation.ethan-folio.fr/ws",
+            path="/",
+            reconnect_delay=10,
+            ping_interval=60
+        )
+        
+        return Config(
+            wifi=wifi_config,
+            websocket=websocket_config,
+            device_id="FOURMI_PHONE_ESP32",
             debug_mode=True,
             heartbeat_interval=15
         )
