@@ -10,7 +10,7 @@ import ubinascii as binascii
 import urandom as random
 import ssl
 
-from uwebsockets.protocol import Websocket, urlparse
+from libs.uwebsockets.protocol import Websocket, urlparse
 
 
 

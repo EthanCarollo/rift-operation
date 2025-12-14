@@ -14,23 +14,11 @@ class WebsocketConfig:
         self.ping_interval = ping_interval
         self.binary_mode = binary_mode
 
-class DepthConfig:
-    def __init__(self, role="child", button_pins=None, led_pins=None, partitions=None):
-        self.role = role
-        self.button_pins = button_pins or {1: 14, 2: 19, 3: 23}
-        self.led_pins = led_pins or {1: 25, 2: 32, 3: 33}
-        self.partitions = partitions or {
-            1: [1, 2, 1, 3],
-            2: [3, 3, 1],
-            3: [2, 1, 2, 3]
-        }
-
 class Config:
-    def __init__(self, wifi=None, websocket=None, depth=None, device_id="ESP32_DEFAULT", 
+    def __init__(self, wifi=None, websocket=None, device_id="ESP32_DEFAULT", 
                  debug_mode=False, heartbeat_interval=10):
         self.wifi = wifi if wifi else WifiConfig()
         self.websocket = websocket if websocket else WebsocketConfig()
-        self.depth = depth if depth else DepthConfig()
         self.device_id = device_id
         self.debug_mode = debug_mode
         self.heartbeat_interval = heartbeat_interval

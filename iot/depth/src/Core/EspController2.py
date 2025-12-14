@@ -5,7 +5,7 @@ from src.Framework.WifiManager import WifiManager
 from src.Framework.WebSocketClient import WebSocketClient
 from src.Framework.Logger import Logger
 
-class EspController:
+class EspController2:
     def __init__(self, config):
         self.config = config
         self.logger = Logger("EspController", Logger.LOG_LEVEL_INFO, esp32_mode=True, max_log_size=500)
@@ -59,5 +59,5 @@ class EspController:
     def cleanup(self):
         self.logger.info("Cleaning up resources")
         self.websocket_client.close()
-        # self.wifi_manager.disconnect()
+        self.wifi_manager.disconnect()
         self.logger.info("Cleanup completed")
