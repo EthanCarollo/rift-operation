@@ -28,8 +28,8 @@ HEARTBEAT_MS = 0
 # --- Inputs ---
 PIN_BUTTON = 27
 DEBOUNCE_MS = 250
+
 # Button interactions
-DOUBLE_PRESS_MS = 450
 LONG_PRESS_MS = 1200
 
 # --- Small config objects ---

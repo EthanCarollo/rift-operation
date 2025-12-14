@@ -1,8 +1,10 @@
+# iot/forest/src/Core/ForestWorkshop.py
 import time
 import ujson
 from config import (
-    DOUBLE_PRESS_MS,
     LONG_PRESS_MS,
+    ACTIVATE_TYPE,
+    ACTIVATE_NAME,
 )
 
 
@@ -23,8 +25,6 @@ class ForestWorkshopSimulator:
         self.log = logger
 
         self.step = self.STEP_IDLE
-
-        self._last_press_ms = 0
         self._press_down_ms = None
 
     def on_server_message(self, raw_text):
@@ -34,13 +34,25 @@ class ForestWorkshopSimulator:
         except Exception:
             return
 
-        t = msg.get("type")
-        v = msg.get("value")
+        msg_type = msg.get("type")
+        value = msg.get("value")
 
-        # Expected: {"type":"workshop", "value":{"name":"forest","action":"start"}}
-        if t == "workshop" and isinstance(v, dict):
-            if v.get("name") == self.device.workshop and v.get("action") == "start":
-                self.start()
+        if msg_type != ACTIVATE_TYPE:
+            return
+
+        if not isinstance(value, dict):
+            return
+
+        name = value.get("name")
+        action = value.get("action")
+
+        if name not in (ACTIVATE_NAME, self.device.workshop):
+            return
+
+        if action == "start":
+            self.start()
+        elif action == "reset":
+            self.reset()
 
     def start(self):
         if self.step != self.STEP_IDLE:
@@ -49,9 +61,7 @@ class ForestWorkshopSimulator:
 
         self.log.info("Forest workshop started")
 
-        # System event: start
         self.emit("system", "workshop_forest_started", {"by": "server_start"})
-
         # Parent: start audio
         self.emit("parent", "speaker", {"action": "on"})
         # Child: start animal LEDs
