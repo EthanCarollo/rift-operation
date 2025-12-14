@@ -1,69 +1,80 @@
+import time
 import ujson
 from lib.websocketclient import connect
-from config import DEVICE_ID, WORKSHOP, SEND_HELLO_ON_CONNECT
-from .utils import log, now_ms
+
+def now_ms():
+    return time.ticks_ms()
 
 
-class WsClient:
+class WebSocketClient:
     # Minimal WebSocket client (auto reconnect, JSON send, non-blocking recv)
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self, ws_config, device_config, send_hello_on_connect, logger):
+        self.url = ws_config.url
+        self.device = device_config
+        self.send_hello_on_connect = send_hello_on_connect
+        self.log = logger
         self.socket = None
 
-    def ensure_connected(self) -> bool:
+    def ensure_connected(self):
         if self.socket:
             return True
 
         try:
-            log("WS connecting:", self.url)
+            self.log.info("WS connecting:", self.url)
             self.socket = connect(self.url, timeout=8)
-            log("WS connected")
+            self.log.info("WS connected")
 
-            if SEND_HELLO_ON_CONNECT:
+            if self.send_hello_on_connect:
                 self.send_json({
                     "type": "hello",
-                    "value": {"deviceId": DEVICE_ID, "workshop": WORKSHOP, "role": ROLE}
+                    "value": {
+                        "deviceId": self.device.device_id,
+                        "workshop": self.device.workshop,
+                        "role": self.device.role,
+                    }
                 })
 
             return True
         except Exception as e:
-            log("WS connect error:", repr(e))
+            self.log.error("WS connect error:", repr(e))
             self.socket = None
             return False
 
-    def send_json(self, obj) -> bool:
+    def send_json(self, obj):
         try:
             if not self.ensure_connected():
                 return False
             msg = ujson.dumps(obj)
             self.socket.send(msg)
-            log("WS >>", msg)
+            self.log.debug("WS >>", msg)
             return True
         except Exception as e:
-            log("WS send error:", repr(e))
+            self.log.error("WS send error:", repr(e))
             self.close(reason="send_error")
             return False
 
     def poll_recv(self):
-        """Return a raw text message if available"""
+        """Return raw text message if available, else None"""
         if not self.socket:
             return None
         try:
-            if self.socket.poll(0):
-                return self.socket.recv()
+            if hasattr(self.socket, "poll"):
+                if not self.socket.poll(0):
+                    return None
+            return self.socket.recv()
         except Exception as e:
-            log("WS recv error:", repr(e))
+            self.log.error("WS recv error:", repr(e))
             self.close(reason="recv_error")
-        return None
+            return None
 
-    def close(self, reason: str = "client_close") -> None:
+    def close(self, reason="client_close"):
         if self.socket:
             try:
                 msg = {
                     "type": "disconnect",
                     "value": {
-                        "deviceId": DEVICE_ID,
-                        "workshop": WORKSHOP,
+                        "deviceId": self.device.device_id,
+                        "workshop": self.device.workshop,
                         "reason": reason,
                         "tsMs": now_ms(),
                     }
@@ -78,4 +89,4 @@ class WsClient:
                 pass
 
         self.socket = None
-        log("WS closed")
+        self.log.info("WS closed")

@@ -1,17 +1,17 @@
-import time
 from machine import Pin
+import time
 
 
 class ButtonInput:
     # Debounced button with press/release events
-    def __init__(self, pin: int, debounce_ms: int):
+    def __init__(self, pin, debounce_ms):
         self.button = Pin(pin, Pin.IN, Pin.PULL_UP)
         self.debounce_ms = debounce_ms
 
         self._last_value = self.button.value()
         self._last_change_ms = 0
 
-    def update(self, now_ms: int):
+    def update(self, now_ms):
         """
         Returns:
           - True for pressed
