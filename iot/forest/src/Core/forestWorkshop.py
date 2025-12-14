@@ -5,6 +5,7 @@ from config import (
     DOUBLE_PRESS_MS, LONG_PRESS_MS
 )
 
+
 class ForestWorkshopSimulator:
     # Steps are intentionally explicit and linear for demo purposes.
     STEP_IDLE = 0
@@ -25,7 +26,7 @@ class ForestWorkshopSimulator:
         self._last_press_ms = 0
         self._press_down_ms = None
 
-    def on_server_message(self, raw_text):
+    def on_server_message(self, raw_text: str) -> None:
         """Handle server messages and start the forest flow when requested."""
         try:
             msg = ujson.loads(raw_text)
@@ -40,11 +41,11 @@ class ForestWorkshopSimulator:
             if v.get("name") == WORKSHOP and v.get("action") == "start":
                 self.start()
 
-    def start(self):
+    def start(self) -> None:
         if self.step != self.STEP_IDLE:
             return
         self.step = self.STEP_ACTIVE
-        # Start Workshop
+
         self.log("Forest workshop started")
         self.emit("system", "workshop_forest_started", {"by": "server_start"})
 
@@ -53,7 +54,7 @@ class ForestWorkshopSimulator:
         # Child: start animal LEDs
         self.emit("child", "animals_led", {"action": "on"})
 
-    def handle_button(self, pressed, now_ms):
+    def handle_button(self, pressed: bool, now_ms: int) -> None:
         if pressed:
             self.log("BTN pressed @", now_ms, "step=", self.step)
             self._press_down_ms = now_ms
@@ -84,7 +85,7 @@ class ForestWorkshopSimulator:
         self.log("BTN action: next_step")
         self.next_step()
 
-    def next_step(self):
+    def next_step(self) -> None:
         if self.step == self.STEP_ACTIVE:
             # Simulate distance sensor triggered + LLM speaker started
             self.emit("child", "distance_sensor", {"action": "triggered"})
@@ -97,7 +98,11 @@ class ForestWorkshopSimulator:
             # Simulate drawing flow + parent lamp on
             self.emit("child", "drawing", {"action": "read"})
             self.emit("child", "llm", {"action": "triggered"})
-            self.emit("child", "drawing", {"action": "recognized", "label": "flashlight"})
+            self.emit(
+                "child",
+                "drawing",
+                {"action": "recognized", "label": "flashlight"}
+            )
             self.emit("parent", "lamp", {"action": "on"})
             self.step = self.STEP_DRAWING
             return
@@ -105,7 +110,11 @@ class ForestWorkshopSimulator:
         if self.step == self.STEP_DRAWING:
             # Simulate light sensor + video switch
             self.emit("parent", "light_sensor", {"action": "triggered"})
-            self.emit("parent", "mapping_video", {"action": "switch", "to": "reveal"})
+            self.emit(
+                "parent",
+                "mapping_video",
+                {"action": "switch", "to": "reveal"}
+            )
             self.step = self.STEP_LIGHT
             return
 
@@ -114,6 +123,7 @@ class ForestWorkshopSimulator:
             self.emit("child", "cage_rfid", {"action": "detected", "tag": "CAGE_A"})
             self.emit("child", "cage_rfid", {"action": "correct", "tag": "CAGE_A"})
             self.step = self.STEP_CAGE
+
             # Auto-finish: no button interaction required after correct cage
             self.emit("child", "servo_trap", {"action": "open"})
             self.emit("parent", "servo_trap", {"action": "open"})
@@ -122,25 +132,29 @@ class ForestWorkshopSimulator:
             self.log("Forest workshop finished")
             return
 
-    def cage_incorrect(self):
+    def cage_incorrect(self) -> None:
         # Simulate wrong cage + animals feedback + LLM speaker feedback
         self.emit("child", "cage_rfid", {"action": "incorrect", "tag": "CAGE_X"})
-        self.emit("child", "animals_speaker", {"action": "on", "reason": "wrong_cage"})
+        self.emit(
+            "child",
+            "animals_speaker",
+            {"action": "on", "reason": "wrong_cage"}
+        )
         self.log("Cage incorrect simulated")
 
-    def reset(self):
+    def reset(self) -> None:
         self.step = self.STEP_IDLE
         self.emit("system", "workshop", {"action": "reset"})
         self.log("Simulation reset")
 
-    def emit(self, room, event, payload):
+    def emit(self, room: str, event: str, payload: dict) -> None:
         msg = {
             "type": "telemetry",
             "value": {
                 "deviceId": DEVICE_ID,
                 "workshop": WORKSHOP,
                 "tsMs": time.ticks_ms(),
-                "room": room,  # "parent" | "child"
+                "room": room,   # "parent" | "child" | "system"
                 "event": event,
             }
         }

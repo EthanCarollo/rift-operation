@@ -2,11 +2,11 @@
 DEBUG = True  # Set to False to reduce serial output
 
 # --- Wi-Fi ---
-WIFI_SSID = "outreterre"
-WIFI_PASS = "RH6SZTXc5L7NTPLftV"
+WIFI_SSID = "SRF_F48F"
+WIFI_PASS = "7b2uj3mb37js72glj1e9"
 
 # --- WebSocket ---
-WS_URL = "ws://192.168.1.23:8080"
+WS_URL = "ws://192.168.1.57:3000/ws"
 
 # --- Protocol options ---
 SEND_HELLO_ON_CONNECT = True
