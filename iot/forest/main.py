@@ -9,8 +9,8 @@ from config import (
 from src.Framework.utils import log, now_ms
 from src.Framework.wifi import WifiManager
 from src.Framework.wsclient import WsClient
-from src.Framework.button import ButtonInput
-from src.Core.forest_workshop import ForestWorkshopSimulator
+from src.Framework.Button.buttonManager import ButtonInput
+from src.Core.forestWorkshop import ForestWorkshopSimulator
 
 
 def main():

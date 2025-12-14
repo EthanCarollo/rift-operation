@@ -2,7 +2,7 @@
 DEBUG = True  # Set to False to reduce serial output
 
 # --- Wi-Fi ---
-WIFI_SSID = "SRF_F48F"
+WIFI_SSID = "SFR_F48F"
 WIFI_PASS = "7b2uj3mb37js72glj1e9"
 
 # --- WebSocket ---

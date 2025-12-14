@@ -22,7 +22,7 @@ class WsClient:
             if SEND_HELLO_ON_CONNECT:
                 self.send_json({
                     "type": "hello",
-                    "value": {"deviceId": DEVICE_ID, "workshop": WORKSHOP}
+                    "value": {"deviceId": DEVICE_ID, "workshop": WORKSHOP, "role": ROLE}
                 })
 
             return True
