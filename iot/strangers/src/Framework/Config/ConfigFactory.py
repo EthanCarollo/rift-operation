@@ -12,8 +12,8 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="wss://backend.riftoperation.ethan-folio.fr/ws",
-            path="/",
+            server="wss://backend.riftoperation.ethan-folio.fr",
+            path="/ws",
             reconnect_delay=10,
             ping_interval=60
         )
@@ -26,8 +26,8 @@ class ConfigFactory:
             heartbeat_interval=15
         )
     @staticmethod
-    def create_ethan_house_config():
-        """Create configuration for Ethan's house network"""
+    def create_ethan_mobile_config():
+        """Create configuration for Ethan's mobile network"""
         wifi_config = WifiConfig(
             ssid="fourmiphone",
             password="fourmiduterroir74",
@@ -36,8 +36,8 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="wss://backend.riftoperation.ethan-folio.fr/ws",
-            path="/",
+            server="wss://backend.riftoperation.ethan-folio.fr",
+            path="/ws",
             reconnect_delay=10,
             ping_interval=60
         )
