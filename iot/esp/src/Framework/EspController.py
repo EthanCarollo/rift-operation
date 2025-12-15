@@ -46,7 +46,7 @@ class EspController:
             self.websocket_client.listen(self.process_message)
         )
 
-        await self.presence()
+        # Removed: await self.presence() - ESP now only sends when it has data to send
 
         while True:
             try:

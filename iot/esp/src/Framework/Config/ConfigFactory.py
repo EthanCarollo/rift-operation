@@ -29,6 +29,15 @@ class WifiConfigFactory:
         )
 
     @staticmethod
+    def create_aix_les_bains():
+        return WifiConfig(
+            ssid="SRF_F48F",
+            password="7b2uj3mb37js72glj1e9",
+            timeout=15,
+            auto_reconnect=True
+        )
+
+    @staticmethod
     def create_custom(ssid, password):
         return WifiConfig(
             ssid=ssid,
@@ -94,6 +103,16 @@ class ConfigFactory:
             wifi=WifiConfigFactory.create_ethan_mobile(),
             websocket=WebsocketConfigFactory.create_prod(),
             device_id="FOURMI_PHONE_ESP32",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
+    @staticmethod
+    def create_lost_config():
+        return Config(
+            wifi=WifiConfigFactory.create_aix_les_bains(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id="LOST_ESP",
             debug_mode=True,
             heartbeat_interval=15
         )
