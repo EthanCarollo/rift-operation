@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rift Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-main: #ffffff;
@@ -47,9 +49,17 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-sec); }
-        ::-webkit-scrollbar-thumb { background: var(--border); }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-sec);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
 
         /* Inputs */
         .raw-input {
@@ -62,10 +72,12 @@
             outline: none;
             transition: all 0.2s;
         }
+
         .raw-input:focus {
             border-color: var(--border-focus);
             background: var(--bg-main);
         }
+
         .raw-input[readonly] {
             opacity: 0.5;
             cursor: not-allowed;
@@ -79,6 +91,7 @@
             background: var(--tri-state-bg);
             height: 32px;
         }
+
         .tri-state-btn {
             flex: 1;
             font-size: 10px;
@@ -91,11 +104,16 @@
             transition: all 0.2s;
             border-right: 1px solid var(--border);
         }
-        .tri-state-btn:last-child { border-right: none; }
+
+        .tri-state-btn:last-child {
+            border-right: none;
+        }
+
         .tri-state-btn:hover {
             color: var(--text-main);
             background: var(--tri-state-hover);
         }
+
         .tri-state-btn[data-active="true"] {
             background: var(--accent);
             color: var(--accent-text);
@@ -108,6 +126,7 @@
             position: relative;
             margin-bottom: 24px;
         }
+
         .section-title {
             position: absolute;
             top: -10px;
@@ -127,12 +146,14 @@
             background-color: var(--bg-sec);
             border-left: 1px solid var(--border);
         }
+
         .client-card {
             border-bottom: 1px solid var(--border);
             padding: 12px 16px;
         }
-        .client-card:hover { 
-            background-color: var(--card-hover); 
+
+        .client-card:hover {
+            background-color: var(--card-hover);
         }
 
         /* Tabs */
@@ -146,9 +167,11 @@
             color: var(--text-sec);
             transition: all 0.2s;
         }
+
         .nav-tab:hover {
             color: var(--text-main);
         }
+
         .nav-tab.active {
             border: 1px solid var(--border-focus);
             color: var(--text-main);
@@ -161,13 +184,16 @@
             border-top: 1px solid var(--border);
             backdrop-filter: blur(10px);
         }
+
         .btn-broadcast {
             background-color: var(--accent);
             color: var(--accent-text);
         }
+
         .btn-broadcast:hover {
             opacity: 0.9;
         }
+
         .btn-broadcast:active {
             transform: scale(0.99);
         }
@@ -183,6 +209,7 @@
             overflow-x: auto;
             white-space: pre-wrap;
         }
+
         .log-entry {
             border-bottom: 1px solid var(--border);
             padding: 8px;
@@ -190,11 +217,15 @@
             font-family: 'Space Mono', monospace;
             transition: background-color 0.2s;
         }
+
         .log-entry:hover {
             background-color: var(--tri-state-hover);
         }
-        .log-entry:last-child { border-bottom: none; }
-        
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
         /* Fast Command Button */
         .fast-cmd-btn {
             border: 1px solid var(--border);
@@ -206,30 +237,33 @@
             flex-direction: column;
             gap: 4px;
         }
+
         .fast-cmd-btn:hover {
             border-color: var(--border-focus);
             background: var(--bg-main);
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
         .fast-cmd-title {
             font-weight: bold;
             text-transform: uppercase;
             font-size: 12px;
         }
+
         .fast-cmd-desc {
             font-size: 10px;
             color: var(--text-sec);
         }
-
     </style>
 </head>
+
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- LEFT: CONTROLS -->
     <main class="flex-1 overflow-y-auto pt-6 px-6 md:px-10 pb-32 scroll-smooth relative flex flex-col">
         <div class="max-w-6xl mx-auto w-full">
-            
+
             <!-- HEADER -->
             <header class="mb-8 flex justify-between items-end border-b-2" style="border-color: var(--border-focus);">
                 <div class="pb-4">
@@ -237,7 +271,9 @@
                     <p class="text-xs mt-1 uppercase" style="color: var(--text-sec)">Dev Panel for Escape Game</p>
                 </div>
                 <div class="pb-4 flex flex-col items-end gap-2">
-                     <button onclick="toggleTheme()" class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors" style="border-color: var(--border);">
+                    <button onclick="toggleTheme()"
+                        class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors"
+                        style="border-color: var(--border);">
                         Mode: <span id="theme-label">LIGHT</span>
                     </button>
                     <!-- TABS -->
@@ -251,10 +287,10 @@
             </header>
 
             <div class="flex gap-8 items-start">
-                
+
                 <!-- MAIN CONTENT AREA -->
                 <div class="flex-1 w-full relative">
-                    
+
                     <!-- VIEW: STAGED JSON (Predefined Form) -->
                     <div id="view-staged">
                         <div class="flex justify-end mb-4">
@@ -265,17 +301,20 @@
 
                         <form id="broadcastForm" class="space-y-8">
 
-                             <!-- 1. RIFT TABLE -->
+                            <!-- 1. RIFT TABLE -->
                             <section class="section-box">
                                 <span class="section-title">00_Rift_Table</span>
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="control-group" data-type="int">
-                                        <label class="block text-xs font-bold mb-2 uppercase">Children Rift Parts</label>
-                                        <input type="number" name="children_rift_part_count" class="raw-input" placeholder="NULL">
+                                        <label class="block text-xs font-bold mb-2 uppercase">Children Rift
+                                            Parts</label>
+                                        <input type="number" name="children_rift_part_count" class="raw-input"
+                                            placeholder="NULL">
                                     </div>
                                     <div class="control-group" data-type="int">
                                         <label class="block text-xs font-bold mb-2 uppercase">Parent Rift Parts</label>
-                                        <input type="number" name="parent_rift_part_count" class="raw-input" placeholder="NULL">
+                                        <input type="number" name="parent_rift_part_count" class="raw-input"
+                                            placeholder="NULL">
                                     </div>
                                 </div>
                             </section>
@@ -290,16 +329,19 @@
                                             <label class="block text-xs font-bold mb-2 uppercase">Start System</label>
                                             <input type="hidden" name="start_system" value="null">
                                             <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL
+                                                </div>
                                                 <div class="tri-state-btn" data-value="false">FALSE</div>
                                                 <div class="tri-state-btn" data-value="true">TRUE</div>
                                             </div>
                                         </div>
                                         <div class="control-group" data-type="bool">
-                                            <label class="block text-xs font-bold mb-2 uppercase">Recognized Stranger</label>
+                                            <label class="block text-xs font-bold mb-2 uppercase">Recognized
+                                                Stranger</label>
                                             <input type="hidden" name="recognized_stranger_name" value="null">
                                             <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL
+                                                </div>
                                                 <div class="tri-state-btn" data-value="false">NO</div>
                                                 <div class="tri-state-btn" data-value="true">YES</div>
                                             </div>
@@ -310,12 +352,18 @@
                                     <div class="border-t pt-4" style="border-color: var(--border);">
                                         <div class="grid grid-cols-1 gap-4">
                                             <div class="control-group" data-type="text">
-                                                <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Micro (Base64) [READ ONLY]</label>
-                                                <input type="text" name="pinguin_micro" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                                                <label class="block text-xs font-bold mb-2 uppercase"
+                                                    style="color: var(--text-sec)">Pinguin Micro (Base64) [READ
+                                                    ONLY]</label>
+                                                <input type="text" name="pinguin_micro" class="raw-input"
+                                                    placeholder="SYSTEM_MANAGED" readonly>
                                             </div>
                                             <div class="control-group" data-type="text">
-                                                <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Audio (Base64) [READ ONLY]</label>
-                                                <input type="text" name="pinguin_audio" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                                                <label class="block text-xs font-bold mb-2 uppercase"
+                                                    style="color: var(--text-sec)">Pinguin Audio (Base64) [READ
+                                                    ONLY]</label>
+                                                <input type="text" name="pinguin_audio" class="raw-input"
+                                                    placeholder="SYSTEM_MANAGED" readonly>
                                             </div>
                                         </div>
                                     </div>
@@ -328,7 +376,8 @@
                                 <div class="grid grid-cols-2 gap-8">
                                     <!-- Parent Group -->
                                     <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Parent Steps</h3>
+                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2"
+                                            style="border-color: var(--border);">Parent Steps</h3>
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
@@ -363,7 +412,8 @@
 
                                     <!-- Child Group -->
                                     <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Child Steps</h3>
+                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2"
+                                            style="border-color: var(--border);">Child Steps</h3>
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
@@ -429,7 +479,8 @@
                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <!-- Stranger -->
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Stranger Preset</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Stranger
+                                            Preset</label>
                                         <input type="hidden" name="preset_stranger" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -439,7 +490,8 @@
                                     </div>
                                     <!-- Depth -->
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Depth Preset</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Depth
+                                            Preset</label>
                                         <input type="hidden" name="preset_depth" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -449,7 +501,8 @@
                                     </div>
                                     <!-- Imagination -->
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination Preset</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination
+                                            Preset</label>
                                         <input type="hidden" name="preset_imagination" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -459,7 +512,8 @@
                                     </div>
                                     <!-- Ending -->
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Ending Preset</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Ending
+                                            Preset</label>
                                         <input type="hidden" name="preset_ending" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -474,7 +528,7 @@
 
                     <!-- VIEW: FAST COMMANDS -->
                     <div id="view-fast" class="hidden">
-                         <section class="section-box">
+                        <section class="section-box">
                             <span class="section-title">Quick Presets</span>
                             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 <button onclick="sendFastCmd({start_system: true})" class="fast-cmd-btn">
@@ -525,16 +579,20 @@
                             <span class="section-title z-10">Raw JSON Payload</span>
                             <div id="raw-json-editor" class="w-full h-full"></div>
                         </section>
-                        <p class="text-xs mt-2" style="color: var(--text-sec)">CAUTION: This bypasses validation. Ensure JSON is valid.</p>
+                        <p class="text-xs mt-2" style="color: var(--text-sec)">CAUTION: This bypasses validation. Ensure
+                            JSON is valid.</p>
                     </div>
 
                     <!-- VIEW: MONITOR -->
                     <div id="view-monitor" class="hidden">
-                         <div class="flex justify-between items-end mb-4">
+                        <div class="flex justify-between items-end mb-4">
                             <h2 class="text-xs font-bold uppercase tracking-wider">Live Server Log</h2>
-                            <button onclick="document.getElementById('monitor-log').innerHTML = ''" class="text-[10px] underline hover:text-red-500">CLEAR LOG</button>
+                            <button onclick="document.getElementById('monitor-log').innerHTML = ''"
+                                class="text-[10px] underline hover:text-red-500">CLEAR LOG</button>
                         </div>
-                        <div id="monitor-log" class="section-box h-[65vh] overflow-y-auto font-mono text-xs p-0 bg-transparent" style="background: var(--bg-sec);">
+                        <div id="monitor-log"
+                            class="section-box h-[65vh] overflow-y-auto font-mono text-xs p-0 bg-transparent"
+                            style="background: var(--bg-sec);">
                             <div class="p-4 text-center text-gray-500 italic">Waiting for incoming messages...</div>
                         </div>
                     </div>
@@ -543,16 +601,18 @@
 
                 <!-- LIVE PREVIEW STICKY (Visible only in Staged view) -->
                 <div id="live-preview-panel" class="hidden md:block w-[300px] sticky top-6 self-start z-10">
-                   <div class="section-box p-0 overflow-hidden">
-                        <span class="section-title" style="left: 0; top: -20px; background: transparent;">Live Payload</span>
-                        <div class="bg-black text-white p-2 text-[10px] font-bold uppercase flex justify-between items-center">
+                    <div class="section-box p-0 overflow-hidden">
+                        <span class="section-title" style="left: 0; top: -20px; background: transparent;">Live
+                            Payload</span>
+                        <div
+                            class="bg-black text-white p-2 text-[10px] font-bold uppercase flex justify-between items-center">
                             <span>JSON PREVIEW</span>
                             <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                         </div>
                         <div id="json-preview" class="code-preview h-[400px] overflow-y-auto text-[10px]">
-{}
+                            {}
                         </div>
-                   </div>
+                    </div>
                 </div>
 
             </div>
@@ -562,20 +622,23 @@
     <!-- RIGHT: SIDEBAR -->
     <aside class="sidebar w-full md:w-[320px] flex flex-col h-screen md:sticky md:top-0 z-20 hidden md:flex">
         <div class="p-4 border-b" style="border-color: var(--border);">
-            <h2 class="text-xs uppercase font-bold tracking-wider" style="color: var(--text-sec);">Connected Clients</h2>
+            <h2 class="text-xs uppercase font-bold tracking-wider" style="color: var(--text-sec);">Connected Clients
+            </h2>
         </div>
         <div id="clients-list" class="flex-1 overflow-y-auto">
-             <!-- Clients -->
+            <!-- Clients -->
         </div>
-        <div class="p-4 border-t text-[10px]" style="border-color: var(--border); background-color: var(--bg-main); color: var(--text-sec);">
+        <div class="p-4 border-t text-[10px]"
+            style="border-color: var(--border); background-color: var(--bg-main); color: var(--text-sec);">
             WS_STATUS: <span id="ws-status" class="text-orange-500">CONNECTING...</span>
         </div>
     </aside>
-    
+
     <!-- BOTTOM BAR -->
     <div class="fixed bottom-0 left-0 right-0 md:pr-[320px] z-50">
         <div class="bottom-bar p-4 flex justify-center">
-             <button onclick="broadcastCurrent()" class="btn-broadcast uppercase font-bold tracking-widest py-4 px-12 text-sm w-full md:w-auto md:min-w-[400px] shadow-lg transition-transform flex items-center justify-center gap-2">
+            <button onclick="broadcastCurrent()"
+                class="btn-broadcast uppercase font-bold tracking-widest py-4 px-12 text-sm w-full md:w-auto md:min-w-[400px] shadow-lg transition-transform flex items-center justify-center gap-2">
                 <span>●</span> BROADCAST PAYLOAD
             </button>
         </div>
@@ -591,7 +654,7 @@
             // UI
             document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
-            
+
             // Views
             document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
@@ -614,13 +677,13 @@
             const isDark = body.classList.contains('dark-mode');
             document.getElementById('theme-label').textContent = isDark ? 'DARK' : 'LIGHT';
             localStorage.setItem('rift-theme', isDark ? 'dark' : 'light');
-            
+
             // Update Ace Theme
             if (rawEditor) {
                 rawEditor.setTheme(isDark ? "ace/theme/twilight" : "ace/theme/chrome");
             }
         }
-        
+
         // --- Init Ace Editor ---
         const rawEditor = ace.edit("raw-json-editor");
         rawEditor.session.setMode("ace/mode/json");
@@ -640,12 +703,12 @@
         if (localStorage.getItem('rift-theme') === 'dark') {
             toggleTheme(); // This handles the Ace theme too
         } else {
-             rawEditor.setTheme("ace/theme/chrome");
+            rawEditor.setTheme("ace/theme/chrome");
         }
 
         // --- Form & Real-time Preview Logic ---
         const form = document.getElementById('broadcastForm');
-        
+
         function getFormData() {
             const payload = {};
             // Ints
@@ -707,10 +770,18 @@
         // --- Broadcast Logic ---
         // Helper to perform the actual send
         function sendPayload(payload) {
-             if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(payload));
-                
-                // Feedback
+            if (ws.readyState === WebSocket.OPEN) {
+                const jsonStr = JSON.stringify(payload);
+                // Log the sent payload
+                try {
+                    const pretty = JSON.stringify(payload, null, 2);
+                    addLog(pretty, 'tx');
+                } catch (_) {
+                    addLog(jsonStr, 'tx');
+                }
+
+                ws.send(jsonStr);
+
                 const btn = document.querySelector('.btn-broadcast');
                 const originalText = btn.innerHTML;
                 const originalBg = btn.style.backgroundColor;
@@ -747,36 +818,45 @@
             }
             sendPayload(payload);
         }
-        
+
         // Fast Cmd Logic
         function sendFastCmd(payload) {
             console.log("Fast Command:", payload);
             sendPayload(payload);
         }
-        
+
         // --- Monitor Logic ---
         function addLog(msg, type = 'rx') {
             const container = document.getElementById('monitor-log');
             if (container.children.length === 1 && container.children[0].textContent.includes('Waiting')) {
                 container.innerHTML = '';
             }
-            
+
             const el = document.createElement('div');
             el.className = 'log-entry';
-            
+
             const time = new Date().toLocaleTimeString();
-            const prefix = type === 'rx' ? '↓ REC' : '↑ SND';
-            const color = type === 'rx' ? 'text-blue-500' : 'text-green-500';
+
+            let prefix;
+            let badgeClasses;
+
+            if (type === 'rx') {
+                prefix = '(↑ SEND)';
+                badgeClasses = 'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-500 text-white';
+            } else {
+                prefix = '(↓ REC)';
+                badgeClasses = 'inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500 text-black';
+            }
 
             el.innerHTML = `
-                <div class="flex gap-2 mb-1">
+                <div class="flex justify-between items-center mb-1 px-3 pt-2">
                     <span class="text-[9px] text-gray-400">${time}</span>
-                    <span class="font-bold ${color}">${prefix}</span>
+                    <span class="${badgeClasses}">${prefix}</span>
                 </div>
-                <pre class="whitespace-pre-wrap text-[10px] pl-4 border-l-2 border-gray-200 dark:border-gray-700">${msg}</pre>
+                <pre class="whitespace-pre-wrap text-[10px] px-4 pb-2 border-l-2 border-gray-200 dark:border-gray-700">${msg}</pre>
             `;
-            
-            container.prepend(el); // Newest top
+
+            container.prepend(el);
         }
 
         // --- WebSocket & Clients ---
@@ -793,15 +873,12 @@
             statusEl.className = "text-red-500";
         };
         ws.onmessage = (event) => {
-             // Try to parse prettily
-             let displayMsg = event.data;
-             try {
-                 const json = JSON.parse(event.data);
-                 // Ignore heartbeat or internal if needed, currently showing all
-                 displayMsg = JSON.stringify(json, null, 2);
-             } catch(e) {}
-             
-             addLog(displayMsg, 'rx');
+            let displayMsg = event.data;
+            try {
+                const json = JSON.parse(event.data);
+                displayMsg = JSON.stringify(json, null, 2);
+            } catch (e) { }
+            addLog(displayMsg, 'rx');
         };
 
         async function fetchClients() {
@@ -809,13 +886,13 @@
                 const res = await fetch('/api/clients');
                 const data = await res.json();
                 renderClients(data.clients);
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
 
         function renderClients(clients) {
             const container = document.getElementById('clients-list');
             container.innerHTML = '';
-            
+
             if (clients.length === 0) {
                 container.innerHTML = '<div class="p-4 text-center text-xs" style="color: var(--text-sec)">NO SIGNAL</div>';
                 return;
@@ -824,12 +901,12 @@
             clients.forEach(c => {
                 const el = document.createElement('div');
                 el.className = 'client-card transition-colors cursor-default';
-                const roleColor = c.role === 'depth' ? 'text-blue-600' : 
-                                  c.role === 'stranger' ? 'text-green-600' : 'text-gray-600';
-                
+                const roleColor = c.role === 'depth' ? 'text-blue-600' :
+                    c.role === 'stranger' ? 'text-green-600' : 'text-gray-600';
+
                 el.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold font-mono">${c.id.substring(0,6)}</span>
+                        <span class="text-xs font-bold font-mono">${c.id.substring(0, 6)}</span>
                         <div class="h-1.5 w-1.5 rounded-full ${c.readyState === 1 ? 'bg-green-500' : 'bg-red-500'}"></div>
                     </div>
                     <div class="flex justify-between items-end">
@@ -843,10 +920,11 @@
 
         setInterval(fetchClients, 2000);
         fetchClients();
-        
+
         // Init Preview
         updatePreview();
 
     </script>
 </body>
+
 </html>
