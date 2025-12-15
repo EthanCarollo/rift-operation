@@ -10,9 +10,11 @@ class DepthController(EspController):
         super().__init__(config)
         self.logger.name = "DepthController"
 
-        self.role = config.depth.role
+        self.role = config.depth.role  # "parent" ou "enfant"
         self.partitions = config.depth.partitions
-        self.current_partition = None
+
+        self.state = {}               # état global reçu du serveur
+        self.is_playing = False       # évite de rejouer en boucle
 
         # Boutons
         self.buttons = {
@@ -28,59 +30,60 @@ class DepthController(EspController):
                 for name, pin in config.depth.led_pins.items()
             }
 
-    # ------------------------------------------------------------------
-    # Utils
-    # ------------------------------------------------------------------
+    # --------------------------------------------------
+    # Conditions métier
+    # --------------------------------------------------
 
-    def depth_is_active(self):
-        state = self.websocket_client.state
+    def depth_started(self):
         return (
-            state.get("preset_depth") is True
-            and state.get("children_rift_part_count", 0)
-            + state.get("parent_rift_part_count", 0) == 2
+            self.state.get("preset_depth") is True
+            and self.state.get("children_rift_part_count") == 1
+            and self.state.get("parent_rift_part_count") == 1
         )
 
-    def get_current_step(self):
+    def depth_finished(self):
+        return (
+            self.state.get("children_rift_part_count") == 2
+            and self.state.get("parent_rift_part_count") == 2
+        )
+
+    def current_step(self):
         for step in (1, 2, 3):
             key = f"step_{step}_{self.role}_sucess"
-            if self.websocket_client.state.get(key) is None:
+            if self.state.get(key) is not True:
                 return step
         return None
+
+    # --------------------------------------------------
+    # Inputs / Outputs
+    # --------------------------------------------------
 
     def read_button(self):
         for name, button in self.buttons.items():
             if button.value() == 0:
-                time.sleep(0.2)  # debounce
+                self.logger.info(f"BOUTON DÉTECTÉ : {name}")
+                time.sleep(0.2)
                 return name
         return None
 
-    # ------------------------------------------------------------------
-    # LEDs (parent only)
-    # ------------------------------------------------------------------
-
-    def play_led_sequence(self, sequence):
+    def play_leds(self, sequence):
         if not self.leds:
             return
-
         for led in sequence:
             self.leds[led].value(1)
             time.sleep(0.4)
             self.leds[led].value(0)
             time.sleep(0.2)
 
-    # ------------------------------------------------------------------
+    # --------------------------------------------------
     # Gameplay
-    # ------------------------------------------------------------------
+    # --------------------------------------------------
 
     def play_partition(self, sequence):
-        """
-        Logique de jeu commune parent / enfant
-        """
         if self.role == "parent":
-            self.play_led_sequence(sequence)
+            self.play_leds(sequence)
 
         index = 0
-
         while index < len(sequence):
             btn = self.read_button()
             if not btn:
@@ -94,63 +97,60 @@ class DepthController(EspController):
 
         return True
 
-    # ------------------------------------------------------------------
+    # --------------------------------------------------
     # WebSocket
-    # ------------------------------------------------------------------
+    # --------------------------------------------------
 
     async def process_message(self, message):
         try:
+            self.logger.info("recus message")
             data = json.loads(message)
-            self.websocket_client.merge_state(data)
-
-            if data.get("type") == "partition":
-                self.current_partition = list(
-                    map(int, data["value"].split(","))
-                )
-                self.logger.info(f"Partition reçue : {self.current_partition}")
-
-            elif data.get("type") == "unlock":
-                self.logger.info("Action finale déclenchée")
-
+            self.state = data  # snapshot complet de l'état serveur
         except Exception as e:
-            self.logger.error(f"Message invalide : {e}")
+            self.logger.error(f"JSON invalide : {e}")
 
-    # ------------------------------------------------------------------
-    # Game loop (appelé par EspController)
-    # ------------------------------------------------------------------
+    # --------------------------------------------------
+    # Loop principale (appelée par EspController)
+    # --------------------------------------------------
 
     async def update(self):
 
-        if not self.depth_is_active():
+        # Expérience pas encore lancée
+        if not self.depth_started():
+            self.is_playing = False
             return
 
-        # 1. Partition envoyée dynamiquement
-        if self.current_partition:
-            if self.play_partition(self.current_partition):
-                await self.websocket_client.send(
-                    json.dumps({"type": "message", "value": "success"})
-                )
-                self.current_partition = None
+        # Expérience déjà terminée
+        if self.depth_finished():
+            self.logger.info("Depth terminée")
             return
 
-        # 2. Mode steps classiques
-        step = self.get_current_step()
+        # Empêche de relancer pendant qu'on joue
+        if self.is_playing:
+            return
+
+        step = self.current_step()
         if step is None:
             return
 
-        # Parent attend la réussite de l’enfant
+        # Le parent attend que l'enfant ait réussi l'étape
         if self.role == "parent":
-            child_key = f"step_{step}_child_sucess"
-            if self.websocket_client.state.get(child_key) is not True:
+            child_key = f"step_{step}_enfant_sucess"
+            if self.state.get(child_key) is not True:
                 return
 
-        partition = self.partitions.get(step, [])
+        partition = self.partitions.get(step)
         if not partition:
             return
 
+        self.is_playing = True
         self.logger.info(f"{self.role} joue l'étape {step}")
 
         if self.play_partition(partition):
             key = f"step_{step}_{self.role}_sucess"
-            self.websocket_client.send_state(key, True)
-            self.websocket_client.state[key] = True
+            await self.websocket_client.send(
+                json.dumps({key: True})
+            )
+
+        self.is_playing = False
+
