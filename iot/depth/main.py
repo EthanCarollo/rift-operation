@@ -1,14 +1,14 @@
 import gc
 import uasyncio as asyncio
-from src.Core.EspController2 import EspController2
+from src.Core.EspController import EspController
 from src.Framework.Config.ConfigFactory import ConfigFactory
 
 gc.collect()
 
 try:
-    config = ConfigFactory.create_alice_house_config()
+    config = ConfigFactory.create_cudy_config()
     
-    controller = EspController2(config)
+    controller = EspController(config)
     asyncio.run(controller.main())
 except KeyboardInterrupt:
     pass

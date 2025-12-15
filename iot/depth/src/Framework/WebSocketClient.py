@@ -13,7 +13,7 @@ class WebSocketClient:
             self.logger.info(f"Connecting to WebSocket: {self.config.server}{self.config.path}")
         
         try:
-            self.websocket = libs.uwebsocket.client.connect(self.config.server + self.config.path)
+            self.websocket = libs.uwebsockets.client.connect(self.config.server + self.config.path)
             if self.logger:
                 self.logger.info("WebSocket connected successfully")
             return True
