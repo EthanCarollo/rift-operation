@@ -1,0 +1,15 @@
+{
+  "originHash" : "09d39547e5f2ea014f090ce3579546bf262fdc1f54f13cf7f8f874cfd9314849",
+  "pins" : [
+    {
+      "identity" : "pappe",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/frameworklabs/Pappe.git",
+      "state" : {
+        "revision" : "0ff579cdd0b5ea3c84ae5c80c7c66edf8b9d07ad",
+        "version" : "0.3.1"
+      }
+    }
+  ],
+  "version" : 3
+}
