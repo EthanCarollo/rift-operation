@@ -1,7 +1,6 @@
 import gc
 import uasyncio as asyncio
 from src.Core.Controller.StrangerController import StrangerController
-from src.Core.DepthController import DepthController
 from src.Framework.Config.ConfigFactory import ConfigFactory
 
 gc.collect()

@@ -35,7 +35,6 @@ class WifiManager:
             while not self.sta.isconnected():
                 st = self.sta.status()
 
-                # Error states: -3, -2, -1 (per ESP32 MicroPython)
                 if st in (-3, -2, -1):
                     if self.logger:
                         self.logger.warning(f"WiFi error status {st}")
@@ -55,7 +54,6 @@ class WifiManager:
                     self.logger.debug(f"IP config: {cfg}")
                 return True
 
-            # Failed, reset and retry
             if self.logger:
                 self.logger.warning("Connection failed, resetting WiFi and retrying...")
             self._reset_sta()
@@ -66,7 +64,6 @@ class WifiManager:
         return False
 
     def _prepare_interfaces(self):
-        # Disable AP mode (prevents unstable WiFi states)
         try:
             if self.ap.active():
                 if self.logger:

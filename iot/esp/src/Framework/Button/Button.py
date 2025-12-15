@@ -4,15 +4,6 @@ from .ButtonDelegate import ButtonDelegate
 
 class Button:
     def __init__(self, pin_id, delegate, trigger=Pin.IRQ_FALLING, pull=Pin.PULL_UP, debounce_delay=50):
-        """
-        Initialize a Button.
-
-        :param pin_id: The GPIO pin number.
-        :param delegate: An instance of ButtonDelegate.
-        :param trigger: The IRQ trigger mode (default: Pin.IRQ_FALLING).
-        :param pull: The internal pull resistor mode (default: Pin.PULL_UP).
-        :param debounce_delay: Minimum time in milliseconds between clicks to avoid bouncing.
-        """
         if not isinstance(delegate, ButtonDelegate):
             raise TypeError("delegate must be an instance of ButtonDelegate")
 
