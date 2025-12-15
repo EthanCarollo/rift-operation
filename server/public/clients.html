@@ -3,337 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rift Operation // Command</title>
+    <title>RIFT // CONTROL INTERFACE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Gray 100 */
-            color: #1f2937; /* Gray 800 */
-        }
-        
-        details > summary {
-            list-style: none;
-        }
-        details > summary::-webkit-details-marker {
-            display: none;
+            font-family: 'Space Mono', monospace;
+            background-color: #ffffff;
+            color: #000000;
         }
 
-        .input-field {
-            background-color: #fff;
-            border: 1px solid #e5e7eb;
-            color: #111;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f0f0f0; }
+        ::-webkit-scrollbar-thumb { background: #000; }
+
+        /* Inputs */
+        .raw-input {
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
+            padding: 8px 12px;
+            font-size: 12px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .raw-input:focus {
+            border-color: #000;
+            background: #fff;
+        }
+
+        /* Tri-state Toggle */
+        .tri-state-container {
+            display: flex;
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
+            height: 32px;
+        }
+        .tri-state-btn {
+            flex: 1;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #999;
             transition: all 0.2s;
         }
-        .input-field:focus {
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        .tri-state-btn:hover {
+            color: #000;
+            background: #f0f0f0;
+        }
+        .tri-state-btn[data-active="true"] {
+            background: #000;
+            color: #fff;
+        }
+        /* Specific state colors */
+        .tri-state-btn[data-value="true"][data-active="true"] { background: #000; }
+        .tri-state-btn[data-value="false"][data-active="true"] { background: #000; } 
+        /* Actually user wanted minimal, so strict B&W is best for "Clean Underground" */
+
+        /* Card/Section */
+        .section-box {
+            border: 1px solid #000;
+            padding: 20px;
+            position: relative;
+        }
+        .section-title {
+            position: absolute;
+            top: -10px;
+            left: 16px;
+            background: #fff;
+            padding: 0 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
         }
 
-        /* Smooth open animation for details */
-        details[open] summary ~ * {
-            animation: fadeIn 0.3s ease-in-out;
+        .client-card {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 16px;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .client-card:last-child { border-bottom: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col md:flex-row">
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <!-- Sidebar: Clients List -->
-    <aside class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
-        <div class="p-6 border-b border-gray-100 bg-gray-50">
-            <h1 class="text-xl font-bold tracking-tight text-gray-900">RIFT OS</h1>
-            <div class="flex items-center justify-between mt-2">
-                <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">● System Online</span>
-                <span id="client-count" class="text-xs font-medium text-gray-500">0 Clients</span>
-            </div>
-        </div>
-        
-        <div id="clients-list" class="flex-1 overflow-y-auto p-4 space-y-3">
-            <!-- Client Cards Injected Here -->
-            <div class="text-center py-10 text-gray-400 text-sm">Waiting for connections...</div>
-        </div>
-    </aside>
-
-    <!-- Main Content: Broadcast -->
-    <main class="flex-1 p-6 md:p-12 overflow-y-auto">
-        <div class="max-w-3xl mx-auto space-y-8">
+    <!-- LEFT: CONTROLS -->
+    <main class="flex-1 overflow-y-auto p-6 md:p-10 scroll-smooth">
+        <div class="max-w-4xl mx-auto pb-20">
             
-            <div class="flex items-center justify-between">
+            <header class="mb-12 flex justify-between items-end border-b-2 border-black pb-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Broadcast Control</h2>
-                    <p class="text-sm text-gray-500">Select a phase to modify state.</p>
+                    <h1 class="text-3xl font-bold tracking-tight">RIFT // OS</h1>
+                    <p class="text-xs text-gray-500 mt-1 uppercase">Dev Operation Console v3</p>
                 </div>
-                <button onclick="resetForm()" class="text-sm text-gray-500 hover:text-red-600 underline transition-colors">
-                    Reset Fields
+                <button onclick="resetAll()" class="text-xs underline hover:bg-black hover:text-white px-2 py-1 transition-colors">
+                    RESET ALL NULL
                 </button>
-            </div>
+            </header>
 
-            <form id="broadcastForm" class="space-y-4">
+            <form id="broadcastForm" class="space-y-10">
 
-                <!-- 1. STRANGERS -->
-                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">1</span>
-                            <span class="text-gray-900 text-lg">Strangers Phase</span>
+                <!-- 1. RIFT TABLE -->
+                <section class="section-box">
+                    <span class="section-title">00_Rift_Table</span>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="control-group" data-type="int">
+                            <label class="block text-xs font-bold mb-2 uppercase">Children Rift Parts</label>
+                            <input type="number" name="children_rift_part_count" class="raw-input" placeholder="NULL">
                         </div>
-                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </span>
-                    </summary>
-                    <div class="p-5 pt-0 border-t border-gray-100 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Recognized Name</label>
-                            <input type="text" name="recognized_stranger_name" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
-                        </div>
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset</label>
-                            <input type="text" name="preset_stranger" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                        <div class="control-group" data-type="int">
+                            <label class="block text-xs font-bold mb-2 uppercase">Parent Rift Parts</label>
+                            <input type="number" name="parent_rift_part_count" class="raw-input" placeholder="NULL">
                         </div>
                     </div>
-                </details>
+                </section>
 
-                <!-- 2. DEPTH -->
-                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">2</span>
-                            <span class="text-gray-900 text-lg">Depth Phase</span>
-                        </div>
-                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </span>
-                    </summary>
-                    <div class="p-5 pt-0 border-t border-gray-100 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div class="mt-4">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Children Rift Parts</label>
-                            <input type="number" name="children_rift_part_count" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
-                        </div>
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Parent Rift Parts</label>
-                            <input type="number" name="parent_rift_part_count" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset</label>
-                            <input type="text" name="preset_depth" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
-                        </div>
-                    </div>
-                </details>
-
-                <!-- 3. LOST -->
-                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">3</span>
-                            <span class="text-gray-900 text-lg">Lost Workshop Phase</span>
-                        </div>
-                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </span>
-                    </summary>
-                    <div class="p-5 pt-0 border-t border-gray-100 mt-2 space-y-6">
-                        
-                        <!-- General -->
-                        <div class="mt-4 grid grid-cols-2 gap-4">
-                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start System</label>
-                                <input type="text" name="start_system" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                <!-- 2. STRANGER -->
+                <section class="section-box">
+                    <span class="section-title">01_Stranger</span>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <!-- Toggle -->
+                            <div class="control-group" data-type="bool">
+                                <label class="block text-xs font-bold mb-2 uppercase">Start System</label>
+                                <input type="hidden" name="start_system" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                    <div class="tri-state-btn" data-value="false">FALSE</div>
+                                    <div class="tri-state-btn" data-value="true">TRUE</div>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset Imagination</label>
-                                <input type="text" name="preset_imagination" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                            <div class="control-group" data-type="bool">
+                                <label class="block text-xs font-bold mb-2 uppercase">Recognized Stranger</label>
+                                <input type="hidden" name="recognized_stranger_name" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                    <div class="tri-state-btn" data-value="false">NO</div>
+                                    <div class="tri-state-btn" data-value="true">YES</div>
+                                </div>
                             </div>
                         </div>
 
-                         <!-- Pinguin -->
+                        <!-- Pinguin -->
                         <div class="border-t border-gray-100 pt-4">
-                            <h4 class="text-xs font-bold text-orange-500 uppercase mb-3">Pinguin</h4>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Micro</label>
-                                    <input type="text" name="pinguin_micro" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="control-group" data-type="text">
+                                    <label class="block text-xs font-bold mb-2 uppercase text-gray-400">Pinguin Micro (Base64)</label>
+                                    <input type="text" name="pinguin_micro" class="raw-input" placeholder="NULL">
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Audio</label>
-                                    <input type="text" name="pinguin_audio" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                                <div class="control-group" data-type="text">
+                                    <label class="block text-xs font-bold mb-2 uppercase text-gray-400">Pinguin Audio (Base64)</label>
+                                    <input type="text" name="pinguin_audio" class="raw-input" placeholder="NULL">
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Steps -->
-                        <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-8">
-                             <div>
-                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Parent Success</h4>
-                                <div class="space-y-2">
-                                    <input type="text" name="step_1_parent_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 1">
-                                    <input type="text" name="step_2_parent_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 2">
-                                    <input type="text" name="step_3_parent_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 3">
-                                </div>
-                             </div>
-                             <div>
-                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Child Success</h4>
-                                <div class="space-y-2">
-                                    <input type="text" name="step_1_enfant_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 1">
-                                    <input type="text" name="step_2_enfant_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 2">
-                                    <input type="text" name="step_3_enfant_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 3">
-                                </div>
-                             </div>
-                        </div>
-
-                        <!-- Interactions -->
-                        <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-4">
-                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Torch Scanned</label>
-                                <input type="text" name="torch_scanned" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
-                            </div>
-                             <div>
-                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Cage on Monster</label>
-                                <input type="text" name="cage_is_on_monster" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
-                            </div>
-                        </div>
-
-                    </div>
-                </details>
-
-                <!-- 4. END -->
-                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm">4</span>
-                            <span class="text-gray-900 text-lg">End Phase</span>
-                        </div>
-                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </span>
-                    </summary>
-                    <div class="p-5 pt-0 border-t border-gray-100 mt-2">
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset</label>
-                            <input type="text" name="preset_ending" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
                         </div>
                     </div>
-                </details>
+                </section>
+
+                <!-- 3. DEPTH -->
+                <section class="section-box">
+                    <span class="section-title">02_Depth_Sequence</span>
+                    <div class="grid grid-cols-2 gap-8">
+                        <!-- Parent Group -->
+                        <div class="space-y-4">
+                            <h3 class="text-xs uppercase font-bold border-b border-gray-200 pb-1 mb-2">Parent Steps</h3>
+                            <!-- Step 1 -->
+                            <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                <label class="text-[10px] uppercase">Step 1 Success</label>
+                                <input type="hidden" name="step_1_parent_sucess" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">F</div>
+                                    <div class="tri-state-btn" data-value="true">T</div>
+                                </div>
+                            </div>
+                             <!-- Step 2 -->
+                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                <label class="text-[10px] uppercase">Step 2 Success</label>
+                                <input type="hidden" name="step_2_parent_sucess" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">F</div>
+                                    <div class="tri-state-btn" data-value="true">T</div>
+                                </div>
+                            </div>
+                             <!-- Step 3 -->
+                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                <label class="text-[10px] uppercase">Step 3 Success</label>
+                                <input type="hidden" name="step_3_parent_sucess" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">F</div>
+                                    <div class="tri-state-btn" data-value="true">T</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Child Group -->
+                        <div class="space-y-4">
+                            <h3 class="text-xs uppercase font-bold border-b border-gray-200 pb-1 mb-2">Child Steps</h3>
+                             <!-- Step 1 -->
+                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                <label class="text-[10px] uppercase">Step 1 Success</label>
+                                <input type="hidden" name="step_1_enfant_sucess" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">F</div>
+                                    <div class="tri-state-btn" data-value="true">T</div>
+                                </div>
+                            </div>
+                             <!-- Step 2 -->
+                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                <label class="text-[10px] uppercase">Step 2 Success</label>
+                                <input type="hidden" name="step_2_enfant_sucess" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">F</div>
+                                    <div class="tri-state-btn" data-value="true">T</div>
+                                </div>
+                            </div>
+                             <!-- Step 3 -->
+                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                <label class="text-[10px] uppercase">Step 3 Success</label>
+                                <input type="hidden" name="step_3_enfant_sucess" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">F</div>
+                                    <div class="tri-state-btn" data-value="true">T</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. IMAGINATION -->
+                <section class="section-box">
+                    <span class="section-title">03_Imagination</span>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="control-group" data-type="bool">
+                            <label class="block text-xs font-bold mb-2 uppercase">Torch Scanned</label>
+                            <input type="hidden" name="torch_scanned" value="null">
+                            <div class="tri-state-container">
+                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                <div class="tri-state-btn" data-value="false">FALSE</div>
+                                <div class="tri-state-btn" data-value="true">TRUE</div>
+                            </div>
+                        </div>
+                        <div class="control-group" data-type="bool">
+                            <label class="block text-xs font-bold mb-2 uppercase">Cage Is On Monster</label>
+                            <input type="hidden" name="cage_is_on_monster" value="null">
+                            <div class="tri-state-container">
+                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                <div class="tri-state-btn" data-value="false">FALSE</div>
+                                <div class="tri-state-btn" data-value="true">TRUE</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. SCENOGRAPHY -->
+                <section class="section-box">
+                    <span class="section-title">04_Scenography (Presets)</span>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Stranger -->
+                        <div class="control-group" data-type="bool">
+                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Stranger Preset</label>
+                            <input type="hidden" name="preset_stranger" value="null">
+                            <div class="tri-state-container">
+                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                <div class="tri-state-btn" data-value="false">OFF</div>
+                                <div class="tri-state-btn" data-value="true">ON</div>
+                            </div>
+                        </div>
+                        <!-- Depth -->
+                         <div class="control-group" data-type="bool">
+                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Depth Preset</label>
+                            <input type="hidden" name="preset_depth" value="null">
+                            <div class="tri-state-container">
+                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                <div class="tri-state-btn" data-value="false">OFF</div>
+                                <div class="tri-state-btn" data-value="true">ON</div>
+                            </div>
+                        </div>
+                        <!-- Imagination -->
+                        <div class="control-group" data-type="bool">
+                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination Preset</label>
+                            <input type="hidden" name="preset_imagination" value="null">
+                            <div class="tri-state-container">
+                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                <div class="tri-state-btn" data-value="false">OFF</div>
+                                <div class="tri-state-btn" data-value="true">ON</div>
+                            </div>
+                        </div>
+                        <!-- Ending -->
+                        <div class="control-group" data-type="bool">
+                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Ending Preset</label>
+                            <input type="hidden" name="preset_ending" value="null">
+                            <div class="tri-state-container">
+                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                <div class="tri-state-btn" data-value="false">OFF</div>
+                                <div class="tri-state-btn" data-value="true">ON</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
             </form>
 
-            <button onclick="broadcast()" class="w-full bg-black hover:bg-gray-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all transform active:scale-95 text-lg cursor-pointer">
-                BROADCAST PAYLOAD
-            </button>
+             <!-- Floating Action Bar for Mobile / Sticky Bottom -->
+            <div class="fixed bottom-0 left-0 right-0 md:left-80 p-4 bg-white/90 backdrop-blur border-t border-black flex justify-center z-10">
+                <button onclick="broadcast()" class="w-full max-w-md bg-black text-white uppercase font-bold tracking-widest py-3 px-8 text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform">
+                    Broadcast Payload
+                </button>
+            </div>
+            
         </div>
     </main>
 
-    <!-- Scripts -->
-    <script>
-        const CLIENTS_LIST_EL = document.getElementById('clients-list');
-        const CLIENT_COUNT_EL = document.getElementById('client-count');
+    <!-- RIGHT: SIDEBAR -->
+    <aside class="w-full md:w-[320px] bg-[#f8f8f8] border-l border-[#e0e0e0] flex flex-col h-screen md:sticky md:top-0 z-20 hidden md:flex">
+        <div class="p-4 border-b border-[#e0e0e0]">
+            <h2 class="text-xs uppercase font-bold tracking-wider text-gray-500">Connected Clients</h2>
+        </div>
+        <div id="clients-list" class="flex-1 overflow-y-auto">
+             <!-- Clients -->
+        </div>
+        <div class="p-4 bg-white border-t border-[#e0e0e0] text-[10px] text-gray-400">
+            WS_STATUS: <span id="ws-status" class="text-orange-500">CONNECTING...</span>
+        </div>
+    </aside>
 
-        // Load Clients
+    <script>
+        // --- 1. Tri-State Logic ---
+        document.querySelectorAll('.control-group[data-type="bool"]').forEach(group => {
+            const input = group.querySelector('input[type="hidden"]');
+            const btns = group.querySelectorAll('.tri-state-btn');
+
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update visual state
+                    btns.forEach(b => b.removeAttribute('data-active'));
+                    btn.setAttribute('data-active', 'true');
+                    
+                    // Update value
+                    const val = btn.getAttribute('data-value');
+                    input.value = val;
+                });
+            });
+        });
+
+        // --- 2. Reset Logic ---
+        function resetAll() {
+            // Reset inputs
+            document.querySelectorAll('input.raw-input').forEach(i => i.value = '');
+            
+            // Reset tri-states to NULL
+            document.querySelectorAll('.control-group[data-type="bool"]').forEach(group => {
+                const input = group.querySelector('input[type="hidden"]');
+                const nullBtn = group.querySelector('.tri-state-btn[data-value="null"]');
+                const btns = group.querySelectorAll('.tri-state-btn');
+                
+                input.value = 'null';
+                btns.forEach(b => b.removeAttribute('data-active'));
+                nullBtn.setAttribute('data-active', 'true');
+            });
+        }
+
+        // --- 3. Broadcast Logic ---
+        function broadcast() {
+            const payload = {};
+            const form = document.getElementById('broadcastForm');
+
+            // Ints
+            form.querySelectorAll('.control-group[data-type="int"] input').forEach(input => {
+                const val = input.value.trim();
+                payload[input.name] = val === '' ? null : parseInt(val);
+            });
+
+            // Text
+            form.querySelectorAll('.control-group[data-type="text"] input').forEach(input => {
+                const val = input.value.trim();
+                payload[input.name] = val === '' ? null : val;
+            });
+
+            // Bools (Hidden inputs updated by Tri-State)
+            form.querySelectorAll('.control-group[data-type="bool"] input[type="hidden"]').forEach(input => {
+                if (input.value === 'null') payload[input.name] = null;
+                else if (input.value === 'true') payload[input.name] = true;
+                else if (input.value === 'false') payload[input.name] = false;
+            });
+
+            console.log("Broadcasting:", payload);
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(payload));
+            } else {
+                alert("WebSocket Disconnected");
+            }
+        }
+
+
+        // --- 4. WebSocket & Clients ---
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+        const statusEl = document.getElementById('ws-status');
+
+        ws.onopen = () => {
+            statusEl.textContent = "CONNECTED";
+            statusEl.className = "text-green-500";
+        };
+        ws.onclose = () => {
+            statusEl.textContent = "DISCONNECTED";
+            statusEl.className = "text-red-500";
+        }
+
         async function fetchClients() {
             try {
                 const res = await fetch('/api/clients');
                 const data = await res.json();
-                
-                CLIENT_COUNT_EL.textContent = `${data.total} Connected`;
-                CLIENTS_LIST_EL.innerHTML = '';
-
-                data.clients.forEach(client => {
-                    const el = document.createElement('div');
-                    el.className = 'bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow';
-                    
-                    const roleBadgeColor = 
-                        client.role === 'depth' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                        client.role === 'stranger' ? 'bg-green-50 text-green-700 border-green-100' :
-                        'bg-gray-100 text-gray-600 border-gray-200';
-
-                    const statusColor = client.readyState === 1 ? 'bg-green-500' : 'bg-red-500';
-
-                    el.innerHTML = `
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-mono text-gray-400">#${client.id.substring(0, 8)}...</span>
-                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs px-2 py-1 rounded border capitalize ${roleBadgeColor} font-medium">${client.role}</span>
-                            <span class="text-[10px] text-gray-400 uppercase tracking-wide">${client.readyStateText}</span>
-                        </div>
-                    `;
-                    CLIENTS_LIST_EL.appendChild(el);
-                });
-
-                if (data.clients.length === 0) {
-                     CLIENTS_LIST_EL.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">No clients connected</div>';
-                }
-
-            } catch (e) {
-                console.error("Fetch error", e);
-            }
+                renderClients(data.clients);
+            } catch(e) { console.error(e); }
         }
 
-        setInterval(fetchClients, 3000);
+        function renderClients(clients) {
+            const container = document.getElementById('clients-list');
+            container.innerHTML = '';
+            
+            if (clients.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-xs text-gray-400">NO SIGNAL</div>';
+                return;
+            }
+
+            clients.forEach(c => {
+                const el = document.createElement('div');
+                el.className = 'client-card hover:bg-white transition-colors cursor-default';
+                
+                // Color calc
+                const roleColor = c.role === 'depth' ? 'text-blue-600' : 
+                                  c.role === 'stranger' ? 'text-green-600' : 'text-gray-600';
+                
+                el.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold font-mono">${c.id.substring(0,6)}</span>
+                        <div class="h-1.5 w-1.5 rounded-full ${c.readyState === 1 ? 'bg-green-500' : 'bg-red-500'}"></div>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-[10px] uppercase tracking-wider ${roleColor}">${c.role || 'UNKNOWN'}</span>
+                        <span class="text-[9px] text-gray-400">${c.readyStateText}</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        setInterval(fetchClients, 2000);
         fetchClients();
 
-        // WebSocket
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
-
-        ws.onopen = () => console.log('Dashboard connected');
-
-        function resetForm() {
-            document.getElementById('broadcastForm').reset();
-        }
-
-        function broadcast() {
-            const form = document.getElementById('broadcastForm');
-            const formData = new FormData(form);
-            const payload = {};
-
-            for (const [key, value] of formData.entries()) {
-                const val = value.trim();
-                // If empty in this UI, we treat as null to send incomplete payloads that the server/clients might handle as "no change" 
-                // OR we send null to explicitely reset. 
-                // The previous request implied sending the full structure with nulls.
-                if (val === "") {
-                    payload[key] = null;
-                } else if (val.toLowerCase() === "true") {
-                    payload[key] = true;
-                } else if (val.toLowerCase() === "false") {
-                    payload[key] = false;
-                } else if (!isNaN(val)) {
-                    payload[key] = Number(val);
-                } else {
-                    payload[key] = val;
-                }
-            }
-
-            console.log("Broadcasting:", payload);
-            
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(payload));
-                
-                // Button feedback
-                const btn = document.querySelector('button.w-full');
-                const originalText = btn.textContent;
-                const originalBg = btn.className;
-                
-                btn.textContent = "✓ SENT";
-                btn.className = "w-full bg-green-600 text-white font-semibold py-4 rounded-xl shadow-lg transition-all text-lg";
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.className = originalBg;
-                }, 1000);
-            } else {
-                alert("WebSocket not connected. Refreshing page...");
-                location.reload();
-            }
-        }
     </script>
 </body>
 </html>
