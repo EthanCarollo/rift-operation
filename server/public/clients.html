@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIFT // CONTROL INTERFACE</title>
+    <title>Rift Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
@@ -19,6 +19,7 @@
             --accent-text: #ffffff;
             --tri-state-bg: #fafafa;
             --tri-state-hover: #f0f0f0;
+            --success: #10b981;
         }
 
         body.dark-mode {
@@ -131,67 +132,218 @@
             background-color: var(--card-hover); 
         }
 
-        /* Button */
+        /* Tabs */
+        .nav-tab {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border: 1px solid transparent;
+            color: var(--text-sec);
+            transition: all 0.2s;
+        }
+        .nav-tab:hover {
+            color: var(--text-main);
+        }
+        .nav-tab.active {
+            border: 1px solid var(--border-focus);
+            color: var(--text-main);
+            background: var(--bg-sec);
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            background: rgba(var(--bg-main), 0.9);
+            border-top: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
         .btn-broadcast {
             background-color: var(--accent);
             color: var(--accent-text);
         }
         .btn-broadcast:hover {
             opacity: 0.9;
-            transform: scale(1.02);
         }
         .btn-broadcast:active {
-            transform: scale(0.98);
+            transform: scale(0.99);
         }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- LEFT: CONTROLS -->
-    <main class="flex-1 overflow-y-auto p-6 md:p-10 scroll-smooth relative">
-        <div class="max-w-4xl mx-auto pb-32">
+    <main class="flex-1 overflow-y-auto pt-6 px-6 md:px-10 pb-32 scroll-smooth relative">
+        <div class="max-w-4xl mx-auto">
             
+            <!-- HEADER -->
             <header class="mb-12 flex justify-between items-end border-b-2" style="border-color: var(--border-focus);">
                 <div class="pb-4">
-                    <h1 class="text-3xl font-bold tracking-tight">RIFT // OS</h1>
-                    <p class="text-xs mt-1 uppercase" style="color: var(--text-sec)">Dev Operation Console v3</p>
+                    <h1 class="text-3xl font-bold tracking-tight">RIFT PANEL</h1>
+                    <p class="text-xs mt-1 uppercase" style="color: var(--text-sec)">Dev Panel for Escape Game</p>
                 </div>
-                <div class="pb-4 flex items-center gap-4">
-                    <button onclick="toggleTheme()" class="text-xs font-bold uppercase border px-3 py-1 hover:bg-black hover:text-white transition-colors" style="border-color: var(--border);">
-                        Theme: <span id="theme-label">LIGHT</span>
+                <div class="pb-4 flex flex-col items-end gap-2">
+                     <button onclick="toggleTheme()" class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors" style="border-color: var(--border);">
+                        Mode: <span id="theme-label">LIGHT</span>
                     </button>
-                    <button onclick="resetAll()" class="text-xs underline hover:text-red-500 transition-colors">
-                        RESET ALL NULL
-                    </button>
+                    <!-- TABS -->
+                    <div class="flex gap-2">
+                        <button onclick="switchTab('staged')" class="nav-tab active" id="tab-staged">Predefined</button>
+                        <button onclick="switchTab('custom')" class="nav-tab" id="tab-custom">Custom JSON</button>
+                    </div>
                 </div>
             </header>
 
-            <form id="broadcastForm" class="space-y-8">
+            <!-- VIEW: STAGED JSON (Predefined Form) -->
+            <div id="view-staged">
+                <div class="flex justify-end mb-4">
+                     <button onclick="resetAll()" class="text-xs underline hover:text-red-500 transition-colors">
+                        RESET FIELDS
+                    </button>
+                </div>
 
-                <!-- 1. RIFT TABLE -->
-                <section class="section-box">
-                    <span class="section-title">00_Rift_Table</span>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="control-group" data-type="int">
-                            <label class="block text-xs font-bold mb-2 uppercase">Children Rift Parts</label>
-                            <input type="number" name="children_rift_part_count" class="raw-input" placeholder="NULL">
-                        </div>
-                        <div class="control-group" data-type="int">
-                            <label class="block text-xs font-bold mb-2 uppercase">Parent Rift Parts</label>
-                            <input type="number" name="parent_rift_part_count" class="raw-input" placeholder="NULL">
-                        </div>
-                    </div>
-                </section>
+                <form id="broadcastForm" class="space-y-8">
 
-                <!-- 2. STRANGER -->
-                <section class="section-box">
-                    <span class="section-title">01_Stranger</span>
-                    <div class="space-y-6">
+                    <!-- 1. RIFT TABLE -->
+                    <section class="section-box">
+                        <span class="section-title">00_Rift_Table</span>
                         <div class="grid grid-cols-2 gap-6">
-                            <!-- Toggle -->
+                            <div class="control-group" data-type="int">
+                                <label class="block text-xs font-bold mb-2 uppercase">Children Rift Parts</label>
+                                <input type="number" name="children_rift_part_count" class="raw-input" placeholder="NULL">
+                            </div>
+                            <div class="control-group" data-type="int">
+                                <label class="block text-xs font-bold mb-2 uppercase">Parent Rift Parts</label>
+                                <input type="number" name="parent_rift_part_count" class="raw-input" placeholder="NULL">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 2. STRANGER -->
+                    <section class="section-box">
+                        <span class="section-title">01_Stranger</span>
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-2 gap-6">
+                                <!-- Toggle -->
+                                <div class="control-group" data-type="bool">
+                                    <label class="block text-xs font-bold mb-2 uppercase">Start System</label>
+                                    <input type="hidden" name="start_system" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                        <div class="tri-state-btn" data-value="false">FALSE</div>
+                                        <div class="tri-state-btn" data-value="true">TRUE</div>
+                                    </div>
+                                </div>
+                                <div class="control-group" data-type="bool">
+                                    <label class="block text-xs font-bold mb-2 uppercase">Recognized Stranger</label>
+                                    <input type="hidden" name="recognized_stranger_name" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                        <div class="tri-state-btn" data-value="false">NO</div>
+                                        <div class="tri-state-btn" data-value="true">YES</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pinguin -->
+                            <div class="border-t pt-4" style="border-color: var(--border);">
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div class="control-group" data-type="text">
+                                        <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Micro (Base64) [READ ONLY]</label>
+                                        <input type="text" name="pinguin_micro" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                                    </div>
+                                    <div class="control-group" data-type="text">
+                                        <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Audio (Base64) [READ ONLY]</label>
+                                        <input type="text" name="pinguin_audio" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. DEPTH -->
+                    <section class="section-box">
+                        <span class="section-title">02_Depth_Sequence</span>
+                        <div class="grid grid-cols-2 gap-8">
+                            <!-- Parent Group -->
+                            <div class="space-y-4">
+                                <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Parent Steps</h3>
+                                <!-- Step 1 -->
+                                <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                    <label class="text-[10px] uppercase">Step 1 Success</label>
+                                    <input type="hidden" name="step_1_parent_sucess" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
+                                 <!-- Step 2 -->
+                                 <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                    <label class="text-[10px] uppercase">Step 2 Success</label>
+                                    <input type="hidden" name="step_2_parent_sucess" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
+                                 <!-- Step 3 -->
+                                 <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                    <label class="text-[10px] uppercase">Step 3 Success</label>
+                                    <input type="hidden" name="step_3_parent_sucess" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Child Group -->
+                            <div class="space-y-4">
+                                <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Child Steps</h3>
+                                 <!-- Step 1 -->
+                                 <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                    <label class="text-[10px] uppercase">Step 1 Success</label>
+                                    <input type="hidden" name="step_1_enfant_sucess" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
+                                 <!-- Step 2 -->
+                                 <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                    <label class="text-[10px] uppercase">Step 2 Success</label>
+                                    <input type="hidden" name="step_2_enfant_sucess" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
+                                 <!-- Step 3 -->
+                                 <div class="control-group grid grid-cols-2 items-center" data-type="bool">
+                                    <label class="text-[10px] uppercase">Step 3 Success</label>
+                                    <input type="hidden" name="step_3_enfant_sucess" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 4. IMAGINATION -->
+                    <section class="section-box">
+                        <span class="section-title">03_Imagination</span>
+                        <div class="grid grid-cols-2 gap-6">
                             <div class="control-group" data-type="bool">
-                                <label class="block text-xs font-bold mb-2 uppercase">Start System</label>
-                                <input type="hidden" name="start_system" value="null">
+                                <label class="block text-xs font-bold mb-2 uppercase">Torch Scanned</label>
+                                <input type="hidden" name="torch_scanned" value="null">
                                 <div class="tri-state-container">
                                     <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
                                     <div class="tri-state-btn" data-value="false">FALSE</div>
@@ -199,188 +351,76 @@
                                 </div>
                             </div>
                             <div class="control-group" data-type="bool">
-                                <label class="block text-xs font-bold mb-2 uppercase">Recognized Stranger</label>
-                                <input type="hidden" name="recognized_stranger_name" value="null">
+                                <label class="block text-xs font-bold mb-2 uppercase">Cage Is On Monster</label>
+                                <input type="hidden" name="cage_is_on_monster" value="null">
                                 <div class="tri-state-container">
                                     <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
-                                    <div class="tri-state-btn" data-value="false">NO</div>
-                                    <div class="tri-state-btn" data-value="true">YES</div>
+                                    <div class="tri-state-btn" data-value="false">FALSE</div>
+                                    <div class="tri-state-btn" data-value="true">TRUE</div>
                                 </div>
                             </div>
                         </div>
+                    </section>
 
-                        <div class="border-t pt-4" style="border-color: var(--border);">
-                            <div class="grid grid-cols-1 gap-4">
-                                <div class="control-group" data-type="text">
-                                    <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Micro (Base64) [READ ONLY]</label>
-                                    <input type="text" name="pinguin_micro" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                    <!-- 5. SCENOGRAPHY -->
+                    <section class="section-box">
+                        <span class="section-title">04_Scenography (Presets)</span>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Stranger -->
+                            <div class="control-group" data-type="bool">
+                                <label class="block text-[10px] uppercase font-bold mb-2 truncate">Stranger Preset</label>
+                                <input type="hidden" name="preset_stranger" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">OFF</div>
+                                    <div class="tri-state-btn" data-value="true">ON</div>
                                 </div>
-                                <div class="control-group" data-type="text">
-                                    <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Audio (Base64) [READ ONLY]</label>
-                                    <input type="text" name="pinguin_audio" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                            </div>
+                            <!-- Depth -->
+                             <div class="control-group" data-type="bool">
+                                <label class="block text-[10px] uppercase font-bold mb-2 truncate">Depth Preset</label>
+                                <input type="hidden" name="preset_depth" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">OFF</div>
+                                    <div class="tri-state-btn" data-value="true">ON</div>
+                                </div>
+                            </div>
+                            <!-- Imagination -->
+                            <div class="control-group" data-type="bool">
+                                <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination Preset</label>
+                                <input type="hidden" name="preset_imagination" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">OFF</div>
+                                    <div class="tri-state-btn" data-value="true">ON</div>
+                                </div>
+                            </div>
+                            <!-- Ending -->
+                            <div class="control-group" data-type="bool">
+                                <label class="block text-[10px] uppercase font-bold mb-2 truncate">Ending Preset</label>
+                                <input type="hidden" name="preset_ending" value="null">
+                                <div class="tri-state-container">
+                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                    <div class="tri-state-btn" data-value="false">OFF</div>
+                                    <div class="tri-state-btn" data-value="true">ON</div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
+                </form>
+            </div>
+
+            <!-- VIEW: CUSTOM JSON -->
+            <div id="view-custom" class="hidden">
+                <section class="section-box h-[60vh] flex flex-col">
+                    <span class="section-title">Raw JSON Payload</span>
+                    <textarea id="raw-json-input" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none" style="background: var(--bg-sec); color: var(--text-main);" placeholder="// Enter valid JSON here...
+{
+  'start_system': true
+}"></textarea>
                 </section>
-
-                <!-- 3. DEPTH -->
-                <section class="section-box">
-                    <span class="section-title">02_Depth_Sequence</span>
-                    <div class="grid grid-cols-2 gap-8">
-                        <!-- Parent Group -->
-                        <div class="space-y-4">
-                            <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Parent Steps</h3>
-                            <!-- Step 1 -->
-                            <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                <label class="text-[10px] uppercase">Step 1 Success</label>
-                                <input type="hidden" name="step_1_parent_sucess" value="null">
-                                <div class="tri-state-container">
-                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                    <div class="tri-state-btn" data-value="false">F</div>
-                                    <div class="tri-state-btn" data-value="true">T</div>
-                                </div>
-                            </div>
-                             <!-- Step 2 -->
-                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                <label class="text-[10px] uppercase">Step 2 Success</label>
-                                <input type="hidden" name="step_2_parent_sucess" value="null">
-                                <div class="tri-state-container">
-                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                    <div class="tri-state-btn" data-value="false">F</div>
-                                    <div class="tri-state-btn" data-value="true">T</div>
-                                </div>
-                            </div>
-                             <!-- Step 3 -->
-                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                <label class="text-[10px] uppercase">Step 3 Success</label>
-                                <input type="hidden" name="step_3_parent_sucess" value="null">
-                                <div class="tri-state-container">
-                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                    <div class="tri-state-btn" data-value="false">F</div>
-                                    <div class="tri-state-btn" data-value="true">T</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Child Group -->
-                        <div class="space-y-4">
-                            <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Child Steps</h3>
-                             <!-- Step 1 -->
-                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                <label class="text-[10px] uppercase">Step 1 Success</label>
-                                <input type="hidden" name="step_1_enfant_sucess" value="null">
-                                <div class="tri-state-container">
-                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                    <div class="tri-state-btn" data-value="false">F</div>
-                                    <div class="tri-state-btn" data-value="true">T</div>
-                                </div>
-                            </div>
-                             <!-- Step 2 -->
-                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                <label class="text-[10px] uppercase">Step 2 Success</label>
-                                <input type="hidden" name="step_2_enfant_sucess" value="null">
-                                <div class="tri-state-container">
-                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                    <div class="tri-state-btn" data-value="false">F</div>
-                                    <div class="tri-state-btn" data-value="true">T</div>
-                                </div>
-                            </div>
-                             <!-- Step 3 -->
-                             <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                <label class="text-[10px] uppercase">Step 3 Success</label>
-                                <input type="hidden" name="step_3_enfant_sucess" value="null">
-                                <div class="tri-state-container">
-                                    <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                    <div class="tri-state-btn" data-value="false">F</div>
-                                    <div class="tri-state-btn" data-value="true">T</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 4. IMAGINATION -->
-                <section class="section-box">
-                    <span class="section-title">03_Imagination</span>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="control-group" data-type="bool">
-                            <label class="block text-xs font-bold mb-2 uppercase">Torch Scanned</label>
-                            <input type="hidden" name="torch_scanned" value="null">
-                            <div class="tri-state-container">
-                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
-                                <div class="tri-state-btn" data-value="false">FALSE</div>
-                                <div class="tri-state-btn" data-value="true">TRUE</div>
-                            </div>
-                        </div>
-                        <div class="control-group" data-type="bool">
-                            <label class="block text-xs font-bold mb-2 uppercase">Cage Is On Monster</label>
-                            <input type="hidden" name="cage_is_on_monster" value="null">
-                            <div class="tri-state-container">
-                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
-                                <div class="tri-state-btn" data-value="false">FALSE</div>
-                                <div class="tri-state-btn" data-value="true">TRUE</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 5. SCENOGRAPHY -->
-                <section class="section-box">
-                    <span class="section-title">04_Scenography (Presets)</span>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <!-- Stranger -->
-                        <div class="control-group" data-type="bool">
-                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Stranger Preset</label>
-                            <input type="hidden" name="preset_stranger" value="null">
-                            <div class="tri-state-container">
-                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                <div class="tri-state-btn" data-value="false">OFF</div>
-                                <div class="tri-state-btn" data-value="true">ON</div>
-                            </div>
-                        </div>
-                        <!-- Depth -->
-                         <div class="control-group" data-type="bool">
-                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Depth Preset</label>
-                            <input type="hidden" name="preset_depth" value="null">
-                            <div class="tri-state-container">
-                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                <div class="tri-state-btn" data-value="false">OFF</div>
-                                <div class="tri-state-btn" data-value="true">ON</div>
-                            </div>
-                        </div>
-                        <!-- Imagination -->
-                        <div class="control-group" data-type="bool">
-                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination Preset</label>
-                            <input type="hidden" name="preset_imagination" value="null">
-                            <div class="tri-state-container">
-                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                <div class="tri-state-btn" data-value="false">OFF</div>
-                                <div class="tri-state-btn" data-value="true">ON</div>
-                            </div>
-                        </div>
-                        <!-- Ending -->
-                        <div class="control-group" data-type="bool">
-                            <label class="block text-[10px] uppercase font-bold mb-2 truncate">Ending Preset</label>
-                            <input type="hidden" name="preset_ending" value="null">
-                            <div class="tri-state-container">
-                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                <div class="tri-state-btn" data-value="false">OFF</div>
-                                <div class="tri-state-btn" data-value="true">ON</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-            </form>
-
-             <!-- Floating Action Bar CENTERING -->
-            <div class="fixed bottom-0 left-0 right-0 md:pl-[320px] pointer-events-none flex justify-center pb-8 z-30">
-                <div class="pointer-events-auto bg-white/10 backdrop-blur-md p-2 rounded-full border shadow-2xl" style="border-color: var(--border); background-color: rgba(var(--bg-main), 0.8);">
-                    <button onclick="broadcast()" class="btn-broadcast uppercase font-bold tracking-widest py-3 px-12 text-sm rounded-full shadow-lg transition-transform flex items-center gap-2">
-                        <span>●</span> Broadcast Payload
-                    </button>
-                </div>
+                <p class="text-xs mt-2" style="color: var(--text-sec)">CAUTION: This bypasses validation. Ensure JSON is valid.</p>
             </div>
             
         </div>
@@ -398,8 +438,32 @@
             WS_STATUS: <span id="ws-status" class="text-orange-500">CONNECTING...</span>
         </div>
     </aside>
+    
+    <!-- BOTTOM BAR -->
+    <div class="fixed bottom-0 left-0 right-0 md:pr-[320px] z-50">
+        <div class="bottom-bar p-4 flex justify-center">
+             <button onclick="broadcastCurrent()" class="btn-broadcast uppercase font-bold tracking-widest py-4 px-12 text-sm w-full md:w-auto md:min-w-[400px] shadow-lg transition-transform flex items-center justify-center gap-2">
+                <span>●</span> BROADCAST PAYLOAD
+            </button>
+        </div>
+    </div>
 
     <script>
+        // --- Tab Logic ---
+        let currentTab = 'staged';
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            // UI
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            // Views
+            document.getElementById('view-staged').classList.add('hidden');
+            document.getElementById('view-custom').classList.add('hidden');
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+        }
+
         // --- Theme Logic ---
         function toggleTheme() {
             const body = document.body;
@@ -408,79 +472,91 @@
             document.getElementById('theme-label').textContent = isDark ? 'DARK' : 'LIGHT';
             localStorage.setItem('rift-theme', isDark ? 'dark' : 'light');
         }
-
-        // Init theme
         if (localStorage.getItem('rift-theme') === 'dark') {
             toggleTheme();
         }
 
-        // --- 1. Tri-State Logic ---
+        // --- Tri-State Logic ---
         document.querySelectorAll('.control-group[data-type="bool"]').forEach(group => {
             const input = group.querySelector('input[type="hidden"]');
             const btns = group.querySelectorAll('.tri-state-btn');
 
             btns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    // Update visual state
                     btns.forEach(b => b.removeAttribute('data-active'));
                     btn.setAttribute('data-active', 'true');
-                    
-                    // Update value
-                    const val = btn.getAttribute('data-value');
-                    input.value = val;
+                    input.value = btn.getAttribute('data-value');
                 });
             });
         });
 
-        // --- 2. Reset Logic ---
+        // --- Reset Logic ---
         function resetAll() {
-            // Reset inputs
             document.querySelectorAll('input.raw-input').forEach(i => i.value = '');
-            
-            // Reset tri-states to NULL
             document.querySelectorAll('.control-group[data-type="bool"]').forEach(group => {
                 const input = group.querySelector('input[type="hidden"]');
                 const nullBtn = group.querySelector('.tri-state-btn[data-value="null"]');
                 const btns = group.querySelectorAll('.tri-state-btn');
-                
                 input.value = 'null';
                 btns.forEach(b => b.removeAttribute('data-active'));
                 nullBtn.setAttribute('data-active', 'true');
             });
         }
 
-        // --- 3. Broadcast Logic ---
-        function broadcast() {
-            const payload = {};
-            const form = document.getElementById('broadcastForm');
-
-            // Ints
-            form.querySelectorAll('.control-group[data-type="int"] input').forEach(input => {
-                const val = input.value.trim();
-                payload[input.name] = val === '' ? null : parseInt(val);
-            });
-
-            // Text
-            form.querySelectorAll('.control-group[data-type="text"] input').forEach(input => {
-                const val = input.value.trim();
-                payload[input.name] = val === '' ? null : val;
-            });
-
-            // Bools (Hidden inputs updated by Tri-State)
-            form.querySelectorAll('.control-group[data-type="bool"] input[type="hidden"]').forEach(input => {
-                if (input.value === 'null') payload[input.name] = null;
-                else if (input.value === 'true') payload[input.name] = true;
-                else if (input.value === 'false') payload[input.name] = false;
-            });
+        // --- Broadcast Logic ---
+        function broadcastCurrent() {
+            let payload = {};
+            
+            if (currentTab === 'staged') {
+                const form = document.getElementById('broadcastForm');
+                
+                // Ints
+                form.querySelectorAll('.control-group[data-type="int"] input').forEach(input => {
+                    const val = input.value.trim();
+                    payload[input.name] = val === '' ? null : parseInt(val);
+                });
+                
+                // Text
+                form.querySelectorAll('.control-group[data-type="text"] input').forEach(input => {
+                    const val = input.value.trim();
+                    payload[input.name] = val === '' ? null : val;
+                });
+                
+                // Bools
+                form.querySelectorAll('.control-group[data-type="bool"] input[type="hidden"]').forEach(input => {
+                    if (input.value === 'null') payload[input.name] = null;
+                    else if (input.value === 'true') payload[input.name] = true;
+                    else if (input.value === 'false') payload[input.name] = false;
+                });
+            } else {
+                // Custom
+                try {
+                    const raw = document.getElementById('raw-json-input').value;
+                    payload = JSON.parse(raw);
+                } catch (e) {
+                    alert("Invalid JSON!");
+                    return;
+                }
+            }
 
             console.log("Broadcasting:", payload);
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
                 
-                // Visual feedback
+                // Feedback
                 const btn = document.querySelector('.btn-broadcast');
-                btn.style.transform = "scale(1.1)";
-                setTimeout(() => btn.style.transform = "", 200);
+                const originalText = btn.innerHTML;
+                const originalBg = btn.style.backgroundColor;
+                
+                btn.innerHTML = "✓ SENT";
+                btn.style.backgroundColor = "var(--success)";
+                btn.style.color = "#fff";
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.backgroundColor = "";
+                    btn.style.color = "";
+                }, 1000);
 
             } else {
                 alert("WebSocket Disconnected");
@@ -488,7 +564,7 @@
         }
 
 
-        // --- 4. WebSocket & Clients ---
+        // --- WebSocket & Clients ---
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
         const statusEl = document.getElementById('ws-status');
@@ -522,8 +598,6 @@
             clients.forEach(c => {
                 const el = document.createElement('div');
                 el.className = 'client-card transition-colors cursor-default';
-                
-                // Color calc
                 const roleColor = c.role === 'depth' ? 'text-blue-600' : 
                                   c.role === 'stranger' ? 'text-green-600' : 'text-gray-600';
                 
