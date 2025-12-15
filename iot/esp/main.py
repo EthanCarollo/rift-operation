@@ -1,9 +1,13 @@
 import gc
 import asyncio as asyncio
+from src.Framework.Config.ConfigFactory import ConfigFactory
+
+from src.Framework.Button.Button import Button
+
 from src.Core.Controller.StrangerController import StrangerController
 from iot.esp.src.Core.Controller.DepthController import DepthController
-from iot.esp.src.Core.Controller.LostController import LostController
-from src.Framework.Config.ConfigFactory import ConfigFactory
+from src.Core.Controller.LostWokshop.LostController import LostController
+from src.Core.Controller.LostWokshop.LostButtonDelegate import LostButtonDelegate
 
 gc.collect()
 
@@ -11,7 +15,10 @@ try:
     config = ConfigFactory.create_cudy_config()
     controller = StrangerController(config)
     controller = DepthController(config)
+
     controller = LostController(config)
+    button = Button(pin_id=27, delegate=LostButtonDelegate(controller))     
+    
     asyncio.run(controller.main())
 except KeyboardInterrupt:
     pass
