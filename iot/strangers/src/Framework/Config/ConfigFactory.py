@@ -25,6 +25,32 @@ class ConfigFactory:
             debug_mode=True,
             heartbeat_interval=15
         )
+
+    @staticmethod
+    def create_cudy_config():
+        """Create configuration for Ethan's mobile network"""
+        wifi_config = WifiConfig(
+            ssid="Cudy-FA5C",
+            password="58448069",
+            timeout=15,
+            auto_reconnect=True
+        )
+        
+        websocket_config = WebsocketConfig(
+            server="wss://backend.riftoperation.ethan-folio.fr",
+            path="/ws",
+            reconnect_delay=10,
+            ping_interval=60
+        )
+        
+        return Config(
+            wifi=wifi_config,
+            websocket=websocket_config,
+            device_id="CUDY-FASC-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
     @staticmethod
     def create_ethan_mobile_config():
         """Create configuration for Ethan's mobile network"""

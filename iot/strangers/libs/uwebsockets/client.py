@@ -12,8 +12,6 @@ import ssl
 
 from libs.uwebsockets.protocol import Websocket, urlparse
 
-
-
 class WebsocketClient(Websocket):
     is_client = True
 

@@ -1,6 +1,7 @@
 import libs.uwebsockets.client
 import uasyncio as asyncio
 import ujson as json
+import gc
 
 class WebSocketClient:
     def __init__(self, config, logger=None):
@@ -13,6 +14,10 @@ class WebSocketClient:
             self.logger.info(f"Connecting to WebSocket: {self.config.server}{self.config.path}")
         
         try:
+            gc.collect()
+            if self.logger:
+                self.logger.debug(f"Free memory before connection: {gc.mem_free()}")
+            
             self.websocket = libs.uwebsockets.client.connect(self.config.server + self.config.path)
             if self.logger:
                 self.logger.info("WebSocket connected successfully")
@@ -28,7 +33,7 @@ class WebSocketClient:
         
         try:
             while True:
-                if self.websocket is None or self.websocket.closed:
+                if self.websocket is None or not self.websocket.open:
                     if self.logger:
                         self.logger.warning("WebSocket connection lost, attempting to reconnect...")
                     if await self.connect():
