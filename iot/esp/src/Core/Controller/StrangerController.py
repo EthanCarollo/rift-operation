@@ -10,11 +10,12 @@ class StrangerController(EspController):
         super().__init__(config)
         self.logger.name = "StrangerController"
 
-        self.state = StrangerInactiveState(self)
-        
         self.button1: Button = Button(17, StrangerWebSocketButtonDelegate(self))
 
+        self.swap_state(StrangerInactiveState(self))
+
     def swap_state(self, state):
+        self.logger.debug(f"Swapping to StrangerController to new state : {state.__class__.__name__}")
         self.state = state
 
     async def process_message(self, message):
