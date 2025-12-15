@@ -4,6 +4,7 @@ import uasyncio as asyncio
 from src.Framework.Config.ConfigFactory import ConfigFactory
 
 from src.Core.Controller.StrangerController import StrangerController
+from src.Core.Controller.TableController import TableController
 from src.Core.Controller.DepthController import DepthController
 from src.Core.Controller.LostController import LostController 
 
@@ -13,6 +14,7 @@ try:
     config = ConfigFactory.create_cudy_config()
 
     # controller = StrangerController(config)
+    controller = TableController(config)
     # controller = DepthController(config)
     controller = LostController(config)
 

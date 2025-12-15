@@ -475,9 +475,72 @@
                     <!-- VIEW: FAST COMMANDS -->
                     <div id="view-fast" class="hidden">
                         
-                        <!-- 0. Scenography -->
+                        <!-- 00. Part Table -->
                         <section class="section-box">
-                            <span class="section-title">00_Scenography</span>
+                            <span class="section-title">00_Part_Table</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <button onclick="sendFastCmd({children_rift_part_count: 1, parent_rift_part_count: 1})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">OPENING SCENE 2</span>
+                                    <span class="fast-cmd-desc">Counts: 1</span>
+                                </button>
+                                <button onclick="sendFastCmd({children_rift_part_count: 1, parent_rift_part_count: 1})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">OPENING SCENE 3</span>
+                                    <span class="fast-cmd-desc">Counts: 1</span>
+                                </button>
+                                <button onclick="sendFastCmd({children_rift_part_count: 1, parent_rift_part_count: 1})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">OPENING SCENE END</span>
+                                    <span class="fast-cmd-desc">Counts: 1</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 01. Stranger (System) -->
+                        <section class="section-box">
+                            <span class="section-title">01_Stranger (System)</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <button onclick="sendFastCmd({start_system: true, recognized_stranger_name: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">START SYSTEM</span>
+                                    <span class="fast-cmd-desc">System: ON, Stranger: YES</span>
+                                </button>
+                                <button onclick="sendFastCmd({start_system: false})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">STOP SYSTEM</span>
+                                    <span class="fast-cmd-desc">{ start_system: false }</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 02. Depth -->
+                        <section class="section-box">
+                            <span class="section-title">02_Depth</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <button onclick="sendFastCmd({
+                                    depth_step_1_parent_sucess: true,
+                                    depth_step_2_parent_sucess: true,
+                                    depth_step_3_parent_sucess: true,
+                                    depth_step_1_enfant_sucess: true,
+                                    depth_step_2_enfant_sucess: true,
+                                    depth_step_3_enfant_sucess: true
+                                })" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">ALL SUCCESS</span>
+                                    <span class="fast-cmd-desc">Parents & Children 1-3 Success</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 03. Part 2 -->
+                        <section class="section-box">
+                            <span class="section-title">03_Part_2</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <button onclick="sendFastCmd({children_rift_part_count: 2, parent_rift_part_count: 2})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">OPENING SCENE (2)</span>
+                                    <span class="fast-cmd-desc">Counts: 2</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 04. Presets (Scenography) -->
+                        <section class="section-box">
+                            <span class="section-title">04_Presets (Scenography)</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({preset_stranger: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">STRANGER PRESET</span>
@@ -498,32 +561,13 @@
                             </div>
                         </section>
 
-                        <!-- 1. Stranger (System) -->
+                        <!-- Ending -->
                         <section class="section-box">
-                            <span class="section-title">01_Stranger (System)</span>
+                            <span class="section-title">Ending</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({start_system: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">START SYSTEM</span>
-                                    <span class="fast-cmd-desc">{ start_system: true }</span>
-                                </button>
-                                <button onclick="sendFastCmd({start_system: false})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">STOP SYSTEM</span>
-                                    <span class="fast-cmd-desc">{ start_system: false }</span>
-                                </button>
-                            </div>
-                        </section>
-
-                        <!-- 2. Depth -->
-                        <section class="section-box">
-                            <span class="section-title">02_Depth</span>
-                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({depth_step_1_parent_sucess: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">PARENT 1 SUCCESS</span>
-                                    <span class="fast-cmd-desc">Step 1 Parent</span>
-                                </button>
-                                <button onclick="sendFastCmd({depth_step_1_enfant_sucess: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">CHILD 1 SUCCESS</span>
-                                    <span class="fast-cmd-desc">Step 1 Child</span>
+                                <button onclick="sendFastCmd({children_rift_part_count: 3, parent_rift_part_count: 3})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">OPENING SCENE (3)</span>
+                                    <span class="fast-cmd-desc">Counts: 3</span>
                                 </button>
                             </div>
                         </section>
