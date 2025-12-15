@@ -4,9 +4,10 @@ import ujson as json
 from src.Framework.WifiManager import WifiManager
 from src.Framework.WebSocketClient import WebSocketClient
 from src.Framework.Logger import Logger
+from src.Framework.Config import Config
 
 class EspController:
-    def __init__(self, config):
+    def __init__(self, config: Config):
         self.config = config
         self.logger = Logger("EspController", Logger.LOG_LEVEL_INFO, esp32_mode=True, max_log_size=500)
         self.wifi_manager = WifiManager(config.wifi.ssid, config.wifi.password, self.logger)
