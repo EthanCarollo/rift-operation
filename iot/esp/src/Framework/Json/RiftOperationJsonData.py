@@ -2,6 +2,7 @@ import ujson
 
 class RiftOperationJsonData:
     def __init__(self, 
+                device_id,
                 children_rift_part_count=None, 
                 parent_rift_part_count=None, 
                 start_system=None, 
@@ -19,6 +20,9 @@ class RiftOperationJsonData:
                 preset_depth=None, 
                 preset_lost=None, 
                 preset_ending=None):
+        if device_id is None:
+            raise ValueError("device_id is mandatory")
+        self.device_id = device_id
         self.children_rift_part_count = children_rift_part_count
         self.parent_rift_part_count = parent_rift_part_count
         self.start_system = start_system

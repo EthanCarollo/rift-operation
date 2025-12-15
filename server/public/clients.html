@@ -528,9 +528,11 @@
 
                     <!-- VIEW: FAST COMMANDS -->
                     <div id="view-fast" class="hidden">
+                        
+                        <!-- 1. Stranger -->
                         <section class="section-box">
-                            <span class="section-title">Quick Presets</span>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <span class="section-title">01_Stranger</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({start_system: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">START SYSTEM</span>
                                     <span class="fast-cmd-desc">{ start_system: true }</span>
@@ -543,14 +545,43 @@
                                     <span class="fast-cmd-title">STRANGER PRESET</span>
                                     <span class="fast-cmd-desc">{ preset_stranger: true }</span>
                                 </button>
+                            </div>
+                        </section>
+
+                        <!-- 2. Depth -->
+                        <section class="section-box">
+                            <span class="section-title">02_Depth</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({preset_depth: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">DEPTH PRESET</span>
                                     <span class="fast-cmd-desc">{ preset_depth: true }</span>
                                 </button>
+                                <button onclick="sendFastCmd({depth_step_1_parent_sucess: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">PARENT 1 SUCCESS</span>
+                                    <span class="fast-cmd-desc">Step 1 Parent</span>
+                                </button>
+                                <button onclick="sendFastCmd({depth_step_1_enfant_sucess: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">CHILD 1 SUCCESS</span>
+                                    <span class="fast-cmd-desc">Step 1 Child</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- 3. Imagination -->
+                        <section class="section-box">
+                            <span class="section-title">03_Imagination</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({preset_imagination: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">IMAGINATION PRESET</span>
                                     <span class="fast-cmd-desc">{ preset_imagination: true }</span>
                                 </button>
+                            </div>
+                        </section>
+
+                        <!-- 4. Ending -->
+                         <section class="section-box">
+                            <span class="section-title">04_Ending</span>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({preset_ending: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">ENDING PRESET</span>
                                     <span class="fast-cmd-desc">{ preset_ending: true }</span>
@@ -558,24 +589,11 @@
                             </div>
                         </section>
 
-                        <section class="section-box">
-                            <span class="section-title">Depth Overrides</span>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <button onclick="sendFastCmd({depth_step_1_parent_sucess: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">PARENT 1 COMPLETE</span>
-                                    <span class="fast-cmd-desc">Step 1 Parent Success</span>
-                                </button>
-                                <button onclick="sendFastCmd({depth_step_1_enfant_sucess: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">CHILD 1 COMPLETE</span>
-                                    <span class="fast-cmd-desc">Step 1 Child Success</span>
-                                </button>
-                            </div>
-                        </section>
                     </div>
 
                     <!-- VIEW: CUSTOM JSON -->
                     <div id="view-custom" class="hidden">
-                        <section class="section-box h-[60vh] flex flex-col p-0 overflow-hidden relative">
+                        <section class="section-box h-[60vh] flex flex-col p-0 relative">
                             <span class="section-title z-10">Raw JSON Payload</span>
                             <div id="raw-json-editor" class="w-full h-full"></div>
                         </section>
@@ -694,6 +712,7 @@
         });
         // Set default value
         rawEditor.setValue(JSON.stringify({
+            device_id: "RIFT_PANEL",
             start_system: true,
             recognized_stranger_name: null,
             depth_step_1_parent_sucess: null
@@ -711,6 +730,9 @@
 
         function getFormData() {
             const payload = {};
+            // Identification
+            payload['device_id'] = "RIFT_PANEL"; 
+
             // Ints
             form.querySelectorAll('.control-group[data-type="int"] input').forEach(input => {
                 const val = input.value.trim();
@@ -821,6 +843,7 @@
 
         // Fast Cmd Logic
         function sendFastCmd(payload) {
+            payload['device_id'] = "RIFT_PANEL";
             console.log("Fast Command:", payload);
             sendPayload(payload);
         }
