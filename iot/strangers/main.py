@@ -6,8 +6,7 @@ from src.Framework.Config.ConfigFactory import ConfigFactory
 gc.collect()
 
 try:
-    # Use basic ethan house config, easier for what we want lol
-    config = ConfigFactory.create_ethan_house_config()
+    config = ConfigFactory.create_cudy_config()
     
     controller = EspController(config)
     asyncio.run(controller.main())
