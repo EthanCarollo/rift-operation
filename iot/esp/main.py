@@ -1,6 +1,6 @@
 import gc
 import uasyncio as asyncio
-from src.Core.EspController import EspController
+from src.Core.DepthController import DepthController
 from src.Framework.Config.ConfigFactory import ConfigFactory
 
 gc.collect()
@@ -8,7 +8,7 @@ gc.collect()
 try:
     config = ConfigFactory.create_cudy_config()
     
-    controller = EspController(config)
+    controller = DepthController(config)
     asyncio.run(controller.main())
 except KeyboardInterrupt:
     pass
