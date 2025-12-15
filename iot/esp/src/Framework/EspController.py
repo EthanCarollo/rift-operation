@@ -17,7 +17,16 @@ class EspController:
             self.logger.info("Debug mode enabled")
 
     async def process_message(self, message):
-        raise NotImplementedError
+        if message is None: return
+        try:
+            data = json.loads(message)
+            self.logger.info("Received message: {}".format(data))
+
+            if data.get("cmd") == "ping":
+                await self.websocket_client.send(json.dumps({"cmd": "pong"}))
+
+        except Exception as e:
+            self.logger.error("Failed to process message: {}".format(e))
 
     async def main(self):
         self.logger.info("Starting EspController main loop")
@@ -30,13 +39,14 @@ class EspController:
             self.logger.error("Failed to connect to WebSocket")
             return
 
-        counter = 0
+        asyncio.create_task(
+            self.websocket_client.listen(self.process_message)
+        )
 
         while True:
-            print("call in while true")
             try:
                 await self.update()
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.2)
             except Exception as e:
                 self.logger.error("Error in main loop: {}".format(e))
                 await asyncio.sleep(1)

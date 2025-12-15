@@ -1,7 +1,7 @@
 import gc
-import asyncio as asyncio
-from src.Framework.Config.ConfigFactory import ConfigFactory
+import uasyncio as asyncio
 
+from src.Framework.Config.ConfigFactory import ConfigFactory
 from src.Framework.Button.Button import Button
 
 from src.Core.Controller.StrangerController import StrangerController
