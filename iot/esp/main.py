@@ -9,7 +9,6 @@ gc.collect()
 try:
     config = ConfigFactory.create_cudy_config()
     controller = StrangerController(config)
-    controller = DepthController(config)
     asyncio.run(controller.main())
 except KeyboardInterrupt:
     pass

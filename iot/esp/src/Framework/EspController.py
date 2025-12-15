@@ -30,13 +30,10 @@ class EspController:
             self.logger.error("Failed to connect to WebSocket")
             return
 
-        counter = 0
-
         while True:
-            print("call in while true")
             try:
                 await self.update()
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.2)
             except Exception as e:
                 self.logger.error("Error in main loop: {}".format(e))
                 await asyncio.sleep(1)

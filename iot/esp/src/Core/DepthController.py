@@ -8,7 +8,6 @@ class DepthController(EspController):
         super().__init__(config)
         self.logger.name = "DepthController"
 
-        # Depth-specific components
         self.role = config.depth.role
         self.buttons = {n: Pin(p, Pin.IN, Pin.PULL_UP) for n, p in config.depth.button_pins.items()}
         
