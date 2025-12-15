@@ -14,9 +14,22 @@
 		96120F762EDAFC4600F329CA /* IOTTools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOTTools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		337722FB2EEFFB2A00C92DA0 /* Exceptions for "IOTTools" folder in "IOTTools" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 96120F752EDAFC4600F329CA /* IOTTools */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		96120F782EDAFC4600F329CA /* IOTTools */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				337722FB2EEFFB2A00C92DA0 /* Exceptions for "IOTTools" folder in "IOTTools" target */,
+			);
 			path = IOTTools;
 			sourceTree = "<group>";
 		};
