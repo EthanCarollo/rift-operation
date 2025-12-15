@@ -1,9 +1,12 @@
+# iot/forest/src/Core/ForestWorkshop.py
 import time
 import ujson
 from config import (
-    DEVICE_ID, WORKSHOP,
-    DOUBLE_PRESS_MS, LONG_PRESS_MS
+    LONG_PRESS_MS,
+    ACTIVATE_TYPE,
+    ACTIVATE_NAME,
 )
+
 
 class ForestWorkshopSimulator:
     # Steps are intentionally explicit and linear for demo purposes.
@@ -16,13 +19,12 @@ class ForestWorkshopSimulator:
     STEP_KEYS = 6
     STEP_DONE = 7
 
-    def __init__(self, ws, log_fn):
-        self.ws = ws
-        self.log = log_fn
+    def __init__(self, ws_client, device_config, logger):
+        self.ws = ws_client
+        self.device = device_config
+        self.log = logger
 
         self.step = self.STEP_IDLE
-
-        self._last_press_ms = 0
         self._press_down_ms = None
 
     def on_server_message(self, raw_text):
@@ -32,22 +34,34 @@ class ForestWorkshopSimulator:
         except Exception:
             return
 
-        t = msg.get("type")
-        v = msg.get("value")
+        msg_type = msg.get("type")
+        value = msg.get("value")
 
-        # Expected: {"type":"workshop", "value":{"name":"forest","action":"start"}}
-        if t == "workshop" and isinstance(v, dict):
-            if v.get("name") == WORKSHOP and v.get("action") == "start":
-                self.start()
+        if msg_type != ACTIVATE_TYPE:
+            return
+
+        if not isinstance(value, dict):
+            return
+
+        name = value.get("name")
+        action = value.get("action")
+
+        if name not in (ACTIVATE_NAME, self.device.workshop):
+            return
+
+        if action == "start":
+            self.start()
+        elif action == "reset":
+            self.reset()
 
     def start(self):
         if self.step != self.STEP_IDLE:
             return
         self.step = self.STEP_ACTIVE
-        # Start Workshop
-        self.log("Forest workshop started")
-        self.emit("system", "workshop_forest_started", {"by": "server_start"})
 
+        self.log.info("Forest workshop started")
+
+        self.emit("system", "workshop_forest_started", {"by": "server_start"})
         # Parent: start audio
         self.emit("parent", "speaker", {"action": "on"})
         # Child: start animal LEDs
@@ -55,7 +69,7 @@ class ForestWorkshopSimulator:
 
     def handle_button(self, pressed, now_ms):
         if pressed:
-            self.log("BTN pressed @", now_ms, "step=", self.step)
+            self.log.debug("BTN pressed @", now_ms, "step=", self.step)
             self._press_down_ms = now_ms
             return
 
@@ -65,23 +79,23 @@ class ForestWorkshopSimulator:
         duration = time.ticks_diff(now_ms, self._press_down_ms)
         self._press_down_ms = None
 
-        self.log("BTN duration=", duration, "ms")
+        self.log.debug("BTN duration=", duration, "ms")
 
         # Long press = incorrect cage only during RFID step
         if duration >= LONG_PRESS_MS and self.step == self.STEP_CAGE:
-            self.log("BTN action: cage_incorrect (long press)")
+            self.log.info("BTN action: cage_incorrect (long press)")
             self.cage_incorrect()
             return
 
         # Ignore long press outside the RFID step
         if duration >= LONG_PRESS_MS:
-            self.log("BTN action: ignored (long press outside cage step)")
+            self.log.debug("BTN action: ignored (long press outside cage step)")
             return
 
         if self.step == self.STEP_DONE:
             return
 
-        self.log("BTN action: next_step")
+        self.log.info("BTN action: next_step")
         self.next_step()
 
     def next_step(self):
@@ -114,33 +128,34 @@ class ForestWorkshopSimulator:
             self.emit("child", "cage_rfid", {"action": "detected", "tag": "CAGE_A"})
             self.emit("child", "cage_rfid", {"action": "correct", "tag": "CAGE_A"})
             self.step = self.STEP_CAGE
-            # Auto-finish: no button interaction required after correct cage
+
+            # Auto-finish after correct cage: traps + finished
             self.emit("child", "servo_trap", {"action": "open"})
             self.emit("parent", "servo_trap", {"action": "open"})
             self.emit("system", "workshop", {"action": "finished"})
             self.step = self.STEP_DONE
-            self.log("Forest workshop finished")
+            self.log.info("Forest workshop finished")
             return
 
     def cage_incorrect(self):
         # Simulate wrong cage + animals feedback + LLM speaker feedback
         self.emit("child", "cage_rfid", {"action": "incorrect", "tag": "CAGE_X"})
         self.emit("child", "animals_speaker", {"action": "on", "reason": "wrong_cage"})
-        self.log("Cage incorrect simulated")
+        self.log.info("Cage incorrect simulated")
 
     def reset(self):
         self.step = self.STEP_IDLE
         self.emit("system", "workshop", {"action": "reset"})
-        self.log("Simulation reset")
+        self.log.info("Simulation reset")
 
     def emit(self, room, event, payload):
         msg = {
             "type": "telemetry",
             "value": {
-                "deviceId": DEVICE_ID,
-                "workshop": WORKSHOP,
+                "deviceId": self.device.device_id,
+                "workshop": self.device.workshop,
                 "tsMs": time.ticks_ms(),
-                "room": room,  # "parent" | "child"
+                "room": room,  # "parent" | "child" | "system"
                 "event": event,
             }
         }
