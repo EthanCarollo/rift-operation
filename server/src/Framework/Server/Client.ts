@@ -4,11 +4,13 @@ export class Client {
   socket: WebSocket;
   id: string;
   role?: string;
+  deviceId?: string;
 
   constructor(socket: WebSocket) {
     this.socket = socket;
     this.id = Math.random().toString(36).slice(2);
     this.role = undefined;
+    this.deviceId = undefined;
   }
 
   send(data: any) {

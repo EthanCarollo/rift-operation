@@ -206,7 +206,7 @@ Bonjour, voici le json tel que nous le pensons ahah ! Il va être constitué de 
 ```json
 "preset_stranger": bool | null,
 "preset_depth": bool | null,
-"preset_imagination": bool | null,
+"preset_lost": bool | null,
 "preset_ending": bool | null,
 ```
 
@@ -244,7 +244,7 @@ Bonjour, voici le json tel que nous le pensons ahah ! Il va être constitué de 
     // Scenographie
     "preset_stranger": bool | null,
     "preset_depth": bool | null,
-    "preset_imagination": bool | null,
+    "preset_lost": bool | null,
     "preset_ending": bool | null
 }
 ```

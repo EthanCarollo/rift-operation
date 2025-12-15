@@ -67,6 +67,12 @@ export class RiftOperationServer extends BaseWebSocketServer {
   onMessage(client: Client, msg: RawData): void {
     try {
       const parsed = JSON.parse(msg.toString());
+      
+      // Capture device_id identity
+      if (parsed.device_id) {
+        client.deviceId = parsed.device_id;
+      }
+      
       this.broadcast(parsed, client);
     } catch {
       Logger.error("Didn't receive JSON on WebSocket message.");

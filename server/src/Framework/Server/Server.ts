@@ -71,6 +71,7 @@ export abstract class BaseWebSocketServer {
   public getClientsData(): { id: string; role: string; readyState: number; readyStateText: string; }[] {
     return Array.from(this.clients).map(client => ({
       id: client.id,
+      deviceId: client.deviceId || 'unknown',
       role: client.role || 'unknown',
       readyState: client.socket.readyState,
       readyStateText: this.getReadyStateText(client.socket.readyState)
