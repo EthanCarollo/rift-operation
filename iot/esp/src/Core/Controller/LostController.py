@@ -1,9 +1,10 @@
 import ujson as json
+import uasyncio as asyncio
 
 from src.Framework.EspController import EspController
 from src.Framework.Json.RiftOperationJsonData import RiftOperationJsonData
 from src.Framework.Button.Button import Button
-from src.Core.Controller.Lost.LostButtonDelegate import LostButtonDelegate
+from src.Core.Lost.LostButtonDelegate import LostButtonDelegate
 
 # --- Constants ---
 TARGET_CHILDREN_COUNT = 2
@@ -36,7 +37,6 @@ class LostController(EspController):
         self.state_initialized = False
         self.children_rift_part_count = None
         self.parent_rift_part_count = None
-        # Flags to avoid resending the same JSON twice
         self.torch_scanned_sent = False
         self._session_done_reported = False
         # Hardware button (GPIO 27)
@@ -46,7 +46,10 @@ class LostController(EspController):
         """
         Build and send a RiftOperationJsonData payload with only the provided fields
         """
-        data = RiftOperationJsonData(**kwargs)
+        data = RiftOperationJsonData(
+                device_id="LOST_ESP",
+                **kwargs
+        )
         try:
             payload = data.to_json()
             await self.websocket_client.send(payload)
@@ -67,10 +70,11 @@ class LostController(EspController):
         payload = data.get("value") if isinstance(data, dict) and "value" in data else data
         if not isinstance(payload, dict):
             return
-
+        
         # If both keys are missing, this is not the Rift JSON we care about
         if "children_rift_part_count" not in payload and "parent_rift_part_count" not in payload:
             return
+                
         # Update local counters (if present)
         if "children_rift_part_count" in payload and payload["children_rift_part_count"] is not None:
             self.children_rift_part_count = payload["children_rift_part_count"]
@@ -97,7 +101,7 @@ class LostController(EspController):
         """
         if not self.state_initialized:
             return
-
+        
         # Auto-start logic: table says we are at 2/2
         if self.step == self.STEP_IDLE:
             c = self.children_rift_part_count or 0
@@ -107,9 +111,7 @@ class LostController(EspController):
                 await self.start(by="rift_json")
             return
 
-        # End of workshop logic
         if self.step == self.STEP_DONE and not self._session_done_reported:
-            # Increment counts locally
             c = (self.children_rift_part_count or 0) + 1
             p = (self.parent_rift_part_count or 0) + 1
             self.children_rift_part_count = c
@@ -145,8 +147,11 @@ class LostController(EspController):
         self.logger.info("Lost workshop started")
 
         await self.send_rift_json(preset_lost=True)
+
         self._log_telemetry("system", "workshop_lost_started", {"by": by})
+        await asyncio.sleep_ms(150)
         self._log_telemetry("parent", "speaker", {"action": "on"})
+        await asyncio.sleep_ms(150)
         self._log_telemetry("child", "animals_led", {"action": "on"})
 
     async def handle_short_press(self):
@@ -158,37 +163,43 @@ class LostController(EspController):
             return
 
         self.logger.info("BTN action: next_step")
+        await asyncio.sleep_ms(100)
         await self.next_step()
 
     async def next_step(self):
         # STEP_ACTIVE -> STEP_DISTANCE
         if self.step == self.STEP_ACTIVE:
             self._log_telemetry("child", "distance_sensor", {"action": "triggered"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry("child", "llm", {"action": "triggered"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry("child", "speaker", {"action": "started"})
             self.step = self.STEP_DISTANCE
             return
-
         # STEP_DISTANCE -> STEP_DRAWING
         if self.step == self.STEP_DISTANCE:
             self._log_telemetry("child", "drawing", {"action": "read"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry("child", "llm", {"action": "triggered"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry(
                 "child",
                 "drawing",
                 {"action": "recognized", "label": "flashlight"},
             )
-
             if not self.torch_scanned_sent:
+                await asyncio.sleep_ms(150)
                 await self.send_rift_json(torch_scanned=True)
                 self.torch_scanned_sent = True
+
+            await asyncio.sleep_ms(150)
             self._log_telemetry("parent", "lamp", {"action": "on"})
             self.step = self.STEP_DRAWING
             return
-
         # STEP_DRAWING -> STEP_LIGHT
         if self.step == self.STEP_DRAWING:
             self._log_telemetry("parent", "light_sensor", {"action": "triggered"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry(
                 "parent",
                 "mapping_video",
@@ -196,7 +207,6 @@ class LostController(EspController):
             )
             self.step = self.STEP_LIGHT
             return
-
         # STEP_LIGHT -> STEP_CAGE -> STEP_DONE
         if self.step == self.STEP_LIGHT:
             self._log_telemetry(
@@ -204,14 +214,19 @@ class LostController(EspController):
                 "cage_rfid",
                 {"action": "detected", "tag": "CAGE_A"},
             )
+            await asyncio.sleep_ms(150)
             self._log_telemetry(
                 "child",
                 "cage_rfid",
                 {"action": "correct", "tag": "CAGE_A"},
             )
             self.step = self.STEP_CAGE
+            # Auto-progress to DONE
+            await asyncio.sleep_ms(150)
             self._log_telemetry("child", "servo_trap", {"action": "open"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry("parent", "servo_trap", {"action": "open"})
+            await asyncio.sleep_ms(150)
             self._log_telemetry("system", "workshop", {"action": "finished"})
             self.step = self.STEP_DONE
             self.logger.info("Workshop finished (waiting for final Rift JSON send)")
