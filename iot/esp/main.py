@@ -5,7 +5,7 @@ from src.Framework.Config.ConfigFactory import ConfigFactory
 from src.Framework.Button.Button import Button
 
 from src.Core.Controller.StrangerController import StrangerController
-from iot.esp.src.Core.Controller.DepthController import DepthController
+from src.Core.Controller.DepthController import DepthController
 from src.Core.Controller.LostWokshop.LostController import LostController
 from src.Core.Controller.LostWokshop.LostButtonDelegate import LostButtonDelegate
 
