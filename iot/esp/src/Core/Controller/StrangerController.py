@@ -11,13 +11,11 @@ class StrangerController(EspController):
         self.button = Button(17, StrangersWebSocketButtonDelegate(self))
 
     async def process_message(self, message):
-        if message is None :
-            return
         try:
             data = json.loads(message)
             self.logger.info(f"Received message: {data}")
         except Exception as e:
-            self.logger.error(f"Failed to parse message: {message}")
+            pass
 
     async def update(self):
         print("update called")

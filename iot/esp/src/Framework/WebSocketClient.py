@@ -47,7 +47,7 @@ class WebSocketClient:
 
                 try:
                     message = self.websocket.recv()
-                    if message is not None:
+                    if message is not None and message != "":
                         if self.logger:
                             self.logger.debug(f"WebSocket received: {message}")
                         await callback(message)
