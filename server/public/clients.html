@@ -3,241 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIFT OS // COMMAND CENTER</title>
+    <title>Rift Operation // Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        
         body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: #000000;
-            color: #d4d4d4;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gray 100 */
+            color: #1f2937; /* Gray 800 */
+        }
+        
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
         }
 
-        .terminal-border {
-            border: 1px solid #333;
+        .input-field {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            color: #111;
+            transition: all 0.2s;
         }
-
-        .terminal-input {
-            background-color: #111;
-            border: 1px solid #333;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .terminal-input:focus {
+        .input-field:focus {
+            border-color: #3b82f6;
             outline: none;
-            border-color: #666;
-            background-color: #1a1a1a;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
 
-        .btn-primary {
-            background-color: #fff;
-            color: #000;
-            font-weight: bold;
-            text-transform: uppercase;
-            transition: all 0.2s;
+        /* Smooth open animation for details */
+        details[open] summary ~ * {
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        .btn-primary:hover {
-            background-color: #ccc;
-        }
-
-        .btn-secondary {
-            border: 1px solid #fff;
-            color: #fff;
-            text-transform: uppercase;
-            transition: all 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background-color: #fff;
-            color: #000;
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #000;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="min-h-screen p-6 flex flex-col gap-6">
+<body class="min-h-screen flex flex-col md:flex-row">
 
-    <!-- Header -->
-    <header class="flex justify-between items-center border-b border-gray-800 pb-4">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tighter text-white">RIFT_OPERATION_SERVER</h1>
-            <p class="text-xs text-gray-500 mt-1">SYSTEM_STATUS: <span class="text-green-500">ONLINE</span></p>
+    <!-- Sidebar: Clients List -->
+    <aside class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+        <div class="p-6 border-b border-gray-100 bg-gray-50">
+            <h1 class="text-xl font-bold tracking-tight text-gray-900">RIFT OS</h1>
+            <div class="flex items-center justify-between mt-2">
+                <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">● System Online</span>
+                <span id="client-count" class="text-xs font-medium text-gray-500">0 Clients</span>
+            </div>
         </div>
-        <div class="test-xs text-right hidden text-gray-600 md:block">
-            <p>V 2.0.4-ALPHA</p>
-            <p id="clock">00:00:00</p>
-        </div>
-    </header>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
         
-        <!-- Left Column: Broadcast Controls -->
-        <div class="lg:col-span-2 space-y-6">
-            <section class="terminal-border p-4 bg-black">
-                <h2 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">Broadcast Command</h2>
-                
-                <form id="broadcastForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    <!-- Counters -->
-                    <div class="space-y-4 border-r border-gray-800 pr-4">
-                        <h3 class="text-sm font-bold text-gray-400">COUNTERS</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Children Rift Parts</label>
-                                <input type="number" name="children_rift_part_count" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-1">Parent Rift Parts</label>
-                                <input type="number" name="parent_rift_part_count" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
-                            </div>
+        <div id="clients-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- Client Cards Injected Here -->
+            <div class="text-center py-10 text-gray-400 text-sm">Waiting for connections...</div>
+        </div>
+    </aside>
+
+    <!-- Main Content: Broadcast -->
+    <main class="flex-1 p-6 md:p-12 overflow-y-auto">
+        <div class="max-w-3xl mx-auto space-y-8">
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Broadcast Control</h2>
+                    <p class="text-sm text-gray-500">Select a phase to modify state.</p>
+                </div>
+                <button onclick="resetForm()" class="text-sm text-gray-500 hover:text-red-600 underline transition-colors">
+                    Reset Fields
+                </button>
+            </div>
+
+            <form id="broadcastForm" class="space-y-4">
+
+                <!-- 1. STRANGERS -->
+                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">1</span>
+                            <span class="text-gray-900 text-lg">Strangers Phase</span>
+                        </div>
+                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </span>
+                    </summary>
+                    <div class="p-5 pt-0 border-t border-gray-100 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mt-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Recognized Name</label>
+                            <input type="text" name="recognized_stranger_name" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset</label>
+                            <input type="text" name="preset_stranger" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
                         </div>
                     </div>
+                </details>
 
-                    <!-- System & Stranger -->
-                    <div class="space-y-4">
-                        <h3 class="text-sm font-bold text-gray-400">SYSTEM / STRANGER</h3>
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">Start System</label>
-                            <input type="text" name="start_system" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null/true/false">
+                <!-- 2. DEPTH -->
+                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">2</span>
+                            <span class="text-gray-900 text-lg">Depth Phase</span>
                         </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">Recognized Stranger Name</label>
-                            <input type="text" name="recognized_stranger_name" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
+                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </span>
+                    </summary>
+                    <div class="p-5 pt-0 border-t border-gray-100 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div class="mt-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Children Rift Parts</label>
+                            <input type="number" name="children_rift_part_count" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Parent Rift Parts</label>
+                            <input type="number" name="parent_rift_part_count" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset</label>
+                            <input type="text" name="preset_depth" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
                         </div>
                     </div>
+                </details>
 
-                     <!-- Pinguin -->
-                     <div class="md:col-span-2 grid grid-cols-2 gap-4 border-t border-gray-800 pt-4">
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">Pinguin Micro</label>
-                            <input type="text" name="pinguin_micro" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
+                <!-- 3. LOST -->
+                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">3</span>
+                            <span class="text-gray-900 text-lg">Lost Workshop Phase</span>
                         </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">Pinguin Audio</label>
-                            <input type="text" name="pinguin_audio" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
-                        </div>
-                    </div>
-
-                    <!-- Progress Steps -->
-                    <div class="md:col-span-2 grid grid-cols-2 gap-8 border-t border-gray-800 pt-4">
-                        <!-- Parent Progress -->
-                        <div class="space-y-2">
-                             <h3 class="text-sm font-bold text-gray-400">PARENT STEPS</h3>
-                             <div class="flex items-center gap-2">
-                                <span class="text-xs w-12">Step 1</span>
-                                <input type="text" name="step_1_parent_sucess" class="terminal-input flex-1 p-1 text-xs" placeholder="null">
-                             </div>
-                             <div class="flex items-center gap-2">
-                                <span class="text-xs w-12">Step 2</span>
-                                <input type="text" name="step_2_parent_sucess" class="terminal-input flex-1 p-1 text-xs" placeholder="null">
-                             </div>
-                             <div class="flex items-center gap-2">
-                                <span class="text-xs w-12">Step 3</span>
-                                <input type="text" name="step_3_parent_sucess" class="terminal-input flex-1 p-1 text-xs" placeholder="null">
-                             </div>
-                        </div>
+                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </span>
+                    </summary>
+                    <div class="p-5 pt-0 border-t border-gray-100 mt-2 space-y-6">
                         
-                        <!-- Child Progress -->
-                        <div class="space-y-2">
-                            <h3 class="text-sm font-bold text-gray-400">CHILD STEPS</h3>
-                             <div class="flex items-center gap-2">
-                                <span class="text-xs w-12">Step 1</span>
-                                <input type="text" name="step_1_enfant_sucess" class="terminal-input flex-1 p-1 text-xs" placeholder="null">
+                        <!-- General -->
+                        <div class="mt-4 grid grid-cols-2 gap-4">
+                             <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Start System</label>
+                                <input type="text" name="start_system" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset Imagination</label>
+                                <input type="text" name="preset_imagination" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                            </div>
+                        </div>
+
+                         <!-- Pinguin -->
+                        <div class="border-t border-gray-100 pt-4">
+                            <h4 class="text-xs font-bold text-orange-500 uppercase mb-3">Pinguin</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Micro</label>
+                                    <input type="text" name="pinguin_micro" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Audio</label>
+                                    <input type="text" name="pinguin_audio" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Steps -->
+                        <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-8">
+                             <div>
+                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Parent Success</h4>
+                                <div class="space-y-2">
+                                    <input type="text" name="step_1_parent_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 1">
+                                    <input type="text" name="step_2_parent_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 2">
+                                    <input type="text" name="step_3_parent_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 3">
+                                </div>
                              </div>
-                             <div class="flex items-center gap-2">
-                                <span class="text-xs w-12">Step 2</span>
-                                <input type="text" name="step_2_enfant_sucess" class="terminal-input flex-1 p-1 text-xs" placeholder="null">
+                             <div>
+                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Child Success</h4>
+                                <div class="space-y-2">
+                                    <input type="text" name="step_1_enfant_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 1">
+                                    <input type="text" name="step_2_enfant_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 2">
+                                    <input type="text" name="step_3_enfant_sucess" class="input-field w-full p-2 text-xs rounded" placeholder="Step 3">
+                                </div>
                              </div>
-                             <div class="flex items-center gap-2">
-                                <span class="text-xs w-12">Step 3</span>
-                                <input type="text" name="step_3_enfant_sucess" class="terminal-input flex-1 p-1 text-xs" placeholder="null">
-                             </div>
+                        </div>
+
+                        <!-- Interactions -->
+                        <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-4">
+                             <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Torch Scanned</label>
+                                <input type="text" name="torch_scanned" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                            </div>
+                             <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Cage on Monster</label>
+                                <input type="text" name="cage_is_on_monster" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
+                            </div>
+                        </div>
+
+                    </div>
+                </details>
+
+                <!-- 4. END -->
+                <details class="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <summary class="flex justify-between items-center font-medium cursor-pointer p-5 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-sm">4</span>
+                            <span class="text-gray-900 text-lg">End Phase</span>
+                        </div>
+                        <span class="text-gray-400 group-open:rotate-180 transition-transform">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </span>
+                    </summary>
+                    <div class="p-5 pt-0 border-t border-gray-100 mt-2">
+                        <div class="mt-4">
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Preset</label>
+                            <input type="text" name="preset_ending" class="input-field w-full p-2.5 rounded-lg text-sm" placeholder="null">
                         </div>
                     </div>
+                </details>
 
-                    <!-- Interactions -->
-                    <div class="md:col-span-2 grid grid-cols-2 gap-4 border-t border-gray-800 pt-4">
-                         <div>
-                            <label class="block text-xs text-gray-500 mb-1">Torch Scanned</label>
-                            <input type="text" name="torch_scanned" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">Cage on Monster</label>
-                            <input type="text" name="cage_is_on_monster" class="terminal-input w-full p-2 text-sm rounded-none" placeholder="null">
-                        </div>
-                    </div>
+            </form>
 
-                    <!-- Presets -->
-                    <div class="md:col-span-2 space-y-3 border-t border-gray-800 pt-4">
-                        <h3 class="text-sm font-bold text-gray-400">PRESETS</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <input type="text" name="preset_stranger" class="terminal-input p-2 text-xs" placeholder="Stranger Preset">
-                            <input type="text" name="preset_depth" class="terminal-input p-2 text-xs" placeholder="Depth Preset">
-                            <input type="text" name="preset_imagination" class="terminal-input p-2 text-xs" placeholder="Imagination Preset">
-                            <input type="text" name="preset_ending" class="terminal-input p-2 text-xs" placeholder="Ending Preset">
-                        </div>
-                    </div>
-                </form>
-
-                <div class="mt-6 flex justify-end gap-4">
-                    <button onclick="resetForm()" class="btn-secondary px-6 py-3 text-sm font-bold border border-gray-600 hover:border-white">
-                        RESET
-                    </button>
-                    <button onclick="broadcast()" class="btn-primary px-8 py-3 text-sm tracking-wide shadow-lg hover:shadow-white/20">
-                        BROADCAST PAYLOAD
-                    </button>
-                </div>
-            </section>
+            <button onclick="broadcast()" class="w-full bg-black hover:bg-gray-800 text-white font-semibold py-4 rounded-xl shadow-lg transition-all transform active:scale-95 text-lg cursor-pointer">
+                BROADCAST PAYLOAD
+            </button>
         </div>
-
-        <!-- Right Column: Clients -->
-        <div class="space-y-6">
-            <section class="terminal-border p-4 h-full flex flex-col">
-                <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-800">
-                    <h2 class="text-lg font-bold text-white">CONNECTED_CLIENTS</h2>
-                    <span id="client-count" class="text-2xl font-bold text-white">0</span>
-                </div>
-                
-                <div id="clients-list" class="flex-1 overflow-y-auto space-y-2 pr-2">
-                    <!-- Client items injected here -->
-                    <div class="animate-pulse flex space-x-4">
-                        <div class="flex-1 space-y-2 py-1">
-                            <div class="h-4 bg-gray-900 rounded w-3/4"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-    </div>
+    </main>
 
     <!-- Scripts -->
     <script>
-        const CLOCK_EL = document.getElementById('clock');
         const CLIENTS_LIST_EL = document.getElementById('clients-list');
         const CLIENT_COUNT_EL = document.getElementById('client-count');
-
-        // Clock
-        setInterval(() => {
-            const now = new Date();
-            CLOCK_EL.textContent = now.toLocaleTimeString('en-US', { hour12: false });
-        }, 1000);
 
         // Load Clients
         async function fetchClients() {
@@ -245,44 +240,35 @@
                 const res = await fetch('/api/clients');
                 const data = await res.json();
                 
-                CLIENT_COUNT_EL.textContent = data.total;
+                CLIENT_COUNT_EL.textContent = `${data.total} Connected`;
                 CLIENTS_LIST_EL.innerHTML = '';
 
                 data.clients.forEach(client => {
                     const el = document.createElement('div');
-                    el.className = 'bg-[#0a0a0a] border border-gray-900 p-3 hover:border-gray-600 transition-colors group';
+                    el.className = 'bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow';
                     
-                    const roleColor = 
-                        client.role === 'depth' ? 'text-blue-400' :
-                        client.role === 'stranger' ? 'text-green-400' :
-                        'text-gray-500';
+                    const roleBadgeColor = 
+                        client.role === 'depth' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                        client.role === 'stranger' ? 'bg-green-50 text-green-700 border-green-100' :
+                        'bg-gray-100 text-gray-600 border-gray-200';
 
-                    const statusColor = 
-                        client.readyState === 1 ? 'bg-green-500' : 'bg-red-500';
+                    const statusColor = client.readyState === 1 ? 'bg-green-500' : 'bg-red-500';
 
                     el.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div class="flex flex-col">
-                                <span class="text-xs text-gray-600 font-bold mb-1">ID_REF</span>
-                                <span class="text-sm text-white font-mono tracking-wide">${client.id}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 rounded-full ${statusColor} animate-pulse"></div>
-                            </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-mono text-gray-400">#${client.id.substring(0, 8)}...</span>
+                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
                         </div>
-                        <div class="mt-3 flex justify-between items-end">
-                             <div class="flex flex-col">
-                                <span class="text-[10px] text-gray-600 uppercase">Role Definition</span>
-                                <span class="text-xs font-bold ${roleColor} uppercase">${client.role}</span>
-                            </div>
-                             <span class="text-[10px] text-gray-700 font-mono">${client.readyStateText}</span>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs px-2 py-1 rounded border capitalize ${roleBadgeColor} font-medium">${client.role}</span>
+                            <span class="text-[10px] text-gray-400 uppercase tracking-wide">${client.readyStateText}</span>
                         </div>
                     `;
                     CLIENTS_LIST_EL.appendChild(el);
                 });
 
                 if (data.clients.length === 0) {
-                     CLIENTS_LIST_EL.innerHTML = '<div class="text-center text-gray-800 text-xs py-10">NO_SIGNALS_DETECTED</div>';
+                     CLIENTS_LIST_EL.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm">No clients connected</div>';
                 }
 
             } catch (e) {
@@ -290,17 +276,14 @@
             }
         }
 
-        setInterval(fetchClients, 2000);
+        setInterval(fetchClients, 3000);
         fetchClients();
 
-        // Broadcast Logic
-        // We connect as a WS client to send the broadcast message
+        // WebSocket
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 
-        ws.onopen = () => {
-            console.log('Dashboard connected to WS');
-        };
+        ws.onopen = () => console.log('Dashboard connected');
 
         function resetForm() {
             document.getElementById('broadcastForm').reset();
@@ -311,12 +294,11 @@
             const formData = new FormData(form);
             const payload = {};
 
-            // Helper to parse inputs
-            // Empty string -> null
-            // "true"/"false" -> boolean
-            // Digits -> number
             for (const [key, value] of formData.entries()) {
                 const val = value.trim();
+                // If empty in this UI, we treat as null to send incomplete payloads that the server/clients might handle as "no change" 
+                // OR we send null to explicitely reset. 
+                // The previous request implied sending the full structure with nulls.
                 if (val === "") {
                     payload[key] = null;
                 } else if (val.toLowerCase() === "true") {
@@ -335,17 +317,21 @@
             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
                 
-                // Visual feedback
-                const btn = document.querySelector('.btn-primary');
+                // Button feedback
+                const btn = document.querySelector('button.w-full');
                 const originalText = btn.textContent;
-                btn.textContent = "TRANSMITTED";
-                btn.style.backgroundColor = "#33ff33"; // Hacker green
+                const originalBg = btn.className;
+                
+                btn.textContent = "✓ SENT";
+                btn.className = "w-full bg-green-600 text-white font-semibold py-4 rounded-xl shadow-lg transition-all text-lg";
+                
                 setTimeout(() => {
                     btn.textContent = originalText;
-                    btn.style.backgroundColor = "";
+                    btn.className = originalBg;
                 }, 1000);
             } else {
-                alert("WebSocket not connected. Please refresh.");
+                alert("WebSocket not connected. Refreshing page...");
+                location.reload();
             }
         }
     </script>
