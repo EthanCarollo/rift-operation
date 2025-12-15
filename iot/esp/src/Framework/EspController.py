@@ -17,11 +17,8 @@ class EspController:
             self.logger.info("Debug mode enabled")
 
     async def process_message(self, message):
-        try:
-            data = json.loads(message)
-            self.logger.info(f"Received message: {data}")
-        except Exception as e:
-            self.logger.error(f"Failed to parse message: {message}")
+        """Method to be overridden by child classes"""
+        pass
 
     async def main(self):
         self.logger.info("Starting EspController main loop")
