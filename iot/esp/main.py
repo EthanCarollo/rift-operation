@@ -1,14 +1,13 @@
 import gc
 import uasyncio as asyncio
-from src.Core.EspController import EspController
+from src.Core.Controller.StrangerController import StrangerController
 from src.Framework.Config.ConfigFactory import ConfigFactory
 
 gc.collect()
 
 try:
     config = ConfigFactory.create_cudy_config()
-    
-    controller = EspController(config)
+    controller = StrangerController(config)
     asyncio.run(controller.main())
 except KeyboardInterrupt:
     pass

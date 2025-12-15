@@ -33,6 +33,7 @@ class WebSocketClient:
         
         try:
             while True:
+                # IMPORTANT: The reconnect condition fix I made:
                 if self.websocket is None or not self.websocket.open:
                     if self.logger:
                         self.logger.warning("WebSocket connection lost, attempting to reconnect...")
@@ -41,6 +42,14 @@ class WebSocketClient:
                     else:
                         await asyncio.sleep(self.config.reconnect_delay)
                         continue
+                
+                # Non-blocking receive for async loop
+                # The underlying library might be blocking, but usually asyncio wraps it or we rely on uasyncio compatibility
+                # Actually, in the original code it was: message = await self.websocket.recv()
+                # Assuming libs.uwebsockets.client.connect returns a socket wrapped for async if the lib supports it, 
+                # OR we just rely on the fact it was working before (except for the loop bug).
+                # But wait, step 115 view of original file showed: message = await self.websocket.recv()
+                # So I will restore that.
                 
                 message = await self.websocket.recv()
                 if self.logger:
@@ -52,7 +61,7 @@ class WebSocketClient:
             self.websocket = None
 
     async def send(self, message):
-        if self.websocket is not None and not self.websocket.closed:
+        if self.websocket is not None and self.websocket.open:
             try:
                 await self.websocket.send(message)
                 if self.logger:

@@ -12,3 +12,6 @@ class StrangerController(EspController):
             self.logger.info(f"Received message: {data}")
         except Exception as e:
             self.logger.error(f"Failed to parse message: {message}")
+
+    async def update(self):
+        print("update called")
