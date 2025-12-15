@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rift Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -444,12 +445,9 @@
 
                     <!-- VIEW: CUSTOM JSON -->
                     <div id="view-custom" class="hidden">
-                        <section class="section-box h-[60vh] flex flex-col">
-                            <span class="section-title">Raw JSON Payload</span>
-                            <textarea id="raw-json-input" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none" style="background: var(--bg-sec); color: var(--text-main);" placeholder="// Enter valid JSON here...
-{
-  'start_system': true
-}"></textarea>
+                        <section class="section-box h-[60vh] flex flex-col p-0 overflow-hidden relative">
+                            <span class="section-title z-10">Raw JSON Payload</span>
+                            <div id="raw-json-editor" class="w-full h-full"></div>
                         </section>
                         <p class="text-xs mt-2" style="color: var(--text-sec)">CAUTION: This bypasses validation. Ensure JSON is valid.</p>
                     </div>
@@ -540,8 +538,33 @@
             const isDark = body.classList.contains('dark-mode');
             document.getElementById('theme-label').textContent = isDark ? 'DARK' : 'LIGHT';
             localStorage.setItem('rift-theme', isDark ? 'dark' : 'light');
+            
+            // Update Ace Theme
+            if (rawEditor) {
+                rawEditor.setTheme(isDark ? "ace/theme/twilight" : "ace/theme/chrome");
+            }
         }
-        if (localStorage.getItem('rift-theme') === 'dark') toggleTheme();
+        
+        // --- Init Ace Editor ---
+        const rawEditor = ace.edit("raw-json-editor");
+        rawEditor.session.setMode("ace/mode/json");
+        rawEditor.setFontSize(12);
+        rawEditor.setShowPrintMargin(false);
+        rawEditor.setOptions({
+            fontFamily: "'Space Mono', monospace",
+        });
+        // Set default value
+        rawEditor.setValue(JSON.stringify({
+            start_system: true,
+            recognized_stranger_name: null
+        }, null, 2), -1);
+
+        // Apply initial theme
+        if (localStorage.getItem('rift-theme') === 'dark') {
+            toggleTheme(); // This handles the Ace theme too
+        } else {
+             rawEditor.setTheme("ace/theme/chrome");
+        }
 
         // --- Form & Real-time Preview Logic ---
         const form = document.getElementById('broadcastForm');
@@ -611,10 +634,10 @@
                 payload = getFormData();
             } else if (currentTab === 'custom') {
                 try {
-                    const raw = document.getElementById('raw-json-input').value;
+                    const raw = rawEditor.getValue();
                     payload = JSON.parse(raw);
                 } catch (e) {
-                    alert("Invalid JSON!");
+                    alert("Invalid JSON: " + e.message);
                     return;
                 }
             } else {
