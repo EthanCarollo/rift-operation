@@ -194,6 +194,34 @@
             background-color: var(--tri-state-hover);
         }
         .log-entry:last-child { border-bottom: none; }
+        
+        /* Fast Command Button */
+        .fast-cmd-btn {
+            border: 1px solid var(--border);
+            background: var(--bg-sec);
+            padding: 16px;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .fast-cmd-btn:hover {
+            border-color: var(--border-focus);
+            background: var(--bg-main);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .fast-cmd-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .fast-cmd-desc {
+            font-size: 10px;
+            color: var(--text-sec);
+        }
+
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -215,7 +243,8 @@
                     <!-- TABS -->
                     <div class="flex gap-2">
                         <button onclick="switchTab('staged')" class="nav-tab active" id="tab-staged">Predefined</button>
-                        <button onclick="switchTab('custom')" class="nav-tab" id="tab-custom">Custom JSON</button>
+                        <button onclick="switchTab('fast')" class="nav-tab" id="tab-fast">Fast Cmd</button>
+                        <button onclick="switchTab('custom')" class="nav-tab" id="tab-custom">Custom</button>
                         <button onclick="switchTab('monitor')" class="nav-tab" id="tab-monitor">Monitor</button>
                     </div>
                 </div>
@@ -303,7 +332,7 @@
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
-                                            <input type="hidden" name="step_1_parent_sucess" value="null">
+                                            <input type="hidden" name="depth_step_1_parent_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -313,7 +342,7 @@
                                         <!-- Step 2 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 2 Success</label>
-                                            <input type="hidden" name="step_2_parent_sucess" value="null">
+                                            <input type="hidden" name="depth_step_2_parent_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -323,7 +352,7 @@
                                         <!-- Step 3 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 3 Success</label>
-                                            <input type="hidden" name="step_3_parent_sucess" value="null">
+                                            <input type="hidden" name="depth_step_3_parent_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -338,7 +367,7 @@
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
-                                            <input type="hidden" name="step_1_enfant_sucess" value="null">
+                                            <input type="hidden" name="depth_step_1_enfant_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -348,7 +377,7 @@
                                         <!-- Step 2 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 2 Success</label>
-                                            <input type="hidden" name="step_2_enfant_sucess" value="null">
+                                            <input type="hidden" name="depth_step_2_enfant_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -358,7 +387,7 @@
                                         <!-- Step 3 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 3 Success</label>
-                                            <input type="hidden" name="step_3_enfant_sucess" value="null">
+                                            <input type="hidden" name="depth_step_3_enfant_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -441,6 +470,53 @@
                                 </div>
                             </section>
                         </form>
+                    </div>
+
+                    <!-- VIEW: FAST COMMANDS -->
+                    <div id="view-fast" class="hidden">
+                         <section class="section-box">
+                            <span class="section-title">Quick Presets</span>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <button onclick="sendFastCmd({start_system: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">START SYSTEM</span>
+                                    <span class="fast-cmd-desc">{ start_system: true }</span>
+                                </button>
+                                <button onclick="sendFastCmd({start_system: false})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">STOP SYSTEM</span>
+                                    <span class="fast-cmd-desc">{ start_system: false }</span>
+                                </button>
+                                <button onclick="sendFastCmd({preset_stranger: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">STRANGER PRESET</span>
+                                    <span class="fast-cmd-desc">{ preset_stranger: true }</span>
+                                </button>
+                                <button onclick="sendFastCmd({preset_depth: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">DEPTH PRESET</span>
+                                    <span class="fast-cmd-desc">{ preset_depth: true }</span>
+                                </button>
+                                <button onclick="sendFastCmd({preset_imagination: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">IMAGINATION PRESET</span>
+                                    <span class="fast-cmd-desc">{ preset_imagination: true }</span>
+                                </button>
+                                <button onclick="sendFastCmd({preset_ending: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">ENDING PRESET</span>
+                                    <span class="fast-cmd-desc">{ preset_ending: true }</span>
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="section-box">
+                            <span class="section-title">Depth Overrides</span>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <button onclick="sendFastCmd({depth_step_1_parent_sucess: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">PARENT 1 COMPLETE</span>
+                                    <span class="fast-cmd-desc">Step 1 Parent Success</span>
+                                </button>
+                                <button onclick="sendFastCmd({depth_step_1_enfant_sucess: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">CHILD 1 COMPLETE</span>
+                                    <span class="fast-cmd-desc">Step 1 Child Success</span>
+                                </button>
+                            </div>
+                        </section>
                     </div>
 
                     <!-- VIEW: CUSTOM JSON -->
@@ -556,7 +632,8 @@
         // Set default value
         rawEditor.setValue(JSON.stringify({
             start_system: true,
-            recognized_stranger_name: null
+            recognized_stranger_name: null,
+            depth_step_1_parent_sucess: null
         }, null, 2), -1);
 
         // Apply initial theme
@@ -628,23 +705,9 @@
         }
 
         // --- Broadcast Logic ---
-        function broadcastCurrent() {
-            let payload = {};
-            if (currentTab === 'staged') {
-                payload = getFormData();
-            } else if (currentTab === 'custom') {
-                try {
-                    const raw = rawEditor.getValue();
-                    payload = JSON.parse(raw);
-                } catch (e) {
-                    alert("Invalid JSON: " + e.message);
-                    return;
-                }
-            } else {
-                return; // Monitoring tab
-            }
-
-            if (ws.readyState === WebSocket.OPEN) {
+        // Helper to perform the actual send
+        function sendPayload(payload) {
+             if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
                 
                 // Feedback
@@ -662,6 +725,33 @@
             } else {
                 alert("WebSocket Disconnected");
             }
+        }
+
+        function broadcastCurrent() {
+            let payload = {};
+            if (currentTab === 'staged') {
+                payload = getFormData();
+            } else if (currentTab === 'custom') {
+                try {
+                    const raw = rawEditor.getValue();
+                    payload = JSON.parse(raw);
+                } catch (e) {
+                    alert("Invalid JSON: " + e.message);
+                    return;
+                }
+            } else if (currentTab === 'fast') {
+                alert("Click a preset button to broadcast.");
+                return;
+            } else {
+                return; // Monitoring tab
+            }
+            sendPayload(payload);
+        }
+        
+        // Fast Cmd Logic
+        function sendFastCmd(payload) {
+            console.log("Fast Command:", payload);
+            sendPayload(payload);
         }
         
         // --- Monitor Logic ---
