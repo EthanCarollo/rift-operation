@@ -1,7 +1,24 @@
 import ujson
 
 class RiftOperationJsonData:
-    def __init__(self, children_rift_part_count=None, parent_rift_part_count=None, start_system=None, recognized_stranger_name=None, pinguin_micro=None, pinguin_audio=None, step_1_parent_sucess=None, step_2_parent_sucess=None, step_3_parent_sucess=None, step_1_enfant_sucess=None, step_2_enfant_sucess=None, step_3_enfant_sucess=None, torch_scanned=None, cage_is_on_monster=None, preset_stranger=None, preset_depth=None, preset_imagination=None, preset_ending=None):
+    def __init__(self, 
+                children_rift_part_count=None, 
+                parent_rift_part_count=None, 
+                start_system=None, 
+                recognized_stranger_name=None, 
+                pinguin_micro=None, pinguin_audio=None,
+                step_1_parent_sucess=None, 
+                step_2_parent_sucess=None, 
+                step_3_parent_sucess=None, 
+                step_1_enfant_sucess=None, 
+                step_2_enfant_sucess=None, 
+                step_3_enfant_sucess=None, 
+                torch_scanned=None, 
+                cage_is_on_monster=None, 
+                preset_stranger=None, 
+                preset_depth=None, 
+                preset_imagination=None, 
+                preset_ending=None):
         self.children_rift_part_count = children_rift_part_count
         self.parent_rift_part_count = parent_rift_part_count
         self.start_system = start_system
