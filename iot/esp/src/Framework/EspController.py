@@ -5,6 +5,7 @@ from src.Framework.WifiManager import WifiManager
 from src.Framework.WebSocketClient import WebSocketClient
 from src.Framework.Logger import Logger
 from src.Framework.Config import Config
+from src.Framework.Json.RiftOperationJsonData import RiftOperationJsonData
 
 class EspController:
     def __init__(self, config: Config):
@@ -45,6 +46,8 @@ class EspController:
             self.websocket_client.listen(self.process_message)
         )
 
+        await self.presence()
+
         while True:
             try:
                 await self.update()
@@ -52,6 +55,11 @@ class EspController:
             except Exception as e:
                 self.logger.error("Error in main loop: {}".format(e))
                 await asyncio.sleep(1)
+
+
+
+    async def presence(self):
+        await self.websocket_client.send(RiftOperationJsonData(device_id= self.config.device_id).to_json())
 
     async def update(self):
         raise NotImplementedError

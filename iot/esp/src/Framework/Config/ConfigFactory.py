@@ -1,47 +1,61 @@
 from .Config import Config, WifiConfig, WebsocketConfig, DepthConfig
 
-class ConfigFactory:
+class WifiConfigFactory:
     @staticmethod
-    def create_ethan_house_config():
-        wifi_config = WifiConfig(
+    def create_ethan_house():
+        return WifiConfig(
             ssid="Freebox-A01429",
             password="5f4ktqwkwkqdx62rqcdwxs",
             timeout=15,
             auto_reconnect=True
         )
-        
-        websocket_config = WebsocketConfig(
-            server="ws://server.riftoperation.ethan-folio.fr",
-            path="/ws",
-            reconnect_delay=10,
-            ping_interval=60
-        )
-        
-        return Config(
-            wifi=wifi_config,
-            websocket=websocket_config,
-            device_id="ETHAN_HOUSE_ESP32",
-            debug_mode=True,
-            heartbeat_interval=15
-        )
 
     @staticmethod
-    def create_cudy_config():
-        wifi_config = WifiConfig(
+    def create_cudy():
+        return WifiConfig(
             ssid="Cudy-FA5C",
             password="58448069",
             timeout=15,
             auto_reconnect=True
         )
-        
-        websocket_config = WebsocketConfig(
+
+    @staticmethod
+    def create_ethan_mobile():
+        return WifiConfig(
+            ssid="fourmiphone",
+            password="fourmiduterroir74",
+            timeout=15,
+            auto_reconnect=True
+        )
+
+    @staticmethod
+    def create_custom(ssid, password):
+        return WifiConfig(
+            ssid=ssid,
+            password=password
+        )
+
+class WebsocketConfigFactory:
+    @staticmethod
+    def create_prod():
+        return WebsocketConfig(
             server="ws://server.riftoperation.ethan-folio.fr",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
         )
+    
+    @staticmethod
+    def create_custom(server, path):
+        return WebsocketConfig(
+            server=server,
+            path=path
+        )
 
-        depth_config = DepthConfig(
+class DepthConfigFactory:
+    @staticmethod
+    def create_default_child():
+        return DepthConfig(
             role="child",
             button_pins={1: 14, 2: 19, 3: 23},
             led_pins={1: 25, 2: 32, 3: 33},
@@ -51,11 +65,24 @@ class ConfigFactory:
                 3: [2, 1, 2, 3]
             }
         )
-        
+
+class ConfigFactory:
+    @staticmethod
+    def create_ethan_house_config():
         return Config(
-            wifi=wifi_config,
-            websocket=websocket_config,
-            depth=depth_config,
+            wifi=WifiConfigFactory.create_ethan_house(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id="ETHAN_HOUSE_ESP32",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
+    @staticmethod
+    def create_cudy_config():
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            depth=DepthConfigFactory.create_default_child(),
             device_id="CUDY-FA5C-ESP",
             debug_mode=True,
             heartbeat_interval=15
@@ -63,23 +90,9 @@ class ConfigFactory:
 
     @staticmethod
     def create_ethan_mobile_config():
-        wifi_config = WifiConfig(
-            ssid="fourmiphone",
-            password="fourmiduterroir74",
-            timeout=15,
-            auto_reconnect=True
-        )
-        
-        websocket_config = WebsocketConfig(
-            server="ws://server.riftoperation.ethan-folio.fr",
-            path="/ws",
-            reconnect_delay=10,
-            ping_interval=60
-        )
-        
         return Config(
-            wifi=wifi_config,
-            websocket=websocket_config,
+            wifi=WifiConfigFactory.create_ethan_mobile(),
+            websocket=WebsocketConfigFactory.create_prod(),
             device_id="FOURMI_PHONE_ESP32",
             debug_mode=True,
             heartbeat_interval=15
@@ -92,19 +105,9 @@ class ConfigFactory:
     @staticmethod
     def create_custom_config(wifi_ssid, wifi_password, websocket_server, websocket_path, 
                            device_id="CUSTOM_ESP32", debug_mode=False):
-        wifi_config = WifiConfig(
-            ssid=wifi_ssid,
-            password=wifi_password
-        )
-        
-        websocket_config = WebsocketConfig(
-            server=websocket_server,
-            path=websocket_path
-        )
-        
         return Config(
-            wifi=wifi_config,
-            websocket=websocket_config,
+            wifi=WifiConfigFactory.create_custom(wifi_ssid, wifi_password),
+            websocket=WebsocketConfigFactory.create_custom(websocket_server, websocket_path),
             device_id=device_id,
             debug_mode=debug_mode
         )
