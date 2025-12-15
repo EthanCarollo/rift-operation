@@ -17,6 +17,7 @@ class EspController:
             self.logger.info("Debug mode enabled")
 
     async def process_message(self, message):
+        if message is None: return
         try:
             data = json.loads(message)
             self.logger.info("Received message: {}".format(data))

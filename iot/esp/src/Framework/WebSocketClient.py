@@ -21,6 +21,7 @@ class WebSocketClient:
             self.websocket = libs.uwebsockets.client.connect(
                 self.config.server + self.config.path
             )
+            self.websocket.sock.setblocking(False)
 
             if self.logger:
                 self.logger.info("WebSocket connected successfully")
@@ -44,11 +45,15 @@ class WebSocketClient:
                         await asyncio.sleep(self.config.reconnect_delay)
                         continue
 
-                message = self.websocket.recv()
-                if message is not None:
-                    if self.logger:
-                        self.logger.debug(f"WebSocket received: {message}")
-                    await callback(message)
+                try:
+                    message = self.websocket.recv()
+                    if message is not None:
+                        if self.logger:
+                            self.logger.debug(f"WebSocket received: {message}")
+                        await callback(message)
+                except OSError as e:
+                    # ESP32 raises OSError: [Errno 11] EAGAIN when no data is available on a non-blocking socket
+                    pass
 
                 await asyncio.sleep_ms(0)
 
