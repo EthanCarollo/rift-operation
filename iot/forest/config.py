@@ -2,11 +2,11 @@
 DEBUG = True  # Set to False to reduce serial output
 
 # --- Wi-Fi ---
-WIFI_SSID = "SFR_F48F"
-WIFI_PASS = "7b2uj3mb37js72glj1e9"
+WIFI_SSID = "Cudy-FA5C"
+WIFI_PASS = "58448069"
 
 # --- WebSocket ---
-WS_URL = "ws://192.168.1.57:3000/ws"
+WS_URL = "ws://172.28.55.66:3000/ws"
 
 # --- Protocol options ---
 SEND_HELLO_ON_CONNECT = True

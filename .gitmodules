@@ -1,0 +1,3 @@
+[submodule "resources/swoft-sphero-rover"]
+	path = resources/swoft-sphero-rover
+	url = https://github.com/Kibishi47/iot-tools
