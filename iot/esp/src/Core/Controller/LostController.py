@@ -16,13 +16,9 @@ class LostController(EspController):
     """
 
     # --- Step constants ---
-    STEP_IDLE     = 0
-    STEP_ACTIVE   = 1
-    STEP_DISTANCE = 2
-    STEP_DRAWING  = 3
-    STEP_LIGHT    = 4
-    STEP_CAGE     = 5
-    STEP_DONE     = 7
+    STEP_IDLE, STEP_ACTIVE, STEP_DISTANCE, STEP_DRAWING, STEP_LIGHT, STEP_CAGE, STEP_DONE = 0, 1, 2, 3, 4, 5, 7
+    STEP_NAMES = {0: "IDLE", 1: "ACTIVE", 2: "DISTANCE", 3: "DRAWING", 4: "LIGHT", 5: "CAGE", 7: "DONE"}
+    
     # --- Target counts to auto-start ---
     TARGET_CHILDREN_COUNT = 2
     TARGET_PARENT_COUNT   = 2
@@ -32,59 +28,75 @@ class LostController(EspController):
         self.logger.name = "LostController"
 
         self.step = self.STEP_IDLE
-        self.state_initialized = False
-        self.torch_scanned_sent = False
-        self._session_done_reported = False
-        # Track counts only for auto-start detection
-        self._last_children_count = 0
-        self._last_parent_count = 0
         # Store the last received payload to modify and resend
         self._last_payload = None
+        # Local state for the values we send
+        self._local_torch_scanned = None
+        self._local_cage_is_on_monster = None
+        self._local_preset_lost = None
         # Hardware button (GPIO 27)
         self.button = Button(pin_id=27, delegate=LostButtonDelegate(self))
 
+    def _log_step_transition(self, from_step, to_step):
+        """Log a step transition with visual separators"""
+        from_name = self.STEP_NAMES.get(from_step, str(from_step))
+        to_name = self.STEP_NAMES.get(to_step, str(to_step))
+        self.logger.info("-------- {} -> {} --------".format(from_name, to_name))
+
+    def _log_ws_send(self, message):
+        """Log WebSocket send with visual separators"""
+        self.logger.debug("-------------------------------")
+        self.logger.debug("WS SEND: {}".format(message))
+        self.logger.debug("-------------------------------")
+
     async def send_rift_json(self, torch_scanned=None, cage_is_on_monster=None, preset_lost=None):
         """
-        Modify the last received payload with the specified values and send it back.
-        Only modifies torch_scanned, cage_is_on_monster, preset_lost.
+        Modify the last received payload with the specified values and send it back
         """
         if self._last_payload is None:
             self.logger.error("Cannot send Rift JSON: no payload received yet")
             return
 
-        # Copy the last payload and modify only what we need
+        # Update local state with new values
+        if torch_scanned is not None:
+            self._local_torch_scanned = torch_scanned
+        if cage_is_on_monster is not None:
+            self._local_cage_is_on_monster = cage_is_on_monster
+        if preset_lost is not None:
+            self._local_preset_lost = preset_lost
+
+        # Copy the last payload
         payload_to_send = dict(self._last_payload)
-        
         # Change device_id to our own
         payload_to_send["device_id"] = self.config.device_id
         
-        # Only update fields that are explicitly set (not None)
-        if torch_scanned is not None:
-            payload_to_send["torch_scanned"] = torch_scanned
-        if cage_is_on_monster is not None:
-            payload_to_send["cage_is_on_monster"] = cage_is_on_monster
-        if preset_lost is not None:
-            payload_to_send["preset_lost"] = preset_lost
+        # Always include ALL our local state values
+        if self._local_torch_scanned is not None:
+            payload_to_send["torch_scanned"] = self._local_torch_scanned
+        if self._local_cage_is_on_monster is not None:
+            payload_to_send["cage_is_on_monster"] = self._local_cage_is_on_monster
+        if self._local_preset_lost is not None:
+            payload_to_send["preset_lost"] = self._local_preset_lost
 
         try:
-            await self.websocket_client.send(json.dumps(payload_to_send))
-            self.logger.info("Sent Rift JSON: torch_scanned={}, cage_is_on_monster={}, preset_lost={}".format(
+            json_str = json.dumps(payload_to_send)
+            self._log_ws_send("torch={}, cage={}, preset_lost={}".format(
                 payload_to_send.get("torch_scanned"),
                 payload_to_send.get("cage_is_on_monster"),
                 payload_to_send.get("preset_lost")
             ))
+            await self.websocket_client.send(json_str)
         except Exception as e:
             self.logger.error("Failed to send Rift JSON: {}".format(e))
 
     async def process_message(self, message: str):
         """
         Handle Rift JSON broadcast from the server.
-        Stores the payload for later modification and resending.
+        Auto-starts workshop when children=2 and parent=2.
         """
         try:
             data = json.loads(message)
         except Exception:
-            self.logger.debug("Ignoring non-JSON message")
             return
 
         payload = data.get("value") if isinstance(data, dict) and "value" in data else data
@@ -98,131 +110,125 @@ class LostController(EspController):
         # Store the full payload for later modification
         self._last_payload = payload
         
-        # Update local counters for auto-start detection only
-        if "children_rift_part_count" in payload and payload["children_rift_part_count"] is not None:
-            self._last_children_count = payload["children_rift_part_count"]
-        if "parent_rift_part_count" in payload and payload["parent_rift_part_count"] is not None:
-            self._last_parent_count = payload["parent_rift_part_count"]
-
-        self.state_initialized = True
-        self.logger.info("Rift JSON received: children={}, parent={}".format(
-            self._last_children_count, self._last_parent_count
-        ))
+        # Get counts from payload
+        children = payload.get("children_rift_part_count")
+        parent = payload.get("parent_rift_part_count")
+        
+        # Auto-start: trigger immediately when we receive 2/2 and we're IDLE
+        if (self.step == self.STEP_IDLE and 
+            children == self.TARGET_CHILDREN_COUNT and 
+            parent == self.TARGET_PARENT_COUNT):
+            await self.start(by="rift_json")
 
     async def update(self):
         """
         Called repeatedly by EspController.main()
-        - Waits for first Rift JSON
-        - When in IDLE and counts == 2/2 -> auto-start
-        - When DONE and not yet reported -> sends final Rift JSON
+        Nothing to do here - everything is event-driven now.
         """
-        if not self.state_initialized:
-            return
-
-        # Auto-start logic
-        if self.step == self.STEP_IDLE:
-            if (self._last_children_count == self.TARGET_CHILDREN_COUNT and 
-                self._last_parent_count == self.TARGET_PARENT_COUNT):
-                await self.start(by="rift_json")
-            return
-        # When workshop is done, send final state
-        if self.step == self.STEP_DONE and not self._session_done_reported:
-            await self.send_rift_json(
-                torch_scanned=True,
-                cage_is_on_monster=True,
-                preset_lost=False
-            )
-            self._session_done_reported = True
-            self.logger.info("Workshop finished, final Rift JSON sent")
+        pass
 
     async def start(self, by="server_start"):
         """
         Start Lost workshop scenario
         """
         if self.step != self.STEP_IDLE:
-            self.logger.info("Ignoring start, current step={}".format(self.step))
             return
 
+        old_step = self.step
         self.step = self.STEP_ACTIVE
-        self._session_done_reported = False
-        self.torch_scanned_sent = False
+        # Reset local state for new session
+        self._local_torch_scanned = None
+        self._local_cage_is_on_monster = None
+        self._local_preset_lost = None
 
-        self.logger.info("Lost workshop started")
+        self.logger.info("LOST Started")
+        self._log_step_transition(old_step, self.step)
         await self.send_rift_json(preset_lost=True)
-        # Log initial telemetry events
         await asyncio.sleep_ms(150)
-        self._log_telemetry("system", "workshop_lost_started", {"by": by})
+        self._log_telemetry("system", "workshop", "start", "ON")
         await asyncio.sleep_ms(150)
-        self._log_telemetry("parent", "speaker", {"action": "on"})
+        self._log_telemetry("parent", "speaker", "audio", "ON")
         await asyncio.sleep_ms(150)
-        self._log_telemetry("child", "animals_led", {"action": "on"})
+        self._log_telemetry("child", "animals_led", "led", "ON")
 
     async def handle_short_press(self):
         """
         Called by LostButtonDelegate when the hardware button is pressed shortly
         """
         if self.step == self.STEP_DONE:
-            self.logger.debug("Short press ignored: already DONE")
             return
 
         self.logger.info("BTN action: next_step")
-        await asyncio.sleep_ms(100)
+        await asyncio.sleep_ms(250)
         await self.next_step()
 
     async def next_step(self):
         """
         Progress through workshop steps
         """
+        old_step = self.step
+        
         # STEP_ACTIVE -> STEP_DISTANCE
         if self.step == self.STEP_ACTIVE:
-            self._log_telemetry("child", "distance_sensor", {"action": "triggered"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("child", "llm", {"action": "triggered"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("child", "speaker", {"action": "started"})
             self.step = self.STEP_DISTANCE
+            self._log_step_transition(old_step, self.step)
+            self._log_telemetry("child", "distance_sensor", "sensor", "TRIGGERED")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("child", "llm", "ia", "TRIGGERED")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("child", "speaker", "audio", "ON")
             return
+            
         # STEP_DISTANCE -> STEP_DRAWING
         if self.step == self.STEP_DISTANCE:
-            self._log_telemetry("child", "drawing", {"action": "read"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("child", "llm", {"action": "triggered"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("child", "drawing", {"action": "recognized", "label": "flashlight"})
-            # Send torch_scanned=True when drawing is recognized
-            if not self.torch_scanned_sent:
-                await asyncio.sleep_ms(150)
-                await self.send_rift_json(torch_scanned=True)
-                self.torch_scanned_sent = True
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("parent", "lamp", {"action": "on"})
             self.step = self.STEP_DRAWING
+            self._log_step_transition(old_step, self.step)
+            self._log_telemetry("child", "drawing", "camera", "READ")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("child", "llm", "ia", "TRIGGERED")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("child", "drawing", "ia", "RECOGNIZED: flashlight")
+            await asyncio.sleep_ms(250)
+            await self.send_rift_json(torch_scanned=True)
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("parent", "lamp", "led", "ON")
             return
+            
         # STEP_DRAWING -> STEP_LIGHT
         if self.step == self.STEP_DRAWING:
-            self._log_telemetry("parent", "light_sensor", {"action": "triggered"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("parent", "mapping_video", {"action": "switch", "to": "reveal"})
             self.step = self.STEP_LIGHT
+            self._log_step_transition(old_step, self.step)
+            self._log_telemetry("parent", "light_sensor", "sensor", "TRIGGERED")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("parent", "mapping_video", "video", "SWITCH: reveal")
             return
+            
         # STEP_LIGHT -> STEP_CAGE -> STEP_DONE
         if self.step == self.STEP_LIGHT:
-            self._log_telemetry("child", "cage_rfid", {"action": "detected", "tag": "CAGE_A"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("child", "cage_rfid", {"action": "correct", "tag": "CAGE_A"})
             self.step = self.STEP_CAGE
-            # Send cage_is_on_monster=True
-            await asyncio.sleep_ms(150)
+            self._log_step_transition(old_step, self.step)
+            self._log_telemetry("child", "cage", "rfid", "DETECTED: CAGE_A")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("child", "cage", "rfid", "CORRECT")
+            await asyncio.sleep_ms(250)
             await self.send_rift_json(cage_is_on_monster=True)
-            # Auto-progress to DONE
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("child", "servo_trap", {"action": "open"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("parent", "servo_trap", {"action": "open"})
-            await asyncio.sleep_ms(150)
-            self._log_telemetry("system", "workshop", {"action": "finished"})
+            await asyncio.sleep_ms(250)
+            # Progress to DONE
+            old_step = self.step
             self.step = self.STEP_DONE
-            self.logger.info("Workshop finished (waiting for final Rift JSON send)")
+            self._log_step_transition(old_step, self.step)
+            self._log_telemetry("child", "servo_trap", "servo", "OPEN")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("parent", "servo_trap", "servo", "OPEN")
+            await asyncio.sleep_ms(250)
+            self._log_telemetry("system", "workshop", "state", "FINISHED")
+            # Send final JSON right here (not in update())
+            self.logger.info("Workshop finished, sending final Rift JSON")
+            await self.send_rift_json(
+                torch_scanned=True,
+                cage_is_on_monster=True,
+                preset_lost=False
+            )
             return
 
     async def reset(self, by="server_reset"):
@@ -230,17 +236,17 @@ class LostController(EspController):
         Reset internal state
         """
         self.step = self.STEP_IDLE
-        self._session_done_reported = False
-        self.state_initialized = False
-        self._last_children_count = 0
-        self._last_parent_count = 0
         self._last_payload = None
-        self.torch_scanned_sent = False
-
+        self._local_torch_scanned = None
+        self._local_cage_is_on_monster = None
+        self._local_preset_lost = None
         self.logger.info("Lost workshop reset")
 
-    def _log_telemetry(self, room: str, event: str, payload: dict):
+    def _log_telemetry(self, room: str, decoration: str, module: str, action: str):
         """
-        Internal helper to log what used to be WebSocket telemetry
+        Log telemetry in human-readable format
         """
-        self.logger.debug("[TELEMETRY] room={} event={} payload={}".format(room, event, payload))
+        room_display = "Parent" if room == "parent" else "Enfant" if room == "child" else "System"
+        self.logger.debug("Room: {} | Deco: {} | Module: {} | Action: {}".format(
+            room_display, decoration, module, action
+        ))

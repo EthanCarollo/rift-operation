@@ -29,9 +29,9 @@ class WifiConfigFactory:
         )
 
     @staticmethod
-    def create_aix_les_bains():
+    def create_appartment_aix():
         return WifiConfig(
-            ssid="SRF_F48F",
+            ssid="SFR_F48F",
             password="7b2uj3mb37js72glj1e9",
             timeout=15,
             auto_reconnect=True
@@ -110,7 +110,7 @@ class ConfigFactory:
     @staticmethod
     def create_lost_config():
         return Config(
-            wifi=WifiConfigFactory.create_aix_les_bains(),
+            wifi=WifiConfigFactory.create_appartment_aix(),
             websocket=WebsocketConfigFactory.create_prod(),
             device_id="LOST_ESP",
             debug_mode=True,
