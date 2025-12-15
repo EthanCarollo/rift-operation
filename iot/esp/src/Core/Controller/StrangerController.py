@@ -2,7 +2,7 @@ import ujson as json
 from src.Framework.EspController import EspController
 from src.Framework.Button.Button import Button
 from src.Core.Stranger.StrangerWebSocketButtonDelegate import StrangerWebSocketButtonDelegate
-from src.Core.Stranger.State import StrangerInactiveState, StrangerControllerState
+from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
 from src.Framework.Config import Config
 
 class StrangerController(EspController):
@@ -10,11 +10,11 @@ class StrangerController(EspController):
         super().__init__(config)
         self.logger.name = "StrangerController"
 
-        self.state: StrangerControllerState = StrangerInactiveState(self)
+        self.state = StrangerInactiveState(self)
         
         self.button1: Button = Button(17, StrangerWebSocketButtonDelegate(self))
 
-    def swap_state(self, state: StrangerControllerState):
+    def swap_state(self, state):
         self.state = state
 
     async def process_message(self, message):
