@@ -173,12 +173,12 @@ Bonjour, voici le json tel que nous le pensons ahah ! Il va être constitué de 
 > Se lance quand `children_rift_part_count` + `parent_rift_part_count` == 2
 
 ```json 
-"step_1_parent_sucess": bool | null,
-"step_2_parent_sucess": bool | null,
-"step_3_parent_sucess": bool | null,
-"step_1_enfant_sucess": bool | null,
-"step_2_enfant_sucess": bool | null,
-"step_3_enfant_sucess": bool | null
+"depth_step_1_parent_sucess": bool | null,
+"depth_step_2_parent_sucess": bool | null,
+"depth_step_3_parent_sucess": bool | null,
+"depth_step_1_enfant_sucess": bool | null,
+"depth_step_2_enfant_sucess": bool | null,
+"depth_step_3_enfant_sucess": bool | null
 ```
 
 ## Step 3 - Imagination
@@ -226,12 +226,12 @@ Bonjour, voici le json tel que nous le pensons ahah ! Il va être constitué de 
     "pinguin_audio": base64 (full audio) | null,
     
     // Step 2 - Depth
-    "step_1_parent_sucess": bool | null,
-    "step_2_parent_sucess": bool | null,
-    "step_3_parent_sucess": bool | null,
-    "step_1_enfant_sucess": bool | null,
-    "step_2_enfant_sucess": bool | null,
-    "step_3_enfant_sucess": bool | null,
+    "depth_step_1_parent_sucess": bool | null,
+    "depth_step_2_parent_sucess": bool | null,
+    "depth_step_3_parent_sucess": bool | null,
+    "depth_step_1_enfant_sucess": bool | null,
+    "depth_step_2_enfant_sucess": bool | null,
+    "depth_step_3_enfant_sucess": bool | null,
     
     // Step 3 - Imagination
     "torch_scanned": bool | null,
