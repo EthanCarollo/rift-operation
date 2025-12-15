@@ -1,8 +1,8 @@
 import gc
 import asyncio as asyncio
 from src.Core.Controller.StrangerController import StrangerController
-from src.Core.DepthController import DepthController
-from src.Core.LostController import LostController
+from iot.esp.src.Core.Controller.DepthController import DepthController
+from iot.esp.src.Core.Controller.LostController import LostController
 from src.Framework.Config.ConfigFactory import ConfigFactory
 
 gc.collect()
