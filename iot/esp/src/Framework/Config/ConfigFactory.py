@@ -11,7 +11,7 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="wss://backend.riftoperation.ethan-folio.fr",
+            server="ws://server.riftoperation.ethan-folio.fr",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
@@ -35,7 +35,7 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="wss://backend.riftoperation.ethan-folio.fr",
+            server="ws://server.riftoperation.ethan-folio.fr",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
@@ -71,7 +71,7 @@ class ConfigFactory:
         )
         
         websocket_config = WebsocketConfig(
-            server="wss://backend.riftoperation.ethan-folio.fr",
+            server="ws://server.riftoperation.ethan-folio.fr",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
