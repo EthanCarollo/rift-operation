@@ -1,6 +1,4 @@
-import time
 import ujson as json
-import uasyncio as asyncio
 
 from src.Framework.EspController import EspController
 from src.Framework.Json.RiftOperationJsonData import RiftOperationJsonData
@@ -8,24 +6,17 @@ from src.Framework.Button.Button import Button
 from src.Core.Controller.Lost.LostButtonDelegate import LostButtonDelegate
 
 # --- Constants ---
-LONG_PRESS_MS = 1000
-WORKSHOP_NAME = "lost"
 TARGET_CHILDREN_COUNT = 2
 TARGET_PARENT_COUNT   = 2
-
 
 class LostController(EspController):
     """
     LOST controller for ESP32
 
-    - Listens for the global Rift JSON (children_rift_part_count, parent_rift_part_count, etc.)
+    - Listens for the global Rift JSON
     - Starts automatically when counts reach 2/2
-    - Sends "status" updates to server ("inactive" / "active")
-    - Sends ONLY 2 Rift JSON updates:
-        1) torch_scanned = True
-        2) cage_is_on_monster = True + counts incremented + preset_imagination = True
+    - Sends Rift JSON updates via RiftOperationJsonData
     - Manages internal steps (distance -> drawing -> light -> cage)
-    - Exposes handle_short_press() which is called by LostButtonDelegate
     """
 
     STEP_IDLE     = 0
@@ -45,30 +36,11 @@ class LostController(EspController):
         self.state_initialized = False
         self.children_rift_part_count = None
         self.parent_rift_part_count = None
-        # Internal flags to avoid resending same JSON multiple times
+        # Flags to avoid resending the same JSON twice
         self.torch_scanned_sent = False
-        self.cage_sent = False
         self._session_done_reported = False
         # Hardware button (GPIO 27)
         self.button = Button(pin_id=27, delegate=LostButtonDelegate(self))
-
-    async def send_status(self, status: str):
-        """
-        Send current workshop connection status to the server.
-        status: "active" | "inactive"
-        """
-        msg = {
-            "type": "workshop_status",
-            "value": {
-                "workshop": WORKSHOP_NAME,
-                "status": status,
-            },
-        }
-        try:
-            await self.websocket_client.send(json.dumps(msg))
-            self.logger.info("Sent workshop status: {}".format(status))
-        except Exception as e:
-            self.logger.error("Failed to send status '{}': {}".format(status, e))
 
     async def send_rift_json(self, **kwargs):
         """
@@ -78,21 +50,13 @@ class LostController(EspController):
         try:
             payload = data.to_json()
             await self.websocket_client.send(payload)
-            self.logger.info("Sent Rift JSON: {}".format(payload))
+            self.logger.info("Sent Rift JSON")
         except Exception as e:
             self.logger.error("Failed to send Rift JSON: {}".format(e))
 
-    async def on_websocket_connected(self):
-        """
-        Hook called by EspController right after WebSocket connection.
-        Initial status is always "inactive"
-        """
-        await self.send_status("inactive")
-
     async def process_message(self, message: str):
         """
-        Handle Rift JSON broadcast or other messages coming from the server.
-        We only care about children_rift_part_count / parent_rift_part_count
+        Handle Rift JSON broadcast or other messages coming from the server
         """
         try:
             data = json.loads(message)
@@ -127,7 +91,6 @@ class LostController(EspController):
     async def update(self):
         """
         Called repeatedly by EspController.main()
-
         - Waits for first Rift JSON (state_initialized == True)
         - When in IDLE and counts == 2/2 -> auto-start
         - When DONE and not yet reported -> increments counts and sends final Rift JSON
@@ -135,7 +98,7 @@ class LostController(EspController):
         if not self.state_initialized:
             return
 
-        # Auto-start logic
+        # Auto-start logic: table says we are at 2/2
         if self.step == self.STEP_IDLE:
             c = self.children_rift_part_count or 0
             p = self.parent_rift_part_count or 0
@@ -143,26 +106,22 @@ class LostController(EspController):
             if c == TARGET_CHILDREN_COUNT and p == TARGET_PARENT_COUNT:
                 await self.start(by="rift_json")
             return
+
         # End of workshop logic
         if self.step == self.STEP_DONE and not self._session_done_reported:
+            # Increment counts locally
             c = (self.children_rift_part_count or 0) + 1
             p = (self.parent_rift_part_count or 0) + 1
             self.children_rift_part_count = c
             self.parent_rift_part_count = p
-
-            # Send final Rift JSON:
-            # - updated counts
-            # - cage_is_on_monster already True
-            # - preset_imagination = True
+            # Send final Rift JSON
             await self.send_rift_json(
                 children_rift_part_count=c,
                 parent_rift_part_count=p,
                 torch_scanned=True,
                 cage_is_on_monster=True,
-                preset_imagination=True,
+                preset_lost=False,
             )
-            # Status back to inactive
-            await self.send_status("inactive")
 
             self._session_done_reported = True
             self.logger.info(
@@ -172,6 +131,9 @@ class LostController(EspController):
             )
 
     async def start(self, by="server_start"):
+        """
+        Start Lost workshop scenario
+        """
         if self.step != self.STEP_IDLE:
             self.logger.info("Ignoring start, current step={}".format(self.step))
             return
@@ -179,12 +141,10 @@ class LostController(EspController):
         self.step = self.STEP_ACTIVE
         self._session_done_reported = False
         self.torch_scanned_sent = False
-        self.cage_sent = False
 
         self.logger.info("Lost workshop started")
 
-        # Status → active
-        await self.send_status("active")
+        await self.send_rift_json(preset_lost=True)
         self._log_telemetry("system", "workshop_lost_started", {"by": by})
         self._log_telemetry("parent", "speaker", {"action": "on"})
         self._log_telemetry("child", "animals_led", {"action": "on"})
@@ -218,11 +178,10 @@ class LostController(EspController):
                 "drawing",
                 {"action": "recognized", "label": "flashlight"},
             )
-            # --- RIFT JSON #1: torch_scanned = True ---
+
             if not self.torch_scanned_sent:
                 await self.send_rift_json(torch_scanned=True)
                 self.torch_scanned_sent = True
-
             self._log_telemetry("parent", "lamp", {"action": "on"})
             self.step = self.STEP_DRAWING
             return
@@ -251,7 +210,6 @@ class LostController(EspController):
                 {"action": "correct", "tag": "CAGE_A"},
             )
             self.step = self.STEP_CAGE
-            # Auto-finish
             self._log_telemetry("child", "servo_trap", {"action": "open"})
             self._log_telemetry("parent", "servo_trap", {"action": "open"})
             self._log_telemetry("system", "workshop", {"action": "finished"})
@@ -261,7 +219,7 @@ class LostController(EspController):
 
     async def reset(self, by="server_reset"):
         """
-        Reset internal state and notify server
+        Reset internal state
         """
         self.step = self.STEP_IDLE
         self._session_done_reported = False
@@ -269,18 +227,15 @@ class LostController(EspController):
         self.children_rift_part_count = None
         self.parent_rift_part_count = None
         self.torch_scanned_sent = False
-        self.cage_sent = False
 
-        await self.send_status("inactive")
         self.logger.info("Lost workshop reset")
 
     # -------------------------------------------------------------------------
-    # Telemetry helper
+    # Telemetry helper (logs only)
     # -------------------------------------------------------------------------
     def _log_telemetry(self, room: str, event: str, payload: dict):
         """
-        Internal helper to log what used to be WebSocket telemetry.
-        This does NOT send anything over the network
+        Internal helper to log what used to be WebSocket telemetry
         """
         self.logger.debug(
             "[TELEMETRY] room={} event={} payload={}".format(room, event, payload)

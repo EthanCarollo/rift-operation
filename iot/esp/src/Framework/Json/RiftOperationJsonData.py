@@ -17,7 +17,7 @@ class RiftOperationJsonData:
                 cage_is_on_monster=None, 
                 preset_stranger=None, 
                 preset_depth=None, 
-                preset_imagination=None, 
+                preset_lost=None, 
                 preset_ending=None):
         self.children_rift_part_count = children_rift_part_count
         self.parent_rift_part_count = parent_rift_part_count
@@ -35,7 +35,7 @@ class RiftOperationJsonData:
         self.cage_is_on_monster = cage_is_on_monster
         self.preset_stranger = preset_stranger
         self.preset_depth = preset_depth
-        self.preset_imagination = preset_imagination
+        self.preset_lost = preset_lost
         self.preset_ending = preset_ending
 
     def to_json(self):
