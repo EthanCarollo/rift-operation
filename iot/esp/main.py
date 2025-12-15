@@ -13,8 +13,8 @@ try:
     config = ConfigFactory.create_cudy_config()
 
     controller = StrangerController(config)
-    controller = DepthController(config)
-    controller = LostController(config)
+    # controller = DepthController(config)
+    # controller = LostController(config)
 
     asyncio.run(controller.main())
 

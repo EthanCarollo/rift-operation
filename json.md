@@ -151,6 +151,7 @@ Bonjour, voici le json tel que nous le pensons ahah ! Il va être constitué de 
 ## Rift table
 
 ```json
+"device_id": string (mandatory)
 "children_rift_part_count": int | null
 "parent_rift_part_count": int | null
 ```
@@ -215,6 +216,9 @@ Bonjour, voici le json tel que nous le pensons ahah ! Il va être constitué de 
 
 ```json
 {
+    // Identification
+    "device_id": string,
+
     // Rift table
     "children_rift_part_count": int | null,
     "parent_rift_part_count": int | null,

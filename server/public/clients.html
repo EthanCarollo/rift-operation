@@ -649,6 +649,7 @@
         });
         // Set default value
         rawEditor.setValue(JSON.stringify({
+            device_id: "RIFT_PANEL",
             start_system: true,
             recognized_stranger_name: null,
             depth_step_1_parent_sucess: null
@@ -666,6 +667,9 @@
         
         function getFormData() {
             const payload = {};
+            // Identification
+            payload['device_id'] = "RIFT_PANEL"; 
+
             // Ints
             form.querySelectorAll('.control-group[data-type="int"] input').forEach(input => {
                 const val = input.value.trim();
@@ -768,6 +772,7 @@
         
         // Fast Cmd Logic
         function sendFastCmd(payload) {
+            payload['device_id'] = "RIFT_PANEL";
             console.log("Fast Command:", payload);
             sendPayload(payload);
         }
