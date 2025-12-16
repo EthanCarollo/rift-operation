@@ -15,6 +15,7 @@ from src.Framework.EspController import EspController
 from src.Core.Lost.LostWorkshop import LostWorkshop
 from src.Framework.Button.Button import Button
 from src.Core.Lost.LostButtonDelegate import LostButtonDelegate
+from src.Core.Lost.LostHardware import LostHardware
 
 
 class LostController(EspController):
@@ -26,11 +27,19 @@ class LostController(EspController):
         
         # Instantiate Workshop business logic
         self.workshop = LostWorkshop(self)
+        
+        # Instantiate Hardware
+        self.hardware = LostHardware(config, self)
+        
+        # Setup Links
+        self.workshop.attach_hardware(self.hardware)
+        self.hardware.attach_callback(self.workshop)
+        
         self.button = Button(pin_id=27, delegate=LostButtonDelegate(self))
 
     async def update(self):
-        """Main loop callback - not used (event-driven)"""
-        pass
+        """Main loop callback"""
+        self.hardware.update()
 
     async def process_message(self, message: str):
         """Delegate WebSocket messages to Workshop"""

@@ -1,4 +1,4 @@
-from .Config import Config, WifiConfig, WebsocketConfig, DepthConfig
+from .Config import Config, WifiConfig, WebsocketConfig
 
 class WifiConfigFactory:
     @staticmethod
@@ -61,31 +61,7 @@ class WebsocketConfigFactory:
             path=path
         )
 
-class DepthConfigFactory:
-    @staticmethod
-    def create_default_child():
-        return DepthConfig(
-            role="child",
-            button_pins={1: 14, 2: 19, 3: 23},
-            led_pins={1: 25, 2: 32, 3: 33},
-            partitions={
-                1: [1, 2, 1, 3],
-                2: [3, 3, 1],
-                3: [2, 1, 2, 3]
-            }
-        )
-
 class ConfigFactory:
-    @staticmethod
-    def create_cudy_lost_config():
-        return Config(
-            wifi=WifiConfigFactory.create_cudy(),
-            websocket=WebsocketConfigFactory.create_prod(),
-            device_id="LOST-CUDY-ESP",
-            debug_mode=True,
-            heartbeat_interval=15
-        )
-    
     @staticmethod
     def create_cudy_stranger_config():
         return Config(
@@ -96,17 +72,6 @@ class ConfigFactory:
             heartbeat_interval=15
         )
     
-    @staticmethod
-    def create_cudy_depth_config():
-        return Config(
-            wifi=WifiConfigFactory.create_cudy(),
-            websocket=WebsocketConfigFactory.create_prod(),
-            depth=DepthConfigFactory.create_default_child(),
-            device_id="DEPTH-CUDY-ESP",
-            debug_mode=True,
-            heartbeat_interval=15
-        )
-
     @staticmethod
     def create_ethan_house_config():
         return Config(
@@ -138,16 +103,6 @@ class ConfigFactory:
             heartbeat_interval=15
         )
 
-    @staticmethod
-    def create_lost_config():
-        return Config(
-            wifi=WifiConfigFactory.create_appartment_aix(),
-            websocket=WebsocketConfigFactory.create_prod(),
-            device_id="LOST_ESP",
-            debug_mode=True,
-            heartbeat_interval=15
-        )
-    
     @staticmethod
     def create_default_config():
         return Config()
