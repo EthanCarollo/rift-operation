@@ -1,6 +1,3 @@
-from machine import Pin
-from libs.mfrc.mfrc522 import MFRC522
-import time
 from .RfidReader import RFIDReader
 
 class RFIDFactory:
