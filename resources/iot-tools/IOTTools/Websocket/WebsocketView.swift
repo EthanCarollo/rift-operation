@@ -14,7 +14,7 @@ final class RiftWebSocketClient: ObservableObject {
 
     // Config de base pour ton serveur Rift
     struct Config {
-        let url = URL(string: "ws://172.28.55.66:3000/ws")!
+        let url = URL(string: "ws://server.riftoperation.ethan-folio.fr/ws")!
         let deviceId = "sphero-forest-ios-01"
         let workshop = "forest"
         let role = "sphero"

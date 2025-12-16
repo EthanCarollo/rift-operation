@@ -4,7 +4,7 @@ struct RobotView: View {
 
     // MARK: - UI State
     @State private var useRover: Bool = false
-    @State private var bluetoothName: String = "SB-808F"
+    @State private var bluetoothName: String = "SB-2020"
     @State private var robot: Robot? = nil
 
     @State private var sensorText: String = ""

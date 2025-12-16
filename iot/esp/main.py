@@ -11,7 +11,7 @@ from src.Core.Controller.LostController import LostController
 gc.collect()
 
 try:
-    config = ConfigFactory.create_lost_config()
+    config = ConfigFactory.create_cudy_config()
 
     controller = TableController(config)
     # controller = StrangerController(config)
