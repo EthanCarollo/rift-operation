@@ -1,12 +1,13 @@
 from src.Framework.Button.Button import Button, ButtonDelegate
-from src.Framework.EspController import EspController
+from src.Core.Stranger.State.StrangerControllerState import StrangerControllerState
 
 """
 Not really used atm, but used to test after all in fact
 """
 class StrangerWebSocketButtonDelegate(ButtonDelegate):
-    def __init__(self, controller: EspController):
-        self.controller = controller
+    def __init__(self, controller_state: StrangerControllerState):
+        self.controller_state = controller_state
 
     def on_click(self):
-        print("clicked on button")
+        print("Recognize button")
+        self.controller_state.recognize_stranger()
