@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Led Controller - Animation Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --surface-variant: #2d2d2d;
+            --primary: #bb86fc;
+            --secondary: #03dac6;
+            --error: #cf6679;
+            --text: #e0e0e0;
+            --text-secondary: #a0a0a0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: var(--surface-variant);
+            color: var(--text);
+            border: 1px solid #444;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: #3d3d3d;
+            border-color: #666;
+        }
+
+        button.primary {
+            background: var(--primary);
+            color: #000;
+            border: none;
+        }
+
+        button.primary:hover {
+            opacity: 0.9;
+        }
+
+        button.danger {
+            color: var(--error);
+            border-color: var(--error);
+            background: transparent;
+        }
+
+        button.danger:hover {
+            background: rgba(207, 102, 121, 0.1);
+        }
+
+        select {
+            background: var(--surface-variant);
+            color: var(--text);
+            border: 1px solid #444;
+            padding: 8px;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        /* Preview */
+        .preview-box {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-strip {
+            height: 40px;
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .pixel {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Timeline / Frames */
+        .frames-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .frame-item {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            transition: transform 0.2s;
+        }
+
+        .frame-item:hover {
+            border-color: #555;
+        }
+
+        .frame-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .frame-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .time-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"] {
+            background: var(--surface-variant);
+            border: 1px solid #444;
+            color: white;
+            padding: 6px;
+            border-radius: 4px;
+            width: 70px;
+            font-family: inherit;
+        }
+
+        /* Gradient Editor */
+        .gradient-editor-wrapper {
+            padding: 0 10px;
+            /* Space for handles at edges */
+        }
+
+        .gradient-track {
+            height: 36px;
+            position: relative;
+            background: linear-gradient(to right, black, black);
+            border-radius: 6px;
+            cursor: copy;
+            /* Indicates adding a point */
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .color-handle {
+            position: absolute;
+            top: -4px;
+            width: 12px;
+            height: 44px;
+            /* Extends above and below */
+            background: white;
+            border: 2px solid #333;
+            border-radius: 4px;
+            cursor: grab;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        .color-handle:active {
+            cursor: grabbing;
+            border-color: white;
+        }
+
+        .color-handle:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        /* JSON Modal/Area */
+        .json-area {
+            width: 100%;
+            height: 150px;
+            background: #111;
+            color: #9cdcfe;
+            font-family: 'Monaco', monospace;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            box-sizing: border-box;
+            display: none;
+            /* Hidden by default */
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="top-bar">
+            <div>
+                <h1>Led Controller</h1>
+                <h2>Animation Studio</h2>
+            </div>
+            <div class="action-group">
+                <select id="presetSelect" onchange="loadPreset()">
+                    <option value="">Load Preset...</option>
+                    <option value="police">Police Lights</option>
+                    <option value="rainbow">Rainbow Wave</option>
+                    <option value="pulse">Blue Pulse</option>
+                </select>
+                <button onclick="toggleJson()">Toggle JSON</button>
+            </div>
+        </div>
+
+        <div class="preview-box">
+            <div class="preview-controls">
+                <span><strong>Live Preview</strong></span>
+                <div class="action-group">
+                    <button class="primary" id="btnPlay" onclick="playPreview()">▶ Play</button>
+                    <button class="danger" id="btnStop" onclick="stopPreview()">■ Stop</button>
+                </div>
+            </div>
+            <div class="preview-strip" id="previewStrip"></div>
+        </div>
+
+        <div id="framesContainer" class="frames-list"></div>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <button onclick="addFrame()" style="width: 100%; padding: 15px; border-style: dashed;">+ Add Frame</button>
+        </div>
+
+        <textarea id="jsonOutput" class="json-area" placeholder="JSON will appear here..."></textarea>
+    </div>
+
+    <script>
+        // --- DATA MODEL ---
+        let animation = {
+            name: "My Animation",
+            frames: [
+                {
+                    time: 500,
+                    colors: [
+                        { color: "255,0,0", position: 0 },
+                        { color: "0,0,255", position: 100 }
+                    ]
+                }
+            ]
+        };
+
+        const NUM_PIXELS = 30; // Better preview resolution
+        let draggedHandle = null;
+        let playInterval = null;
+
+        // --- PRESETS ---
+        const PRESETS = {
+            police: {
+                frames: [
+                    { time: 150, colors: [{ color: "255,0,0", position: 0 }, { color: "255,0,0", position: 45 }, { color: "0,0,0", position: 50 }, { color: "0,0,255", position: 55 }, { color: "0,0,255", position: 100 }] },
+                    { time: 150, colors: [{ color: "0,0,255", position: 0 }, { color: "0,0,255", position: 45 }, { color: "0,0,0", position: 50 }, { color: "255,0,0", position: 55 }, { color: "255,0,0", position: 100 }] }
+                ]
+            },
+            pulse: {
+                frames: [
+                    { time: 1000, colors: [{ color: "0,0,0", position: 0 }, { color: "0,0,255", position: 50 }, { color: "0,0,0", position: 100 }] },
+                    { time: 1000, colors: [{ color: "0,0,50", position: 0 }, { color: "0,0,100", position: 50 }, { color: "0,0,50", position: 100 }] }
+                ]
+            },
+            rainbow: {
+                frames: [
+                    { time: 2000, colors: [{ color: "255,0,0", position: 0 }, { color: "0,255,0", position: 33 }, { color: "0,0,255", position: 66 }, { color: "255,0,0", position: 100 }] },
+                    { time: 2000, colors: [{ color: "0,0,255", position: 0 }, { color: "255,0,0", position: 33 }, { color: "0,255,0", position: 66 }, { color: "0,0,255", position: 100 }] }
+                ]
+            }
+        };
+
+        function init() {
+            // Setup Preview
+            const strip = document.getElementById('previewStrip');
+            strip.innerHTML = '';
+            for (let i = 0; i < NUM_PIXELS; i++) {
+                const px = document.createElement('div');
+                px.className = 'pixel';
+                px.id = 'px-' + i;
+                strip.appendChild(px);
+            }
+
+            // Global Mouse Up for drag end
+            document.addEventListener('mouseup', () => {
+                if (draggedHandle) {
+                    if (!draggedHandle.hasMoved) {
+                        // It was a click!
+                        openColorPicker(draggedHandle.frameIndex, draggedHandle.colorIndex);
+                    }
+                    draggedHandle = null;
+                    renderUI(); // Re-render to update standard sorts
+                }
+            });
+
+            // Global Mouse Move for dragging
+            document.addEventListener('mousemove', (e) => {
+                if (draggedHandle) {
+                    onHandleDrag(e);
+                }
+            });
+
+            renderUI();
+        }
+
+        // --- CORE UI ---
+        function renderUI() {
+            const container = document.getElementById('framesContainer');
+            // Store scroll pos or keep simple? Simple re-render for now. 
+            // Ideally we'd patch updates, but full re-render is safer for logic.
+            container.innerHTML = '';
+
+            // Sync JSON
+            document.getElementById('jsonOutput').value = JSON.stringify(animation, null, 4);
+
+            animation.frames.forEach((frame, index) => {
+                const el = document.createElement('div');
+                el.className = 'frame-item';
+
+                // Gradient Background Calculation
+                const sortedColors = [...frame.colors].sort((a, b) => a.position - b.position);
+                const stopsStr = sortedColors.map(c => `rgb(${c.color}) ${c.position}%`).join(', ');
+
+                el.innerHTML = `
+                    <div class="frame-header">
+                        <span class="frame-title">Frame ${index + 1}</span>
+                        <div class="time-control">
+                            <span>Duration(ms):</span>
+                            <input type="number" value="${frame.time}" onchange="updateTime(${index}, this.value)">
+                            <button class="danger" onclick="removeFrame(${index})">Remove</button>
+                        </div>
+                    </div>
+                    
+                    <div class="gradient-editor-wrapper">
+                        <div class="gradient-track" id="track-${index}" 
+                             style="background: linear-gradient(to right, ${stopsStr});"
+                             onclick="addStop(${index}, event)">
+                             <!-- Handles injected here -->
+                        </div>
+                    </div>
+                    <div style="margin-top:5px; text-align:right; font-size:0.8rem; color:#666;">
+                        Left-click track to add. Drag handles. Right-click handle to delete. Click handle to color.
+                    </div>
+                `;
+                container.appendChild(el);
+
+                // Inject Handles
+                const track = document.getElementById(`track-${index}`);
+                frame.colors.forEach((c, cIndex) => {
+                    const handle = document.createElement('div');
+                    handle.className = 'color-handle';
+                    handle.style.left = c.position + '%';
+                    handle.style.background = `rgb(${c.color})`;
+
+                    // Mouse Down -> Start Drag
+                    handle.onmousedown = (e) => {
+                        e.stopPropagation(); // Don't trigger addStop
+                        draggedHandle = {
+                            frameIndex: index,
+                            colorIndex: cIndex,
+                            startX: e.clientX,
+                            hasMoved: false,
+                            rect: track.getBoundingClientRect()
+                        };
+                    };
+
+                    // Right Click -> Delete
+                    handle.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (frame.colors.length > 1) {
+                            frame.colors.splice(cIndex, 1);
+                            renderUI();
+                        }
+                    };
+
+                    track.appendChild(handle);
+                });
+            });
+        }
+
+        // --- INTERACTION ---
+        function onHandleDrag(e) {
+            if (!draggedHandle) return;
+
+            // Check threshold to avoid accidental micro-drags being interpreted as moves
+            if (!draggedHandle.hasMoved && Math.abs(e.clientX - draggedHandle.startX) > 3) {
+                draggedHandle.hasMoved = true;
+            }
+
+            if (draggedHandle.hasMoved) {
+                const h = draggedHandle;
+                const dx = e.clientX - h.rect.left;
+                let pct = (dx / h.rect.width) * 100;
+                pct = Math.max(0, Math.min(100, Math.round(pct)));
+
+                animation.frames[h.frameIndex].colors[h.colorIndex].position = pct;
+
+                // We re-render to encourage smooth preview updates, 
+                // though it might be heavy. 
+                renderUI();
+            }
+        }
+
+        function openColorPicker(frameIndex, colorIndex) {
+            const c = animation.frames[frameIndex].colors[colorIndex];
+            const input = document.createElement('input');
+            input.type = 'color';
+
+            const rgb = c.color.split(',').map(Number);
+            const hex = "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
+            input.value = hex;
+
+            input.oninput = (ev) => {
+                const r = parseInt(input.value.substr(1, 2), 16);
+                const g = parseInt(input.value.substr(3, 2), 16);
+                const b = parseInt(input.value.substr(5, 2), 16);
+                c.color = `${r},${g},${b}`;
+                renderUI();
+            };
+
+            input.click();
+        }
+
+        function addStop(frameIndex, event) {
+            // Prevent adding if clicking existing handle (handled by stopPropagation)
+            const rect = event.target.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const pct = Math.max(0, Math.min(100, Math.round((x / rect.width) * 100)));
+
+            animation.frames[frameIndex].colors.push({
+                color: "255,255,255",
+                position: pct
+            });
+            renderUI();
+        }
+
+        function updateTime(index, val) {
+            animation.frames[index].time = parseInt(val);
+            renderUI();
+        }
+
+        function addFrame() {
+            animation.frames.push({
+                time: 500,
+                colors: [{ color: "0,0,0", position: 0 }, { color: "0,0,0", position: 100 }]
+            });
+            renderUI();
+        }
+
+        function removeFrame(index) {
+            if (animation.frames.length <= 1) return;
+            animation.frames.splice(index, 1);
+            renderUI();
+        }
+
+        function loadPreset() {
+            const val = document.getElementById('presetSelect').value;
+            if (PRESETS[val]) {
+                // Clone to avoid ref issues
+                animation.frames = JSON.parse(JSON.stringify(PRESETS[val].frames));
+                renderUI();
+            }
+        }
+
+        function toggleJson() {
+            const el = document.getElementById('jsonOutput');
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // --- PREVIEW PLAYER ---
+        async function playPreview() {
+            stopPreview();
+            let step = 0;
+            const run = async () => {
+                for (const frame of animation.frames) {
+                    if (!playInterval) return;
+                    drawFrameOnPreview(frame);
+                    await new Promise(r => setTimeout(r, frame.time));
+                }
+                if (playInterval) run(); // Loop
+            };
+            playInterval = true;
+            run();
+        }
+
+        function stopPreview() {
+            playInterval = false;
+        }
+
+        function drawFrameOnPreview(frame) {
+            const stops = frame.colors.map(c => ({
+                pos: c.position,
+                rgb: c.color.split(',').map(Number)
+            })).sort((a, b) => a.pos - b.pos);
+
+            for (let i = 0; i < NUM_PIXELS; i++) {
+                const pct = (i / (NUM_PIXELS - 1)) * 100;
+                let start = stops[0], end = stops[stops.length - 1];
+
+                if (pct <= start.pos) { start = start; end = start; }
+                else if (pct >= end.pos) { start = end; end = end; }
+                else {
+                    for (let j = 0; j < stops.length - 1; j++) {
+                        if (pct >= stops[j].pos && pct <= stops[j + 1].pos) {
+                            start = stops[j]; end = stops[j + 1]; break;
+                        }
+                    }
+                }
+
+                const range = end.pos - start.pos;
+                const ratio = range === 0 ? 0 : (pct - start.pos) / range;
+
+                const r = Math.round(start.rgb[0] + (end.rgb[0] - start.rgb[0]) * ratio);
+                const g = Math.round(start.rgb[1] + (end.rgb[1] - start.rgb[1]) * ratio);
+                const b = Math.round(start.rgb[2] + (end.rgb[2] - start.rgb[2]) * ratio);
+
+                document.getElementById('px-' + i).style.backgroundColor = `rgb(${r},${g},${b})`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
