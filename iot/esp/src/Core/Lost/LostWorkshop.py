@@ -13,6 +13,8 @@ class LostWorkshop:
         # Delegate logging to a dedicated helper, using controller's logger
         self.logger = LostLogger(controller.logger)
         
+        self.hardware = None
+        
         # State & Config
         self.current_step_delay = LC.DEFAULT_STEP_DELAY
         self._last_payload = None
@@ -21,6 +23,25 @@ class LostWorkshop:
         
         # Initialize State
         asyncio.create_task(self.swap_state(LostStateIdle(self)))
+
+    def attach_hardware(self, hardware):
+        self.hardware = hardware
+
+    def on_rfid_read(self, uid):
+        self.logger.logger.info(f"Workshop RFID Event: {uid}")
+        # Pass to current state
+        if self.state and hasattr(self.state, "handle_rfid"):
+             # We need to make this async safe or call generic handle
+             # Since this is called from main loop (sync), we should task it?
+             # But handle_rfid in State might want to be async.
+             # Actually on_read comes from hardware.update() which is called in update() which is async!
+             # Wait, Controller.update() is async def update(self).
+             # It calls self.hardware.update().
+             # Hardware.update() calls rfid.check() which is sync.
+             # rfid.check() calls delegate.on_read().
+             # So we are inside async loop but in a sync stack.
+             # We can spawn a task.
+             asyncio.create_task(self.state.handle_rfid(uid))
 
     async def swap_state(self, new_state):
         try:

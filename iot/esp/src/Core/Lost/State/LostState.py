@@ -18,6 +18,10 @@ class LostState:
         """Handle WebSocket message payload"""
         pass
 
+    async def handle_rfid(self, uid):
+        """Handle RFID tag read"""
+        pass
+
     async def handle_button(self):
         """Handle button press"""
         # Default behavior: log and next step
