@@ -1,0 +1,601 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		331A4CF92EF1607500C6D459 /* Pappe in Frameworks */ = {isa = PBXBuildFile; productRef = 331A4CF82EF1607500C6D459 /* Pappe */; };
+		33BD99F52EF1715700EAA4D4 /* swift_sphero_roverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33BD99D92EF1715700EAA4D4 /* swift_sphero_roverApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		331A4CA22EF150F000C6D459 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 331A4C8C2EF150ED00C6D459 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 331A4C932EF150ED00C6D459;
+			remoteInfo = "swift-sphero-rover";
+		};
+		331A4CAC2EF150F000C6D459 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 331A4C8C2EF150ED00C6D459 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 331A4C932EF150ED00C6D459;
+			remoteInfo = "swift-sphero-rover";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		331A4C942EF150ED00C6D459 /* swift-sphero-rover.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "swift-sphero-rover.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		331A4CA12EF150F000C6D459 /* swift-sphero-roverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "swift-sphero-roverTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		331A4CAB2EF150F000C6D459 /* swift-sphero-roverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "swift-sphero-roverUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		33BD99D92EF1715700EAA4D4 /* swift_sphero_roverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = swift_sphero_roverApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		331A4C962EF150ED00C6D459 /* swift-sphero-rover */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "swift-sphero-rover";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		331A4C912EF150ED00C6D459 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				331A4CF92EF1607500C6D459 /* Pappe in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331A4C9E2EF150F000C6D459 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331A4CA82EF150F000C6D459 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		331A4C8B2EF150ED00C6D459 = {
+			isa = PBXGroup;
+			children = (
+				331A4C962EF150ED00C6D459 /* swift-sphero-rover */,
+				331A4C952EF150ED00C6D459 /* Products */,
+				33BD99D92EF1715700EAA4D4 /* swift_sphero_roverApp.swift */,
+			);
+			sourceTree = "<group>";
+		};
+		331A4C952EF150ED00C6D459 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				331A4C942EF150ED00C6D459 /* swift-sphero-rover.app */,
+				331A4CA12EF150F000C6D459 /* swift-sphero-roverTests.xctest */,
+				331A4CAB2EF150F000C6D459 /* swift-sphero-roverUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		331A4C932EF150ED00C6D459 /* swift-sphero-rover */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 331A4CB52EF150F000C6D459 /* Build configuration list for PBXNativeTarget "swift-sphero-rover" */;
+			buildPhases = (
+				331A4C902EF150ED00C6D459 /* Sources */,
+				331A4C912EF150ED00C6D459 /* Frameworks */,
+				331A4C922EF150ED00C6D459 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				331A4C962EF150ED00C6D459 /* swift-sphero-rover */,
+			);
+			name = "swift-sphero-rover";
+			packageProductDependencies = (
+				331A4CF82EF1607500C6D459 /* Pappe */,
+			);
+			productName = "swift-sphero-rover";
+			productReference = 331A4C942EF150ED00C6D459 /* swift-sphero-rover.app */;
+			productType = "com.apple.product-type.application";
+		};
+		331A4CA02EF150F000C6D459 /* swift-sphero-roverTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 331A4CB82EF150F000C6D459 /* Build configuration list for PBXNativeTarget "swift-sphero-roverTests" */;
+			buildPhases = (
+				331A4C9D2EF150F000C6D459 /* Sources */,
+				331A4C9E2EF150F000C6D459 /* Frameworks */,
+				331A4C9F2EF150F000C6D459 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				331A4CA32EF150F000C6D459 /* PBXTargetDependency */,
+			);
+			name = "swift-sphero-roverTests";
+			packageProductDependencies = (
+			);
+			productName = "swift-sphero-roverTests";
+			productReference = 331A4CA12EF150F000C6D459 /* swift-sphero-roverTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		331A4CAA2EF150F000C6D459 /* swift-sphero-roverUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 331A4CBB2EF150F000C6D459 /* Build configuration list for PBXNativeTarget "swift-sphero-roverUITests" */;
+			buildPhases = (
+				331A4CA72EF150F000C6D459 /* Sources */,
+				331A4CA82EF150F000C6D459 /* Frameworks */,
+				331A4CA92EF150F000C6D459 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				331A4CAD2EF150F000C6D459 /* PBXTargetDependency */,
+			);
+			name = "swift-sphero-roverUITests";
+			packageProductDependencies = (
+			);
+			productName = "swift-sphero-roverUITests";
+			productReference = 331A4CAB2EF150F000C6D459 /* swift-sphero-roverUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		331A4C8C2EF150ED00C6D459 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					331A4C932EF150ED00C6D459 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					331A4CA02EF150F000C6D459 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 331A4C932EF150ED00C6D459;
+					};
+					331A4CAA2EF150F000C6D459 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 331A4C932EF150ED00C6D459;
+					};
+				};
+			};
+			buildConfigurationList = 331A4C8F2EF150ED00C6D459 /* Build configuration list for PBXProject "swift-sphero-rover" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 331A4C8B2EF150ED00C6D459;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				331A4CF72EF1607500C6D459 /* XCRemoteSwiftPackageReference "Pappe" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 331A4C952EF150ED00C6D459 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				331A4C932EF150ED00C6D459 /* swift-sphero-rover */,
+				331A4CA02EF150F000C6D459 /* swift-sphero-roverTests */,
+				331A4CAA2EF150F000C6D459 /* swift-sphero-roverUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		331A4C922EF150ED00C6D459 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331A4C9F2EF150F000C6D459 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331A4CA92EF150F000C6D459 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		331A4C902EF150ED00C6D459 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				33BD99F52EF1715700EAA4D4 /* swift_sphero_roverApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331A4C9D2EF150F000C6D459 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		331A4CA72EF150F000C6D459 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		331A4CA32EF150F000C6D459 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 331A4C932EF150ED00C6D459 /* swift-sphero-rover */;
+			targetProxy = 331A4CA22EF150F000C6D459 /* PBXContainerItemProxy */;
+		};
+		331A4CAD2EF150F000C6D459 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 331A4C932EF150ED00C6D459 /* swift-sphero-rover */;
+			targetProxy = 331A4CAC2EF150F000C6D459 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		331A4CB32EF150F000C6D459 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		331A4CB42EF150F000C6D459 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		331A4CB62EF150F000C6D459 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_KEY_CFBundleDisplayName = "RiftOperation-Robots";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses bluetooth to connect to robot";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "astro.swift-sphero-rover";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		331A4CB72EF150F000C6D459 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_KEY_CFBundleDisplayName = "RiftOperation-Robots";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses bluetooth to connect to robot";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "astro.swift-sphero-rover";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		331A4CB92EF150F000C6D459 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "astro.swift-sphero-roverTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/swift-sphero-rover.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/swift-sphero-rover";
+			};
+			name = Debug;
+		};
+		331A4CBA2EF150F000C6D459 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "astro.swift-sphero-roverTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/swift-sphero-rover.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/swift-sphero-rover";
+			};
+			name = Release;
+		};
+		331A4CBC2EF150F000C6D459 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				GENERATE_INFOPLIST_FILE = NO;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "astro.swift-sphero-roverUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "swift-sphero-rover";
+			};
+			name = Debug;
+		};
+		331A4CBD2EF150F000C6D459 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 79S5R9NC4X;
+				GENERATE_INFOPLIST_FILE = NO;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "astro.swift-sphero-roverUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "swift-sphero-rover";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		331A4C8F2EF150ED00C6D459 /* Build configuration list for PBXProject "swift-sphero-rover" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				331A4CB32EF150F000C6D459 /* Debug */,
+				331A4CB42EF150F000C6D459 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		331A4CB52EF150F000C6D459 /* Build configuration list for PBXNativeTarget "swift-sphero-rover" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				331A4CB62EF150F000C6D459 /* Debug */,
+				331A4CB72EF150F000C6D459 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		331A4CB82EF150F000C6D459 /* Build configuration list for PBXNativeTarget "swift-sphero-roverTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				331A4CB92EF150F000C6D459 /* Debug */,
+				331A4CBA2EF150F000C6D459 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		331A4CBB2EF150F000C6D459 /* Build configuration list for PBXNativeTarget "swift-sphero-roverUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				331A4CBC2EF150F000C6D459 /* Debug */,
+				331A4CBD2EF150F000C6D459 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		331A4CF72EF1607500C6D459 /* XCRemoteSwiftPackageReference "Pappe" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/frameworklabs/Pappe";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		331A4CF82EF1607500C6D459 /* Pappe */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 331A4CF72EF1607500C6D459 /* XCRemoteSwiftPackageReference "Pappe" */;
+			productName = Pappe;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 331A4C8C2EF150ED00C6D459 /* Project object */;
+}
