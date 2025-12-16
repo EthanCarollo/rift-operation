@@ -1,8 +1,6 @@
 from src.Core.Stranger.State.StrangerControllerState import StrangerControllerState
 from src.Framework.Rfid.RfidFactory import RFIDFactory
-print("passed top")
 from src.Core.Stranger.Rfid.StrangerRfidDelegate import StrangerRFIDDelegate
-print("didnt passed bottom")
 from machine import SPI, Pin
 
 class StrangerActiveState(StrangerControllerState):
@@ -36,4 +34,5 @@ class StrangerActiveState(StrangerControllerState):
 
 
     def update(self):
+        self.rfid_letter_1.check()
         pass
