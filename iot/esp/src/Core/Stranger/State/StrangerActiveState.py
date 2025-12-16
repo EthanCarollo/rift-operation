@@ -17,11 +17,19 @@ class StrangerActiveState(StrangerControllerState):
             miso=Pin(19)
         )
 
-        self.rfid_letter_1 = RFIDFactory.create_reader(
+        self.rfid_letter_3 = RFIDFactory.create_reader(
+            spi=spi, 
+            cs_pin=17, 
+            rst_pin=21, 
+            delegate= StrangerRFIDDelegate(),
+            name= "Letter_3_RFID_Stranger"
+        )
+        self.rfid_letter_4 = RFIDFactory.create_reader(
             spi=spi, 
             cs_pin=5, 
             rst_pin=22, 
-            delegate= StrangerRFIDDelegate()
+            delegate= StrangerRFIDDelegate(),
+            name= "Letter_4_RFID_Stranger"
         )
 
     def process_json_message(self, json):
@@ -32,7 +40,10 @@ class StrangerActiveState(StrangerControllerState):
         from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
         self.controller.swap_state(StrangerInactiveState(self.controller))
 
+    def give_card(self):
+        pass
 
     def update(self):
-        self.rfid_letter_1.check()
+        self.rfid_letter_3.check()
+        self.rfid_letter_4.check()
         pass

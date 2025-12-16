@@ -14,17 +14,17 @@ class RFIDFactory:
 
     (Exemple en dessous)
 
-    - Lecteur 1 :
+    - Lecteur 2 (optionnel) :
+        CS (SDA) -> GPIO 16
+        RST -> GPIO 4
+
+    - Lecteur 3 :
+        CS (SDA) -> GPIO 17
+        RST -> GPIO 21
+
+    - Lecteur 4 :
         CS (SDA) -> GPIO 5
         RST -> GPIO 22
-
-    - Lecteur 2 :
-        CS (SDA) -> GPIO 17
-        RST (SDA) -> GPIO 21
-
-    - Lecteur 3 (optionnel) :
-        CS (SDA) -> GPIO 16
-        RST (SDA) -> GPIO 4
     """
 
     @staticmethod
