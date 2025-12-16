@@ -319,10 +319,27 @@ function onColorPicked(e) {
 
 
 // --- PREVIEW PLAYER ---
-function calculateFramePixels(frame) {
+function parseColor(colorStr) {
+    if (!colorStr) return [0, 0, 0];
+    return colorStr.split(',').map(Number);
+}
+
+function lerp(start, end, t) {
+    return start + (end - start) * t;
+}
+
+function lerpColor(c1, c2, t) {
+    const r = Math.round(lerp(c1[0], c2[0], t));
+    const g = Math.round(lerp(c1[1], c2[1], t));
+    const b = Math.round(lerp(c1[2], c2[2], t));
+    return `rgb(${r},${g},${b})`;
+}
+
+// Calculate pixels for a specific frame configuration
+function calculatePixelsForFrame(frame) {
     const stops = frame.colors.map(c => ({
         pos: c.position,
-        rgb: c.color.split(',').map(Number)
+        rgb: parseColor(c.color)
     })).sort((a, b) => a.pos - b.pos);
     
     const pixels = [];
@@ -347,7 +364,7 @@ function calculateFramePixels(frame) {
         const g = Math.round(start.rgb[1] + (end.rgb[1] - start.rgb[1]) * ratio);
         const b = Math.round(start.rgb[2] + (end.rgb[2] - start.rgb[2]) * ratio);
         
-        pixels.push(`rgb(${r},${g},${b})`);
+        pixels.push([r, g, b]); // Return array [r,g,b] for easier lerping later
     }
     return pixels;
 }
@@ -356,19 +373,69 @@ async function playPreview() {
     if (isPlaying.value) return;
     isPlaying.value = true;
     
+    let frameIdx = 0;
+    
     const loop = async () => {
-        for (const frame of animation.frames) {
-             if (!isPlaying.value) break;
-             previewPixels.value = calculateFramePixels(frame);
-             await new Promise(r => setTimeout(r, frame.time));
+        if (!isPlaying.value) return;
+        
+        // Safety check if frames exist
+        if (animation.frames.length === 0) {
+             stopPreview();
+             return;
         }
-        if (isPlaying.value) loop();
+
+        const currentFrame = animation.frames[frameIdx];
+        const nextIdx = (frameIdx + 1) % animation.frames.length;
+        const nextFrame = animation.frames[nextIdx];
+        
+        // Calculate start and end states for pixels
+        const startPixels = calculatePixelsForFrame(currentFrame);
+        const endPixels = calculatePixelsForFrame(nextFrame);
+        
+        const duration = currentFrame.time > 0 ? currentFrame.time : 100; // Minimum duration safety
+        const startTime = performance.now();
+        
+        // Animation Loop for this transition
+        // We use a promise to await the completion of this segment
+        await new Promise(resolve => {
+            const tick = (now) => {
+                if (!isPlaying.value) {
+                    resolve();
+                    return;
+                }
+                
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1.0);
+                
+                // Render interpolated pixels
+                const rendered = startPixels.map((p1, i) => {
+                    const p2 = endPixels[i];
+                    return lerpColor(p1, p2, progress);
+                });
+                previewPixels.value = rendered;
+                
+                if (progress < 1.0) {
+                    requestAnimationFrame(tick);
+                } else {
+                    resolve();
+                }
+            };
+            requestAnimationFrame(tick);
+        });
+        
+        // Move to next frame
+        if (isPlaying.value) {
+            frameIdx = nextIdx;
+            loop(); // Recursion (could use while loop but this is cleaner for async)
+        }
     };
+    
     loop();
 }
 
 function stopPreview() {
     isPlaying.value = false;
+    // Reset to black? Or keep last state? Keeping last state is fine.
 }
 
 </script>
