@@ -11,12 +11,12 @@ from src.Core.Controller.LostController import LostController
 gc.collect()
 
 try:
-    config = ConfigFactory.create_cudy_config()
+    config = ConfigFactory.create_cudy_stranger_config()
 
-    controller = TableController(config)
-    # controller = StrangerController(config)
+    # controller = TableController(config)
+    controller = StrangerController(config)
     # controller = DepthController(config)
-    controller = LostController(config)
+    # controller = LostController(config)
 
     asyncio.run(controller.main())
 

@@ -77,6 +77,37 @@ class DepthConfigFactory:
 
 class ConfigFactory:
     @staticmethod
+    def create_cudy_lost_config():
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id="LOST-CUDY-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+    
+    @staticmethod
+    def create_cudy_stranger_config():
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id="STRANGER-CUDY-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+    
+    @staticmethod
+    def create_cudy_depth_config():
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            depth=DepthConfigFactory.create_default_child(),
+            device_id="DEPTH-CUDY-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
+    @staticmethod
     def create_ethan_house_config():
         return Config(
             wifi=WifiConfigFactory.create_ethan_house(),
