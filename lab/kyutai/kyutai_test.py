@@ -38,7 +38,7 @@ if __name__ == "__main__":
             args.hf_repo = "kyutai/stt-1b-en_fr-mlx"
     
     # Download in kyutai_model directory
-    local_dir = "kyutai_model"
+    local_dir = "rift-pinguin/Moshi/kyutai-model"
     lm_config = hf_hub_download(args.hf_repo, "config.json", local_dir=local_dir)
     with open(lm_config, "r") as fobj:
         lm_config = json.load(fobj)
