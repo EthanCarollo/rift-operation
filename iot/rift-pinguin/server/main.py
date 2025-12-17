@@ -12,14 +12,13 @@ from moshi_mlx import models, utils
 
 app = FastAPI()
 
-# Global variables for model and tokenizer
+# Global variables for model and tokenizer - MUST be declared before load_model()
 model = None
 audio_tokenizer = None
 text_tokenizer = None
 gen = None
 other_codebooks = 0
 lm_config = None
-
 MODEL_loaded = False
 
 def load_model():
@@ -69,15 +68,9 @@ def load_model():
     print("Warming up model...")
     model.warmup()
     
-    # Initialize Generator
-    # Note: We create a generator instance per session or reuse one? 
-    # kyutai_test.py creates one. LmGen keeps state (cache). 
-    # For a server handling multiple clients, we arguably need one per client.
-    # But for now, we will assume single client usage or re-instantiate for simplicity first, 
-    # or check if LmGen is reset-able. LmGen seems to hold cache.
-    
     MODEL_loaded = True
     print("Model loaded.")
+
 
 # Load model on startup
 load_model()
@@ -88,67 +81,89 @@ async def audio_websocket(websocket: WebSocket):
     print("Client connected")
     
     # Create a fresh generator for this session
-    # We are sharing the model (weights), but need separate state (cache) for generation.
-    # models.LmGen takes the model. If LmGen modifies model state, we are in trouble.
-    # Looking at moshi_mlx, LmGen usually maintains the KVCache.
-    # Let's inspect LmGen in moshi_mlx if possible, but assuming standard autoregressive pattern, 
-    # cache is passed or stored in LmGen.
-    
     local_gen = models.LmGen(
         model=model,
-        max_steps=4096, # Or unlimited/loop?
+        max_steps=4096,
         text_sampler=utils.Sampler(top_k=25, temp=0),
         audio_sampler=utils.Sampler(top_k=250, temp=0.8),
         check=False,
     )
     
+    chunk_count = 0
+    
     try:
         while True:
             # Receive audio data
-            # Expecting raw bytes of float32, 24000Hz, mono.
             data = await websocket.receive_bytes()
+            chunk_count += 1
+            
+            # DEBUG: Log received data info
+            print(f"[Chunk {chunk_count}] Received {len(data)} bytes")
             
             # Convert to numpy array
             audio_chunk = np.frombuffer(data, dtype=np.float32)
             
-            # Process generic chunk size
-            # The model in kyutai_test.py processes blocks in a loop.
-            # We need to feed 'audio_tokenizer.encode_step'
-            # audio_tokenizer.encode_step expects (channels, samples) -> (1, N)
+            # DEBUG: Log audio stats
+            print(f"  -> {len(audio_chunk)} float32 samples, min={audio_chunk.min():.4f}, max={audio_chunk.max():.4f}, mean={audio_chunk.mean():.4f}")
             
-            # Adapt input to shape (1, 1, N)
+            # Expected: kyutai_test uses blocksize=1920 samples at 24kHz
+            # That's 80ms of audio per block
+            # Check if we're getting reasonable chunk sizes
+            expected_samples = 1920  # What kyutai_test uses
+            print(f"  -> Expected ~{expected_samples} samples (80ms at 24kHz), got {len(audio_chunk)}")
+            
+            # Adapt input to shape (1, 1, N) for encode_step
             audio_chunk = audio_chunk[None, None, :] 
             
             other_audio_tokens = audio_tokenizer.encode_step(audio_chunk)
-            
-            # (1, 1, codebooks) after encode_step? 
-            # kyutai_test.py: 
-            # other_audio_tokens = mx.array(other_audio_tokens).transpose(0, 2, 1)[:, :, :other_codebooks]
-            
             other_audio_tokens = mx.array(other_audio_tokens).transpose(0, 2, 1)[:, :, :other_codebooks]
             
-            # Generate
-            # We are assuming VAD is OFF for now to match prompt "transcription" simply,
-            # or we can enable it. User asked to "use the kyutai model".
-            # kyutai_test.py defaults to no VAD if not specified, 
-            # but user didn't specify. I'll stick to simple first.
+            # DEBUG: Log token info
+            print(f"  -> Audio tokens shape: {other_audio_tokens.shape}")
             
-            text_token = local_gen.step(other_audio_tokens[0])
-            text_token = text_token[0].item()
-            
-            if text_token not in (0, 3): # 0=pad?, 3=eos?
-                text = text_tokenizer.id_to_piece(text_token)
-                text = text.replace("▁", " ")
-                # Send back to client
-                if text:
-                    await websocket.send_text(text)
+            # Process each frame separately if multiple frames returned
+            num_frames = other_audio_tokens.shape[1]
+            for frame_idx in range(num_frames):
+                # Extract single frame: shape (1, 32) -> what model expects
+                single_frame = other_audio_tokens[:, frame_idx:frame_idx+1, :]
+                
+                # Generate
+                text_token = local_gen.step(single_frame[0])
+                text_token = text_token[0].item()
+                
+                # DEBUG: Log token
+                if frame_idx == 0:  # Only log first frame to reduce noise
+                    print(f"  -> Text token: {text_token}")
+                
+                if text_token not in (0, 3):
+                    text = text_tokenizer.id_to_piece(text_token)
+                    text = text.replace("▁", " ")
+                    print(f"  -> Transcribed: '{text}'")
+                    if text:
+                        await websocket.send_text(text)
 
     except WebSocketDisconnect:
-        print("Client disconnected")
+        print(f"Client disconnected after {chunk_count} chunks")
     except Exception as e:
         print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
         await websocket.close()
+
 
 if __name__ == "__main__":
     import uvicorn
+    import socket
+    
+    # Get local IP address
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+    except Exception:
+        local_ip = "127.0.0.1"
+    finally:
+        s.close()
+    
+    print(f"Local network address: http://{local_ip}:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000)

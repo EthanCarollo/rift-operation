@@ -28,71 +28,128 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     }
     
     private func setupAudio() {
-        let inputNode = engine.inputNode
-        let inputFormat = inputNode.inputFormat(forBus: 0)
-        
-        guard let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 24000, channels: 1, interleaved: false) else { 
-            print("Failed to create target format")
-            DispatchQueue.main.async { self.errorMessage = "Audio format error" }
-            return 
-        }
-        
-        guard let converter = AVAudioConverter(from: inputFormat, to: targetFormat) else {
-            print("Failed to create converter")
-            DispatchQueue.main.async { self.errorMessage = "Audio converter error" }
+        print("[AudioStreamer] setupAudio() called")
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)
+            try session.setActive(true)
+            print("[AudioStreamer] Audio session configured successfully")
+        } catch {
+            print("[AudioStreamer] Failed to setup audio session: \(error)")
+            DispatchQueue.main.async { self.errorMessage = "Audio session error: \(error.localizedDescription)" }
             return
         }
         
-        inputNode.installTap(onBus: 0, bufferSize: 2048, format: inputFormat) { [weak self] (buffer, time) in
+        let inputNode = engine.inputNode
+        let hardwareFormat = inputNode.inputFormat(forBus: 0)
+        print("[AudioStreamer] Hardware format: \(hardwareFormat)")
+        print("[AudioStreamer] Sample rate: \(hardwareFormat.sampleRate), channels: \(hardwareFormat.channelCount)")
+        
+        // Check for valid format (prevent 0Hz error)
+        if hardwareFormat.sampleRate == 0 {
+            print("[AudioStreamer] ERROR: Invalid input format: 0Hz - microphone not available?")
+            DispatchQueue.main.async { self.errorMessage = "Microphone not available" }
+            return
+        }
+        
+        // Target: 24kHz, 1 channel, Float32 - what the server expects
+        guard let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 24000, channels: 1, interleaved: false) else { 
+            print("[AudioStreamer] ERROR: Failed to create target format")
+            DispatchQueue.main.async { self.errorMessage = "Audio format error" }
+            return 
+        }
+        print("[AudioStreamer] Target format: \(targetFormat)")
+        
+        // Install tap with the HARDWARE format (what the mic provides)
+        // Then convert manually using a properly configured converter
+        guard let converter = AVAudioConverter(from: hardwareFormat, to: targetFormat) else {
+            print("[AudioStreamer] ERROR: Failed to create converter")
+            DispatchQueue.main.async { self.errorMessage = "Audio converter error" }
+            return
+        }
+        print("[AudioStreamer] Converter created successfully")
+        
+        print("[AudioStreamer] Installing tap on input node with hardware format...")
+        // Use hardware format for tap - this is the key fix!
+        inputNode.installTap(onBus: 0, bufferSize: 4800, format: hardwareFormat) { [weak self] (buffer, time) in
             guard let self = self else { return }
             
+            // Calculate output frame count based on sample rate ratio
+            let ratio = targetFormat.sampleRate / hardwareFormat.sampleRate
+            let outputFrameCapacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio)
+            
+            guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: outputFrameCapacity) else {
+                print("[AudioStreamer] Failed to create output buffer")
+                return
+            }
+            
+            var error: NSError?
+            
+            // Use simple convert method for non-VBR formats
             let inputBlock: AVAudioConverterInputBlock = { inNumPackets, outStatus in
                 outStatus.pointee = .haveData
                 return buffer
             }
             
-            let ratio = 24000.0 / inputFormat.sampleRate
-            let capacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio)
+            let status = converter.convert(to: outputBuffer, error: &error, withInputFrom: inputBlock)
             
-            if let outputBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: capacity) {
-                var error: NSError? = nil
-                converter.convert(to: outputBuffer, error: &error, withInputFrom: inputBlock)
-                
-                if let error = error {
-                    print("Conversion error: \(error)")
-                    return
-                }
-                
+            if let error = error {
+                print("[AudioStreamer] Conversion error: \(error)")
+                return
+            }
+            
+            if status == .error {
+                print("[AudioStreamer] Conversion status: error")
+                return
+            }
+            
+            // Only send if we have frames
+            if outputBuffer.frameLength > 0 {
                 self.sendAudio(buffer: outputBuffer)
             }
         }
+        print("[AudioStreamer] Tap installed")
         
         do {
             try engine.start()
+            print("[AudioStreamer] Engine started successfully!")
             DispatchQueue.main.async {
                 self.isRecording = true
             }
         } catch {
-            print("Engine start error: \(error)")
+            print("[AudioStreamer] ERROR: Engine start error: \(error)")
             DispatchQueue.main.async {
                 self.errorMessage = "Could not start audio engine"
             }
         }
     }
     
+    private var sendCount = 0
+    
     private func sendAudio(buffer: AVAudioPCMBuffer) {
-        guard let floatChannelData = buffer.floatChannelData else { return }
+        guard let floatChannelData = buffer.floatChannelData else { 
+            print("[AudioStreamer] No float channel data!")
+            return 
+        }
         
         let frameLength = Int(buffer.frameLength)
+        if frameLength == 0 {
+            print("[AudioStreamer] Warning: buffer has 0 frames")
+            return
+        }
+        
         let dataSize = frameLength * MemoryLayout<Float>.size
         let data = Data(bytes: floatChannelData[0], count: dataSize)
         
-        // Ensure socket is ready or simply send and handle error
-        // Note: In robust app, we might want to check state
+        sendCount += 1
+        if sendCount <= 5 || sendCount % 50 == 0 {
+            print("[AudioStreamer] Sending chunk #\(sendCount): \(data.count) bytes, \(frameLength) samples")
+        }
+        
         let message = URLSessionWebSocketTask.Message.data(data)
         socket?.send(message) { error in
             if let error = error {
-                print("Send error: \(error)")
+                print("[AudioStreamer] Send error: \(error)")
             }
         }
     }
