@@ -1,5 +1,9 @@
 # Rift Operation
 
+<div align="center">
+  <img src="server/public/riftoperation.png" alt="Rift Operation Logo" width="100%" />
+</div>
+
 Vous êtes deux agents spéciaux déployés dans les mondes parallèles pour réparer une faille critique dans le tissu de la réalité onirique.
 
 ## Les Agents
@@ -20,6 +24,43 @@ Les deux agents doivent collaborer pour identifier la faille qui menace de fusio
 ## Contexte de la Mission
 
 Une faille critique s'est ouverte entre les mondes des rêves et des cauchemars. Des appareils IoT défaillants créent des perturbations dans le flux onirique, menaçant de fusionner ces deux réalités parallèles. Votre équipe doit intervenir pour restaurer l'équilibre fragile.
+
+## Structure du Projet
+
+```mermaid
+graph TD
+    Root[Rift Operation]
+    
+    subgraph IoT["IoT (ESP32)"]
+        ESP[Main Controller]
+        Framework[Framework]
+        Core[Core Logic]
+        Driver[Drivers]
+    end
+    
+    subgraph Server["Server (Node/Python)"]
+        Backend[Backend WS/HTTP]
+        Public[Public Assets]
+    end
+    
+    subgraph Tools["Tools (Nuxt 3)"]
+        Studio[Rift Studio]
+        Dashboard[Dashboard]
+    end
+
+    Root --> IoT
+    Root --> Server
+    Root --> Tools
+```
+
+- **iot/** : Code MicroPython pour les ESP32
+  - `esp/src/Framework` : Libs réutilisables
+  - `esp/src/Core` : Logique métier (Stranger, Lost, Depth...)
+- **server/** : Serveur Python/FastAPI gérant les WebSockets
+  - `public/` : Assets statiques (clients.html, logos...)
+- **tools/** : Application Nuxt 3 pour le développement et monitoring
+  - `app/` : Source Vue 3
+  - `server/` : API routes Nuxt
 
 ## Fonctionnalités Techniques
 

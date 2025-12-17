@@ -3,6 +3,10 @@ from src.Framework.Rfid.RfidFactory import RFIDFactory
 from src.Core.Stranger.Rfid.StrangerRfidDelegate import StrangerRFIDDelegate
 from machine import SPI, Pin
 
+from src.Framework.Servo.Servo import Servo
+from src.Framework.Servo.ServoDelegate import ServoDelegate
+
+
 class StrangerActiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
@@ -51,6 +55,10 @@ class StrangerActiveState(StrangerControllerState):
 
         self.detected_word = [None, None, None, None]
 
+        self.servo_motor = Servo(14, ServoDelegate())
+
+        self.servo_motor.off()
+
     def on_letter_detected(self, reader_name, letter):
         index = -1
         if reader_name == "Letter_1_RFID_Stranger": index = 0
@@ -82,9 +90,10 @@ class StrangerActiveState(StrangerControllerState):
         pass
 
     def recognize_stranger(self):
-        self.controller.logger.debug("Stranger has been recognized ! Good job !")
+        self.controller.logger.debug("Stranger has been recognized ! Good job ! Giving the rift part")
         from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
         self.controller.swap_state(StrangerInactiveState(self.controller))
+        self.servo_motor.set_angle(120)
 
     def give_card(self):
         pass

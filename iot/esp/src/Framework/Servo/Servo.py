@@ -1,6 +1,15 @@
 import machine
 from .ServoDelegate import ServoDelegate
 
+
+"""
+Comment qu'on le connecte ?
+
+Servo wire -> Connect to
+Red	-> 5–6 V external power
+Brown / Black -> GND (same GND as ESP32)
+Yellow / Orange / White	-> ESP32 GPIO (PWM-capable)
+"""
 class Servo:
     def __init__(self, pin_id, delegate, name="Servo", freq=50, min_duty=26, max_duty=123):
         if not isinstance(delegate, ServoDelegate):
