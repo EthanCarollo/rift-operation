@@ -2,6 +2,7 @@
 LostConfig.py - Dedicated configuration for LOST workshop
 """
 from src.Framework.Config.Config import WifiConfig, WebsocketConfig
+from src.Framework.Config.ConfigFactory import WifiConfigFactory, WebsocketConfigFactory
 
 class LostConfig:
     def __init__(self, role="child"):
@@ -19,20 +20,20 @@ class Config:
 class LostConfigFactory:
     @staticmethod
     def create_child():
-        # Configuration for CHILD (Sensor, RFID, Servo)
+        # Configuration for CHILD
         return Config(
             role="child",
             device_id="LOST-CHILD-ESP",
-            wifi=WifiConfig(ssid="SFR_F48F", password="7b2uj3mb37js72glj1e9"), # Modify as needed
-            websocket=WebsocketConfig(server="ws://server.riftoperation.ethan-folio.fr", path="/ws")
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod()
         )
 
     @staticmethod
     def create_parent():
-        # Configuration for PARENT (Button, Servo)
+        # Configuration for PARENT
         return Config(
             role="parent",
             device_id="LOST-PARENT-ESP",
-            wifi=WifiConfig(ssid="SFR_F48F", password="7b2uj3mb37js72glj1e9"), # Modify as needed
-            websocket=WebsocketConfig(server="ws://server.riftoperation.ethan-folio.fr", path="/ws")
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod()
         )
