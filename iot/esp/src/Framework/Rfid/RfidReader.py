@@ -3,7 +3,7 @@ from libs.mfrc.mfrc522 import MFRC522
 import time
 
 class RFIDReader:
-    def __init__(self, spi, cs_pin, rst_pin, delegate, name="RFID", cooldown=1):
+    def __init__(self, spi, cs_pin, rst_pin, delegate, name="RFID"):
         """
         spi : objet SPI
         cs_pin : GPIO pour CS
@@ -21,7 +21,6 @@ class RFIDReader:
         self.reader = MFRC522(spi, self.cs, self.rst)
         self.delegate = delegate
         self._last_uid = None
-        self._cooldown = cooldown
 
     def _read_uid(self):
         status, _ = self.reader.request(self.reader.REQIDL)
@@ -33,13 +32,25 @@ class RFIDReader:
         return None
 
     def check(self):
-        """À appeler régulièrement dans la boucle principale"""
         uid = self._read_uid()
+
         if uid:
+            if uid != self._last_uid:
+                self._last_uid = uid
+                try:
+                    self.delegate.on_read(uid, self.name)
+                except Exception as e:
+                    print(f"Error in RFID delegate on_read: {e}")
+
+            self.reader.halt()
+            self.reader.stop_crypto1()
+
+        elif self._last_uid is not None:
             try:
-                self.delegate.on_read(uid, self.name)
+                if hasattr(self.delegate, "on_card_lost"):
+                    self.delegate.on_card_lost(self._last_uid, self.name)
             except Exception as e:
-                print(f"Error in RFID delegate: {e}")
-            time.sleep(self._cooldown)
-        elif uid is None:
+                print(f"Error in RFID delegate on_card_lost: {e}")
+
             self._last_uid = None
+

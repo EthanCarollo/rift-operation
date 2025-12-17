@@ -135,6 +135,10 @@ class MFRC522:
         self._wreg(0x15, 0x40)
         self._wreg(0x11, 0x3D)
         self.antenna_on()
+        
+    def halt(self):
+        buf = [0x50, 0x00]
+        self._tocard(0x0C, buf)
 
     def antenna_on(self):
         temp = self._rreg(0x14)

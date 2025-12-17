@@ -13,3 +13,6 @@ class StrangerRFIDDelegate(RFIDDelegate) :
         Le but ici, ça va être de pour chaque UID scanné, de check si tout est OK ou pas et si le nom est bon
         """
         print("Read : " + reader_name + " UID : " + uid)
+
+    def on_card_lost(self, uid, reader_name):
+        print("Card lost : " + reader_name + " UID : " + uid)
