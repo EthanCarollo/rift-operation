@@ -35,8 +35,7 @@ class RFIDReader:
     def check(self):
         """À appeler régulièrement dans la boucle principale"""
         uid = self._read_uid()
-        if uid and uid != self._last_uid:
-            self._last_uid = uid
+        if uid:
             try:
                 self.delegate.on_read(uid, self.name)
             except Exception as e:
