@@ -1,71 +1,112 @@
 # Rift Operation
 
-Vous êtes deux agents spéciaux déployés dans les mondes parallèles pour réparer une faille critique dans le tissu de la réalité onirique.
+<div align="center">
+  <img src="server/public/riftoperation.png" alt="Rift Operation Logo" width="100%" />
+</div>
 
-## Les Agents
+You are two special agents deployed in parallel worlds to repair a critical rift in the fabric of dream reality.
 
-### Agent Enfant (Monde des Rêves)
-- Infiltré dans le domaine des rêves doux et colorés
-- Utilise l'innocence et la créativité pour naviguer les paysages oniriques
-- Rapporteur des anomalies positives et des distorsions du bonheur
+## The Agents
 
-### Agent Parent (Monde des Cauchemars)
-- Opérateur dans les territoires sombres des cauchemars
-- Maîtrise la protection et la résolution des peurs profondes
-- Gardien des seuils entre le conscient et l'inconscient
+### Child Agent (Dream World)
+- Infiltrated in the domain of sweet and colorful dreams
+- Uses innocence and creativity to navigate dreamscapes
+- Reporter of positive anomalies and happiness distortions
 
-### Mission Commune
-Les deux agents doivent collaborer pour identifier la faille qui menace de fusionner définitivement les mondes des rêves et des cauchemars. Leur synchronisation parfaite est essentielle pour maintenir l'équilibre fragile de la réalité onirique.
+### Parent Agent (Nightmare World)
+- Operator in the dark territories of nightmares
+- Masters protection and the resolution of deep fears
+- Guardian of the thresholds between the conscious and unconscious
 
-## Contexte de la Mission
+### Joint Mission
+The two agents must collaborate to identify the rift threatening to permanently merge the worlds of dreams and nightmares. Their perfect synchronization is essential to maintain the fragile balance of dream reality.
 
-Une faille critique s'est ouverte entre les mondes des rêves et des cauchemars. Des appareils IoT défaillants créent des perturbations dans le flux onirique, menaçant de fusionner ces deux réalités parallèles. Votre équipe doit intervenir pour restaurer l'équilibre fragile.
+## Mission Context
 
-## Fonctionnalités Techniques
+A critical rift has opened between the worlds of dreams and nightmares. Faulty IoT devices are creating disturbances in the dream flow, threatening to merge these two parallel realities. Your team must intervene to restore the fragile balance.
 
-### Serveur Central
-- Serveur WebSocket qui reçoit les messages des appareils IoT
-- Diffuse automatiquement chaque message à tous les appareils connectés
-- Fonctionne sur le port 3000 avec les WebSockets sur `/ws`
+## Project Structure
 
-### Surveillance des Appareils
-- Interface web en temps réel montrant tous les appareils connectés
-- API REST pour récupérer la liste des appareils actifs
-- Page d'administration accessible sur `http://localhost:3000`
+```mermaid
+graph TD
+    Root[Rift Operation]
+    
+    subgraph IoT["IoT (ESP32)"]
+        ESP[Main Controller]
+        Framework[Framework]
+        Core[Core Logic]
+        Driver[Drivers]
+    end
+    
+    subgraph Server["Server (Node/Python)"]
+        Backend[Backend WS/HTTP]
+        Public[Public Assets]
+    end
+    
+    subgraph Tools["Tools (Nuxt 3)"]
+        Studio[Rift Studio]
+        Dashboard[Dashboard]
+    end
 
-### Protocole de Communication
-- Échange de données en JSON entre les appareils
-- Format standardisé pour les rapports de mission
-- Synchronisation automatique des états
+    Root --> IoT
+    Root --> Server
+    Root --> Tools
+```
 
-## Déploiement de la Mission
+- **iot/** : MicroPython code for ESP32
+  - `esp/src/Framework` : Reusable libs
+  - `esp/src/Core` : Business logic (Stranger, Lost, Depth...)
+- **server/** : Python/FastAPI server handling WebSockets
+  - `public/` : Static assets (clients.html, logos...)
+- **tools/** : Nuxt 3 application for development and monitoring
+  - `app/` : Vue 3 Source
+  - `server/` : Nuxt API routes
 
-### Phase 1 : Les Étrangers (Rencontre Initiale)
-- L'enfant découvre les premiers signes de la faille dans les rêves
-- Le parent identifie les perturbations dans les cauchemars
-- Établissement du premier contact entre les deux mondes via les appareils connectés
+## Technical Features
 
-### Phase 2 : Les Requins (Navigation Dangereuse)
-- L'enfant apprend à naviguer dans les courants oniriques instables
-- Le parent affronte les créatures nées des cauchemars défaillants
-- Coordination des mouvements entre les deux agents et surveillance des appareils critiques
+### Central Server
+- WebSocket server receiving messages from IoT devices
+- Automatically broadcasts each message to all connected devices
+- Runs on port 3000 with WebSockets on `/ws`
 
-### Phase 3 : La Sorcière (Révélation)
-- L'enfant découvre le pouvoir créateur des rêves purs
-- Le parent apprend à transformer les cauchemars en alliés
-- Analyse approfondie des données des appareils connectés
+### Device Monitoring
+- Real-time web interface showing all connected devices
+- REST API to retrieve the list of active devices
+- Admin page accessible on `http://localhost:3000`
 
-### Phase 4 : La Résolution (Guérison Finale)
-- Synchronisation parfaite entre rêve et cauchemar
-- Réparation définitive de la faille via les appareils coordonnés
-- Rétablissement de l'équilibre onirique et déconnexion sécurisée
+### Communication Protocol
+- JSON data exchange between devices
+- Standardized format for mission reports
+- Automatic state synchronization
+
+## Mission Deployment
+
+### Phase 1: The Strangers (Initial Encounter)
+- The child discovers the first signs of the rift in dreams
+- The parent identifies disturbances in nightmares
+- Establishment of the first contact between the two worlds via connected devices
+
+### Phase 2: The Sharks (Dangerous Navigation)
+- The child learns to navigate unstable dream currents
+- The parent faces creatures born from faulty nightmares
+- Movement coordination between the two agents and monitoring of critical devices
+
+### Phase 3: The Witch (Revelation)
+- The child discovers the creative power of pure dreams
+- The parent learns to transform nightmares into allies
+- In-depth analysis of connected device data
+
+### Phase 4: The Resolution (Final Healing)
+- Perfect synchronization between dream and nightmare
+- Definitive repair of the rift via coordinated devices
+- Restoration of dream balance and secure disconnection
 
 ## Architecture
 
-Le système repose sur une architecture modulaire :
+The system relies on a modular architecture:
 
-- **Framework** : Classes réutilisables pour la gestion HTTP/WebSocket
-- **Core** : Logique métier spécifique à la mission Rift Operation
-- **Server** : Serveur unifié gérant HTTP et WebSocket sur le même port
+- **Framework**: Reusable classes for HTTP/WebSocket management
+- **Core**: Business logic specific to the Rift Operation mission
+- **Server**: Unified server handling HTTP and WebSocket on the same port
 
-Chaque appareil IoT devient un point de surveillance dans les mondes parallèles. L'enfant et le parent doivent synchroniser leurs actions pour identifier les signes de la faille et coordonner la réparation du tissu onirique, maintenant l'équilibre fragile entre les rêves et les cauchemars.
+Each IoT device becomes a monitoring point in the parallel worlds. The child and parent must synchronize their actions to identify signs of the rift and coordinate the repair of the dream fabric, maintaining the fragile balance between dreams and nightmares.

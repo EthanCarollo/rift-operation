@@ -1,8 +1,7 @@
 import ujson as json
+from src.Framework.Config.Config import Config
 from src.Framework.EspController import EspController
-from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
 from src.Core.Stranger.State.StrangerActiveState import StrangerActiveState
-from src.Framework.Config import Config
 
 class StrangerParentController(EspController):
     def __init__(self, config: Config):
