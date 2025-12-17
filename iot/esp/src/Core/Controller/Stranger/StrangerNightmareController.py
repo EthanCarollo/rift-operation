@@ -3,7 +3,7 @@ from src.Framework.Config.Config import Config
 from src.Framework.EspController import EspController
 from src.Core.Stranger.State.StrangerActiveState import StrangerActiveState
 
-class StrangerParentController(EspController):
+class StrangerNightmareController(EspController):
     def __init__(self, config: Config):
         super().__init__(config)
         self.logger.name = "StrangerController"

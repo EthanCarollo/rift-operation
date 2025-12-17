@@ -56,7 +56,8 @@ class StrangerActiveState(StrangerControllerState):
         self.detected_word = [None, None, None, None]
 
         self.servo_motor = Servo(14, ServoDelegate())
-        self.servo_motor.set_angle(80)
+
+        self.servo_motor.off()
 
     def on_letter_detected(self, reader_name, letter):
         index = -1
@@ -89,9 +90,10 @@ class StrangerActiveState(StrangerControllerState):
         pass
 
     def recognize_stranger(self):
-        self.controller.logger.debug("Stranger has been recognized ! Good job !")
+        self.controller.logger.debug("Stranger has been recognized ! Good job ! Giving the rift part")
         from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
         self.controller.swap_state(StrangerInactiveState(self.controller))
+        self.servo_motor.set_angle(180)
 
     def give_card(self):
         pass
