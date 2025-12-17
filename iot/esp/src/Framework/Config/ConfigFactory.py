@@ -63,6 +63,16 @@ class WebsocketConfigFactory:
 
 class ConfigFactory:
     @staticmethod
+    def create_lost_config(role):
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id=f"LOST-{role.upper()}-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
+    @staticmethod
     def create_cudy_stranger_config():
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
