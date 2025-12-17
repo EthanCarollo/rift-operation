@@ -7,7 +7,7 @@ from src.Core.Depth.DepthConfig import DepthConfigFactory
 
 from src.Core.Controller.StrangerController import StrangerController
 from src.Core.Controller.TableController import TableController
-from iot.esp.src.Core.Controller.DepthController import DepthController
+from src.Core.Controller.DepthController import DepthController
 from src.Core.Controller.LostController import LostController 
 
 gc.collect()
