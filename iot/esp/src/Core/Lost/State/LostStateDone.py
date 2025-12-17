@@ -3,7 +3,7 @@ LostStateDone.py - Done state
 """
 import uasyncio as asyncio
 import src.Core.Lost.LostConstants as LC
-from src.Core.Lost.State.LostState import LostState
+from src.Core.Lost.LostState import LostState
 
 class LostStateDone(LostState):
     def __init__(self, workshop):

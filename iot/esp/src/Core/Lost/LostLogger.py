@@ -9,6 +9,7 @@ class LostLogger:
 
     def log_transition(self, from_step, to_step):
         """Log step transition with visual separator"""
+        # Format: -------- 0: IDLE -> 1: DISTANCE --------
         self.logger.info(f"-------- {LC.LostSteps.get_name(from_step)} -> {LC.LostSteps.get_name(to_step)} --------")
 
     def log_ws(self, msg):
