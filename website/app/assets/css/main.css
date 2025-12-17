@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Forced Light Theme Tokens */
+  --bg-main: #ffffff;
+  --bg-sec: #f4f4f5; /* Zinc-100 */
+  --text-main: #18181b; /* Zinc-900 */
+  --text-sec: #71717a; /* Zinc-500 */
+  --border: #e4e4e7; /* Zinc-200 */
+  --border-focus: #18181b; /* Zinc-900 */
+  --accent: #18181b; /* Black accent for high contrast technical look */
+  --accent-text: #ffffff;
+  --success: #10b981; /* Emerald-500 */
+  --code-bg: #f4f4f5;
+}
+
+body {
+  @apply bg-bg-main text-text-main font-mono transition-colors duration-300;
+}
