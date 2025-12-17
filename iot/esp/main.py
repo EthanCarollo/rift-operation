@@ -5,7 +5,7 @@ from src.Framework.Config.ConfigFactory import ConfigFactory
 from src.Core.Lost.LostConfig import LostConfigFactory
 from src.Core.Depth.DepthConfig import DepthConfigFactory
 
-from src.Core.Controller.StrangerController import StrangerController
+from src.Core.Controller.Stranger.StrangerParentController import StrangerParentController
 from src.Core.Controller.TableController import TableController
 from src.Core.Controller.DepthController import DepthController
 from src.Core.Controller.LostController import LostController 
@@ -19,7 +19,7 @@ try:
     # config = DepthConfigFactory.create_default_child()
 
     # controller = TableController(config)
-    controller = StrangerController(config)
+    controller = StrangerParentController(config)
     # controller = DepthController(config)
     # controller = LostController(config)
 

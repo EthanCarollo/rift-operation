@@ -41,10 +41,7 @@ class RFIDReader:
                     self.delegate.on_read(uid, self.name)
                 except Exception as e:
                     print(f"Error in RFID delegate on_read: {e}")
-
             self.reader.halt()
-            self.reader.stop_crypto1()
-
         elif self._last_uid is not None:
             try:
                 if hasattr(self.delegate, "on_card_lost"):

@@ -15,8 +15,8 @@ class RFIDFactory:
     (Exemple en dessous)
 
     - Lecteur 1 :
-        CS (SDA) -> GPIO 32
-        RST -> GPIO 33
+        CS (SDA) -> GPIO 2
+        RST -> GPIO 0
         
     - Lecteur 2 (optionnel) :
         CS (SDA) -> GPIO 16

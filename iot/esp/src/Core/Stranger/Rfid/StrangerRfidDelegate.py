@@ -6,11 +6,21 @@ class StrangerRFIDDelegate(RFIDDelegate) :
     U_LETTER = "E3-6A-75-AD-51"
     L_LETTER = "C3-BF-C0-2F-93"
 
+    UID_MAP = {
+        P_LETTER: "P",
+        A_LETTER: "A",
+        U_LETTER: "U",
+        L_LETTER: "L"
+    }
+
+    def __init__(self, callback=None):
+        self.callback = callback
+
     def on_read(self, uid, reader_name):
-        """
-        Le but ici, ça va être de pour chaque UID scanné, de check si tout est OK ou pas et si le nom est bon
-        """
-        print("Read : " + reader_name + " UID : " + uid)
+        letter = self.UID_MAP.get(uid)
+        if letter and self.callback:
+            self.callback.on_letter_detected(reader_name, letter)
 
     def on_card_lost(self, uid, reader_name):
-        print("Card lost : " + reader_name + " UID : " + uid)
+        if self.callback:
+            self.callback.on_letter_lost(reader_name)
