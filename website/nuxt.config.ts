@@ -7,12 +7,12 @@ export default defineNuxtConfig({
   css: ['./app/assets/css/main.css'],
   content: {
     highlight: {
-      theme: 'github-dark'
+      theme: 'github-light'
     }
   },
   app: {
     head: {
-      title: 'Rift Operation Tools',
+      title: 'Rift Hub',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

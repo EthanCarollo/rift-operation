@@ -3,6 +3,10 @@ from src.Framework.Rfid.RfidFactory import RFIDFactory
 from src.Core.Stranger.Rfid.StrangerRfidDelegate import StrangerRFIDDelegate
 from machine import SPI, Pin
 
+from src.Framework.Servo.Servo import Servo
+from src.Framework.Servo.ServoDelegate import ServoDelegate
+
+
 class StrangerActiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
@@ -50,6 +54,9 @@ class StrangerActiveState(StrangerControllerState):
             print(error)
 
         self.detected_word = [None, None, None, None]
+
+        self.servo_motor = Servo(14, ServoDelegate())
+        self.servo_motor.set_angle(80)
 
     def on_letter_detected(self, reader_name, letter):
         index = -1

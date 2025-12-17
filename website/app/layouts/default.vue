@@ -6,7 +6,7 @@
         <!-- Brand -->
         <div class="flex items-center gap-3">
           <img src="/riftoperation.png" alt="Logo" class="h-8 w-auto filter grayscale opacity-80" />
-          <span class="text-xl font-bold uppercase tracking-widest text-accent">Rift Tools</span>
+          <span class="text-xl font-bold uppercase tracking-widest text-accent">Rift Hub</span>
         </div>
 
         <!-- Links -->
@@ -15,8 +15,7 @@
             active-class="text-accent underline decoration-2 underline-offset-4">
             Studio
           </NuxtLink>
-          <NuxtLink to="/docs/getting-started"
-            class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
+          <NuxtLink to="/docs" class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
             active-class="text-accent underline decoration-2 underline-offset-4">
             Docs
           </NuxtLink>
