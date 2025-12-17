@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+huggingface_hub
+moshi_mlx==0.2.12
+numpy
+rustymimi
+sentencepiece
+mlx
