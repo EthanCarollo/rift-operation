@@ -6,8 +6,8 @@ struct LogView: View {
     var body: some View {
         ScrollView {
             Text(text.isEmpty ? "Transcription will appear here..." : text)
-                .font(.system(size: 24, weight: .light, design: .default))
-                .foregroundStyle(.white)
+                .font(.system(size: 36, weight: .regular, design: .default))
+                .foregroundStyle(.black)
                 .multilineTextAlignment(.leading)
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -16,11 +16,11 @@ struct LogView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.05))
+                .fill(Color.black.opacity(0.03))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(Color.black.opacity(0.1), lineWidth: 1)
         )
         .padding(.horizontal)
     }

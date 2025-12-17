@@ -5,6 +5,7 @@ internal import Combine
 class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     @Published var transcribedText: String = ""
     @Published var isRecording: Bool = false
+    @Published var isConnected: Bool = false
     @Published var errorMessage: String? = nil
     
     private var engine = AVAudioEngine()
@@ -170,8 +171,27 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
                 }
                 self?.receiveMessage()
             case .failure(let error):
-                print("Receive error: \(error)")
+                print("[AudioStreamer] Receive error: \(error)")
+                DispatchQueue.main.async {
+                    self?.isConnected = false
+                }
             }
+        }
+    }
+    
+    // MARK: - URLSessionWebSocketDelegate
+    
+    func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+        print("[AudioStreamer] WebSocket connected")
+        DispatchQueue.main.async {
+            self.isConnected = true
+        }
+    }
+    
+    func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
+        print("[AudioStreamer] WebSocket disconnected")
+        DispatchQueue.main.async {
+            self.isConnected = false
         }
     }
 }

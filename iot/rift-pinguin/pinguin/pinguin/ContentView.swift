@@ -12,11 +12,27 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.white.ignoresSafeArea()
             
             VStack(spacing: 40) {
                 
                 HeaderView()
+                
+                // Connection status indicator
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(streamer.isConnected ? Color.green : Color.gray)
+                        .frame(width: 10, height: 10)
+                    Text(streamer.isConnected ? "Connected" : "Disconnected")
+                        .font(.caption)
+                        .foregroundStyle(streamer.isConnected ? .green : .gray)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.05))
+                )
                 
                 LogView(text: streamer.transcribedText)
                 
@@ -36,7 +52,7 @@ struct ContentView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
     }
 }
 
