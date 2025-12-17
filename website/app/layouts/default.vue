@@ -4,10 +4,11 @@
     <nav class="border-b border-border bg-bg-sec/50 backdrop-blur-sm sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
         <!-- Brand -->
-        <div class="flex items-center gap-3">
+        <!-- Brand -->
+        <NuxtLink to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <img src="/riftoperation.png" alt="Logo" class="h-8 w-auto filter grayscale opacity-80" />
           <span class="text-xl font-bold uppercase tracking-widest text-accent">Rift Hub</span>
-        </div>
+        </NuxtLink>
 
         <!-- Links -->
         <div class="flex items-center gap-6">
