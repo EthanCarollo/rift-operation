@@ -32,9 +32,9 @@ class RFIDFactory:
     """
 
     @staticmethod
-    def create_reader(spi, cs_pin, rst_pin, delegate, name, cooldown=1):
+    def create_reader(spi, cs_pin, rst_pin, delegate, name):
         """Crée un lecteur RC522 sur le SPI commun (CS = SDA)"""
-        return RFIDReader(spi, cs_pin, rst_pin, delegate, name, cooldown)
+        return RFIDReader(spi, cs_pin, rst_pin, delegate, name)
 
     @staticmethod
     def create_multiple_readers(spi, readers_config):
@@ -53,8 +53,7 @@ class RFIDFactory:
                 cfg["cs"],
                 cfg["rst"],
                 cfg["delegate"],
-                cfg.get("name", "RFID"),
-                cfg.get("cooldown",1)
+                cfg.get("name", "RFID")
             )
             readers.append(reader)
         return readers
