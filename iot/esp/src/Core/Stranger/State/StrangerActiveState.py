@@ -93,7 +93,7 @@ class StrangerActiveState(StrangerControllerState):
         self.controller.logger.debug("Stranger has been recognized ! Good job ! Giving the rift part")
         from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
         self.controller.swap_state(StrangerInactiveState(self.controller))
-        self.servo_motor.set_angle(180)
+        self.servo_motor.set_angle(120)
 
     def give_card(self):
         pass
