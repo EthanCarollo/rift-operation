@@ -3,7 +3,7 @@ LostStateDrawing.py - Drawing state
 """
 import uasyncio as asyncio
 import src.Core.Lost.LostConstants as LC
-from src.Core.Lost.State.LostState import LostState
+from src.Core.Lost.LostState import LostState
 
 class LostStateDrawing(LostState):
     def __init__(self, workshop):
@@ -11,7 +11,19 @@ class LostStateDrawing(LostState):
         self.step_id = LC.LostSteps.DRAWING
 
     async def enter(self):
-        self.workshop.logger.info("State: DRAWING. Sending json with value : \"torch_scanned=True\"")
+        self.workshop.logger.info("State: DRAWING -> Waiting for button press (Simulating Drawing recognition)")
+
+    async def handle_button(self):
+        self.workshop.logger.info("Button pressed -> Drawing recognized")
+        self.workshop.logger.info("Futur implementation : Camera voit Dessin")
+        self.workshop.logger.info("Futur implementation : Envoie Dessin (photo ou live) au llm")
+        self.workshop.logger.info("Futur implementation : LLM reconnait pas dessin")
+        self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
+        self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Je n'ai pas compris ce que tu dessiné, il faut quelque chose pour éclairer\"")
+        self.workshop.logger.info("Futur implementation : LLM reconnait dessin")
+        self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo je crois on va pouvoir aider ton parent avec ça\"")
+
+        self.workshop.logger.info("State: DRAWING -> Sending json with value : \"torch_scanned=True\"")
         await self.workshop.send_rift_json(torch=True)
         # Auto transition to Cage
         await self.next_step()

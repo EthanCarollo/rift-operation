@@ -3,7 +3,7 @@ LostStateLight.py - Light state
 """
 import uasyncio as asyncio
 import src.Core.Lost.LostConstants as LC
-from src.Core.Lost.State.LostState import LostState
+from src.Core.Lost.LostState import LostState
 
 class LostStateLight(LostState):
     def __init__(self, workshop):

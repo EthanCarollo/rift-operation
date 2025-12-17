@@ -19,7 +19,6 @@ class LostWorkshop:
         self._state_data = {"torch": None, "cage": None}
         self.light_triggered = False
         self.state = None
-        
         # Initialize State
         asyncio.create_task(self.swap_state(LostStateIdle(self)))
 
@@ -27,7 +26,7 @@ class LostWorkshop:
         self.hardware = hardware
 
     def on_rfid_read(self, uid):
-        self.logger.info(f"Workshop RFID Event: {uid}")
+        self.logger.info(f"Workshop Lost RFID: {uid}")
         if self.state and hasattr(self.state, "handle_rfid"):
              asyncio.create_task(self.state.handle_rfid(uid))
 
@@ -44,7 +43,7 @@ class LostWorkshop:
             old_step = self.state.step_id if self.state else -1
             self.state = new_state
             
-            if old_step != self.state.step_id:
+            if old_step != self.state.step_id and old_step != -1:
                 self.logger.log_transition(old_step, self.state.step_id)
             
             await self.state.enter()
@@ -56,14 +55,10 @@ class LostWorkshop:
             await self.state.handle_button()
 
     async def process_message(self, message: str):
-        # Handle raw messages
-        # Handle raw messages
         if message == "light_sensor_triggered":
             self.light_triggered = True
-            # Log as requested by user
-            device_id = self.controller.config.device_id
-            self.logger.info(f"{device_id} wait 3: Light finished")
-            self.logger.info(f"-------- {LC.LostSteps.get_name(LC.LostSteps.LIGHT)} -> {LC.LostSteps.get_name(LC.LostSteps.CAGE)} --------")
+            if self.state:
+                await self.state.handle_signal("light_sensor_triggered")
             return
 
         try:
@@ -77,43 +72,20 @@ class LostWorkshop:
 
         if "children_rift_part_count" not in payload and "parent_rift_part_count" not in payload:
             return
-        
         self._last_payload = payload
         
         # Fast-forward triggers
         if payload.get("cage_is_on_monster") is True:
              if self.state and self.state.step_id < LC.LostSteps.DONE:
-                 await self.fast_forward_to(LC.LostSteps.DONE)
+                 await self.state.fast_forward_to(LC.LostSteps.DONE)
                  return 
-        
         elif payload.get("torch_scanned") is True:
              if self.state and self.state.step_id < LC.LostSteps.DRAWING:
-                 await self.fast_forward_to(LC.LostSteps.DRAWING)
+                 await self.state.fast_forward_to(LC.LostSteps.DRAWING)
                  return
 
         if self.state:
             await self.state.handle_message(payload)
-
-    async def fast_forward_to(self, target_step):
-        if not self.state or self.state.step_id >= target_step:
-            return
-
-        self.controller.logger.info("FAST FORWARD -> {}".format(LC.LostSteps.get_name(target_step)))
-        
-        original_delay = self.current_step_delay
-        self.current_step_delay = 0
-        
-        try:
-            # Loop until we catch up
-            max_loops = 10
-            while self.state.step_id < target_step and max_loops > 0:
-                current_id = self.state.step_id
-                await self.state.next_step()
-                if self.state.step_id == current_id:
-                    break
-                max_loops -= 1
-        finally:
-            self.current_step_delay = original_delay
 
     async def send_rift_json(self, torch=None, cage=None):
         if not self._last_payload:
