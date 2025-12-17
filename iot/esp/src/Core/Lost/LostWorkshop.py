@@ -17,6 +17,7 @@ class LostWorkshop:
         self.current_step_delay = LC.LostGameConfig.DEFAULT_STEP_DELAY
         self._last_payload = None
         self._state_data = {"torch": None, "cage": None}
+        self.light_triggered = False
         self.state = None
         
         # Initialize State
@@ -55,6 +56,16 @@ class LostWorkshop:
             await self.state.handle_button()
 
     async def process_message(self, message: str):
+        # Handle raw messages
+        # Handle raw messages
+        if message == "light_sensor_triggered":
+            self.light_triggered = True
+            # Log as requested by user
+            device_id = self.controller.config.device_id
+            self.logger.info(f"{device_id} wait 3: Light finished")
+            self.logger.info(f"-------- {LC.LostSteps.get_name(LC.LostSteps.LIGHT)} -> {LC.LostSteps.get_name(LC.LostSteps.CAGE)} --------")
+            return
+
         try:
             data = json.loads(message)
         except Exception:
@@ -130,5 +141,6 @@ class LostWorkshop:
 
     async def reset(self):
         self._state_data = {"torch": None, "cage": None}
+        self.light_triggered = False
         await self.swap_state(LostStateIdle(self))
         self.controller.logger.info("Lost workshop reset")

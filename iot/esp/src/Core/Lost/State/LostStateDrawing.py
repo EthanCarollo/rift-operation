@@ -11,7 +11,7 @@ class LostStateDrawing(LostState):
         self.step_id = LC.LostSteps.DRAWING
 
     async def enter(self):
-        self.workshop.logger.info("State: DRAWING. Sending torch_scanned=True")
+        self.workshop.logger.info("State: DRAWING. Sending json with value : \"torch_scanned=True\"")
         await self.workshop.send_rift_json(torch=True)
         # Auto transition to Cage
         await self.next_step()

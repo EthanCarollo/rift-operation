@@ -22,11 +22,16 @@ class LostStateIdle(LostState):
         if role == "child":
             # Check distance sensor
             dist = self.workshop.hardware.get_distance()
-            self.workshop.logger.debug(f"Idle check. Dist: {dist}")
+            device_id = self.workshop.controller.config.device_id
+            self.workshop.logger.info(f"{device_id} : Etat Idle (Dist: {dist})")
             
-            if dist != -1 and dist < 30:
-                 self.workshop.logger.info("Distance triggered -> Active")
-                 await self.workshop.controller.websocket_client.send("active")
+            if dist != -1 and dist < 20:
+                 self.workshop.logger.info("Capteur de Distance triggered")
+                 self.workshop.logger.info("Futur implementation : Allumage Led Yeux Animaux")
+                 self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
+                 self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Welcome + explication\"")
+                 
+                 await self.workshop.controller.websocket_client.send("active") # Send raw string as requested
                  from src.Core.Lost.State.LostStateDistance import LostStateDistance
                  await self.workshop.swap_state(LostStateDistance(self.workshop))
 
@@ -37,7 +42,7 @@ class LostStateIdle(LostState):
                  await self.workshop.controller.websocket_client.send("active")
                  from src.Core.Lost.State.LostStateLight import LostStateLight
                  await self.workshop.swap_state(LostStateLight(self.workshop))
-
+ 
     async def handle_distance(self, distance):
         # Allow event-driven trigger too for child
         if self.workshop.hardware.role == "child":
@@ -45,8 +50,12 @@ class LostStateIdle(LostState):
              if not last_pl: return
              
              counts = (last_pl.get("children_rift_part_count"), last_pl.get("parent_rift_part_count"))
-             if counts == LC.LostGameConfig.TARGET_COUNTS and distance < 30:
-                 self.workshop.logger.logger.info("Distance event -> Active")
+             if counts == LC.LostGameConfig.TARGET_COUNTS and distance < 20:
+                 self.workshop.logger.info("Capteur de Distance triggered")
+                 self.workshop.logger.info("Futur implementation : Allumage Led Yeux Animaux")
+                 self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
+                 self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Welcome + explication\"")
+                 
                  await self.workshop.controller.websocket_client.send("active")
                  from src.Core.Lost.State.LostStateDistance import LostStateDistance
                  await self.workshop.swap_state(LostStateDistance(self.workshop))

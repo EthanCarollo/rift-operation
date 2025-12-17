@@ -2,7 +2,7 @@
 LostStateCage.py - Cage state
 """
 import uasyncio as asyncio
-
+import src.Core.Lost.LostConstants as LC
 from src.Core.Lost.State.LostState import LostState
 
 class LostStateCage(LostState):
@@ -14,6 +14,11 @@ class LostStateCage(LostState):
         self.workshop.logger.info("State: CAGE. Waiting for RFID Tag...")
 
     async def handle_rfid(self, uid):
+        # Synchronisation: Wait for Parent (Light) before accepting RFID
+        if not self.workshop.light_triggered:
+            self.workshop.logger.info("Wait for Parent (Light)...")
+            return
+
         if uid == LC.LostGameConfig.VALID_RFID_UID:
              self.workshop.logger.info("RFID VALID -> Cage Unlocked")
              await self.workshop.send_rift_json(cage=True)

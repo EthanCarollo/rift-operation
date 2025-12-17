@@ -20,7 +20,9 @@ class LostHardware:
         self.role = config.lost.role
         self.logger = controller.logger
         self.controller = controller
+        self.controller = controller
         self.callback = None
+        self.last_distance_poll = 0
         
         # Hardware containers
         self.servo = None
@@ -48,8 +50,13 @@ class LostHardware:
         if self.role == "child":
             if self.rfid:
                 self.rfid.check()
+            
+            # Poll distance every 200ms
             if self.distance and self.callback:
-                 pass
+                 import time
+                 if time.ticks_diff(time.ticks_ms(), self.last_distance_poll) > 200:
+                     self.last_distance_poll = time.ticks_ms()
+                     self.distance.measure()
 
     def get_distance(self):
         if self.distance:
@@ -69,27 +76,27 @@ class LostHardware:
             try:
                 self.distance = DistanceSensor(trigger_pin=25, echo_pin=33, 
                                              delegate=self.distance_delegate, name="WallSensor")
-                self.logger.info("Distance Sensor initialized (T:25, E:33)")
+                # self.logger.info("Distance Sensor initialized (T:25, E:33)")
             except Exception as e:
                 self.logger.error(f"Distance init failed: {e}")
             # Servo
             try:
                 self.servo = Servo(pin_id=32, delegate=self.servo_delegate, name="ChildServo")
-                self.logger.info("Servo initialized (32)")
+                # self.logger.info("Servo initialized (32)")
             except Exception as e:
                 self.logger.error(f"Servo init failed: {e}")
             # RFID
             try:
-                sck = 18; mosi = 23; miso = 19; cs = 5; rst = 21
+                sck = 18; mosi = 17; miso = 19; cs = 5; rst = 21
                 spi = SPI(2, baudrate=2500000, polarity=0, phase=0, sck=Pin(sck), mosi=Pin(mosi), miso=Pin(miso))
                 self.rfid = RFIDReader(spi, cs, rst, self.rfid_delegate, name="ChildReader")
-                self.logger.info("RFID initialized")
+                # self.logger.info("RFID initialized")
             except Exception as e:
                 self.logger.error(f"RFID init failed: {e}")
             # Button
             try:
                 self.button = Button(pin_id=35, delegate=self.button_delegate)
-                self.logger.info("Button initialized (35)")
+                # self.logger.info("Button initialized (35)")
             except Exception as e:
                 self.logger.error(f"Button init failed: {e}")
 

@@ -15,6 +15,10 @@ class LostStateLight(LostState):
 
     async def handle_button(self):
         self.workshop.logger.info("Button pressed -> Light triggered")
+        
+        # Send manual signal for synchronization
+        await self.workshop.controller.websocket_client.send("light_sensor_triggered")
+        
         from src.Core.Lost.State.LostStateDone import LostStateDone
         await self.workshop.swap_state(LostStateDone(self.workshop))
 

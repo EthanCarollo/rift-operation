@@ -22,6 +22,10 @@ class LostState:
         """Handle RFID tag read"""
         pass
 
+    async def handle_button(self):
+        """Handle button press (Default: Do nothing)"""
+        pass
+
     async def next_step(self):
         """Transition to the next state"""
         pass

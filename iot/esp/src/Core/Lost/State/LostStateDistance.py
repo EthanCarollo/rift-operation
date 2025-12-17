@@ -14,7 +14,15 @@ class LostStateDistance(LostState):
         self.workshop.logger.info("State: DISTANCE. Waiting for button press (Simulating Drawing recog).")
 
     async def handle_button(self):
-        self.workshop.logger.info("Button presed -> Drawing recognized")
+        self.workshop.logger.info("Button pressed -> Drawing recognized")
+        self.workshop.logger.info("Futur implementation : Camera voit Dessin")
+        self.workshop.logger.info("Futur implementation : Envoie Dessin (photo ou live) au llm")
+        self.workshop.logger.info("Futur implementation : LLM reconnait pas dessin")
+        self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
+        self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Je n'ai pas compris ce que tu dessiné, il faut quelque chose pour éclairer\"")
+        self.workshop.logger.info("Futur implementation : LLM reconnait dessin")
+        self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo je crois on va pouvoir aider ton parent avec ça\"")
+        
         from src.Core.Lost.State.LostStateDrawing import LostStateDrawing
         await self.workshop.swap_state(LostStateDrawing(self.workshop))
 
