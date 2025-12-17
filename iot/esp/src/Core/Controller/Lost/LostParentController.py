@@ -1,5 +1,5 @@
 """
-LostController - ESP32 Controller for the LOST workshop
+LostParentController - ESP32 Controller for the LOST workshop (Parent Role)
 
 State Machine:
     IDLE -> INTERNE STEPS -> DONE
@@ -7,23 +7,22 @@ State Machine:
 Triggers:
     - Auto-starts when receiving JSON with counts
 """
-
 import uasyncio as asyncio
 
 from src.Framework.EspController import EspController
 from src.Core.Lost.LostWorkshop import LostWorkshop
 from src.Core.Lost.LostHardware import LostHardware
 
-
-class LostController(EspController):
-    """LOST workshop controller - wrapper for LostWorkshop"""
+class LostParentController(EspController):
+    """LOST workshop controller - Parent Role"""
 
     def __init__(self, config):
         super().__init__(config)
-        self.logger.name = "LostController"
+        self.logger.name = "LostParentController"
         # Instantiate Workshop and Hardware
         self.workshop = LostWorkshop(self)
-        self.hardware = LostHardware(config, self)
+        # Explicitly pass role="parent"
+        self.hardware = LostHardware(config, self, role="parent")
         # Setup Links
         self.workshop.attach_hardware(self.hardware)
         self.hardware.attach_callback(self.workshop)

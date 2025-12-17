@@ -24,7 +24,7 @@ class LostStateCage(LostState):
             if uid == LC.LostGameConfig.VALID_RFID_UID:
                 self.workshop.logger.info("RFID VALID -> Cage Unlocked")
                 self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo, vous avez capturé le monstre!\"")
-                self.workshop.logger.info("State: CAGE -> Sending json with value : \"torch_scanned=True\"")
+                self.workshop.logger.info("State: CAGE -> Sending json with value : \"cage_is_on_monster=True\"")
                 await self.workshop.send_rift_json(cage=True)
                 # Auto transition to Done
                 await self.next_step()

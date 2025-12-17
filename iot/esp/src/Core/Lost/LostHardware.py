@@ -16,8 +16,8 @@ except ImportError:
     pass 
 
 class LostHardware:
-    def __init__(self, config, controller):
-        self.role = config.lost.role
+    def __init__(self, config, controller, role):
+        self.role = role
         self.logger = controller.logger
         self.controller = controller
         self.callback = None

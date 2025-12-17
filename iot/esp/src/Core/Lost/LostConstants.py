@@ -26,8 +26,8 @@ class LostSteps:
 class LostGameConfig:
     # Auto-start trigger values (children, parent)
     TARGET_COUNTS = (2, 2)
+    MAX_ATTEMPTS = 3
     # Validation key
     VALID_RFID_UID = "BD-D7-1F-21-54"
     # Timing (ms)
     DEFAULT_STEP_DELAY = 0
-    START_DELAY = 0
