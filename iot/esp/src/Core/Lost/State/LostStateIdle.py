@@ -30,9 +30,10 @@ class LostStateIdle(LostState):
             await self.workshop.swap_state(LostStateDistance(self.workshop))
 
         elif role == "parent":
-             # Check torch_scanned
-             if payload.get("torch_scanned") is True:
+            # Check torch_scanned
+            if payload.get("torch_scanned") is True:
                 device_id = self.workshop.controller.config.device_id
                 self.workshop.logger.info(f"WebSocket sent. {device_id} : Active")
-                 from src.Core.Lost.State.LostStateLight import LostStateLight
-                 await self.workshop.swap_state(LostStateLight(self.workshop))
+                await self.workshop.controller.websocket_client.send("active")
+                from src.Core.Lost.State.LostStateLight import LostStateLight
+                await self.workshop.swap_state(LostStateLight(self.workshop))

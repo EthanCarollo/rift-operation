@@ -20,7 +20,6 @@ class LostHardware:
         self.role = config.lost.role
         self.logger = controller.logger
         self.controller = controller
-        self.controller = controller
         self.callback = None
         self.last_distance_poll = 0
         

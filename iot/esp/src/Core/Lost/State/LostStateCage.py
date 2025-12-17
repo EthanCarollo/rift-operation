@@ -11,27 +11,27 @@ class LostStateCage(LostState):
         self.step_id = LC.LostSteps.CAGE
 
     async def enter(self):
-        self.workshop.logger.info("State: CAGE. Waiting for RFID Tag...")
-
-    async def handle_signal(self, signal):
-        if signal == "light_sensor_triggered":
-            self.workshop.logger.info("Wait for LOST-Parent-ESP Step3 : Light -> Finished...")
-            self.workshop.logger.info(f"-------- {LC.LostSteps.get_name(LC.LostSteps.LIGHT)} -> {LC.LostSteps.get_name(LC.LostSteps.CAGE)} --------")
+        self.cage_triggered = False
+        self.workshop.logger.info("State: CAGE -> Waiting for RFID Scan")
 
     async def handle_rfid(self, uid):
         # Synchronisation: Wait for Parent (Light) before accepting RFID
         if not self.workshop.light_triggered:
             self.workshop.logger.info("Wait for LOST-Parent-ESP Step3 : Light -> Finished...")
             return
-
-        if uid == LC.LostGameConfig.VALID_RFID_UID:
-             self.workshop.logger.info("RFID VALID -> Cage Unlocked")
-             await self.workshop.send_rift_json(cage=True)
-             from src.Core.Lost.State.LostStateDone import LostStateDone
-             await self.workshop.swap_state(LostStateDone(self.workshop))
-        else:
-             self.workshop.logger.warning(f"RFID INVALID: {uid}. Expected: {LC.LostGameConfig.VALID_RFID_UID}")
-             # Optional: Feedback?
+        
+        if self.workshop.light_triggered:
+            if uid == LC.LostGameConfig.VALID_RFID_UID:
+                self.workshop.logger.info("RFID VALID -> Cage Unlocked")
+                self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo, vous avez capturé le monstre!\"")
+                self.workshop.logger.info("State: CAGE -> Sending json with value : \"torch_scanned=True\"")
+                await self.workshop.send_rift_json(cage=True)
+                # Auto transition to Done
+                await self.next_step()
+            else:
+                self.workshop.logger.warning(f"RFID INVALID: {uid}")
+                self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Oups, pas la bonne cage! Essayez encore.\"")
 
     async def next_step(self):
-        pass
+        from src.Core.Lost.State.LostStateDone import LostStateDone
+        await self.workshop.swap_state(LostStateDone(self.workshop))

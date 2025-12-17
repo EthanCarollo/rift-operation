@@ -11,7 +11,6 @@ class LostStateDone(LostState):
         self.step_id = LC.LostSteps.DONE
 
     async def enter(self):
-        self.workshop.logger.info("State: DONE. Waiting for 'cage_is_on_monster'...")
         await self.check_condition()
 
     async def handle_message(self, payload):
@@ -22,15 +21,12 @@ class LostStateDone(LostState):
         if not data: return
 
         if data.get("cage_is_on_monster") is True:
-             self.workshop.logger.info("Cage OK -> Opening Servo & Finishing")
-             
-             # Open Servo
-             self.workshop.hardware.set_servo(90) # Open angle? Assume 90.
-             await asyncio.sleep_ms(1000)
-             # Send WS Finished
+             self.workshop.hardware.set_servo(180)
+             await asyncio.sleep_ms(500)
              await self.workshop.controller.websocket_client.send("finished")
-             # Stop or Loop? User said "envoie msg fin...". DONE.
-             # Maybe detach callback/stop update? For now just stay here.
+             
+             # Reset to Idle to restart the loop
+             await self.workshop.reset()
 
     async def next_step(self):
         pass

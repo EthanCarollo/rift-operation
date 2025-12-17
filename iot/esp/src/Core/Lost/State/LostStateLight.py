@@ -11,16 +11,21 @@ class LostStateLight(LostState):
         self.step_id = LC.LostSteps.LIGHT
 
     async def enter(self):
-        self.workshop.logger.info("State: LIGHT. Waiting for button press (Simulating Light Sensor)")
+        self.light_triggered = False
+        self.workshop.logger.info("Futur implementation : Allumage des Leds du Hibou")
+        self.workshop.logger.info("State: LIGHT -> Waiting for button press (Simulating Light Sensor)")
 
     async def handle_button(self):
-        self.workshop.logger.info("Button pressed -> Light triggered")
+        if not self.light_triggered:
+            self.light_triggered = True
+            self.workshop.logger.info("Button pressed -> Light triggered")
+            self.workshop.logger.info("Futur implementation : Changement Mapping Video")
+            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Maintenant qu'on voit le monstre qui bully ton parent, identifiez le et capturez le avec la bonne cage!\"")
         
-        # Send manual signal for synchronization
-        await self.workshop.controller.websocket_client.send("light_sensor_triggered")
-        
-        from src.Core.Lost.State.LostStateDone import LostStateDone
-        await self.workshop.swap_state(LostStateDone(self.workshop))
+            await self.workshop.controller.websocket_client.send("light_sensor_triggered")
+            # Auto transition to Cage
+            await self.next_step()
 
     async def next_step(self):
-        pass
+        from src.Core.Lost.State.LostStateCage import LostStateCage
+        await self.workshop.swap_state(LostStateCage(self.workshop))
