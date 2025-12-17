@@ -21,3 +21,20 @@
 body {
   @apply bg-bg-main text-text-main font-mono transition-colors duration-300;
 }
+
+/* Fix for Syntax Highlighting with Typography */
+.prose pre {
+  background-color: var(--code-bg) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border);
+}
+
+.prose code {
+  color: var(--accent);
+  background-color: transparent;
+}
+
+.prose pre code {
+  color: inherit;
+  background-color: transparent;
+}
