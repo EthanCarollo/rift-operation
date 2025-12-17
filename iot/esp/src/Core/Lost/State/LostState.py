@@ -22,13 +22,6 @@ class LostState:
         """Handle RFID tag read"""
         pass
 
-    async def handle_button(self):
-        """Handle button press"""
-        # Default behavior: log and next step
-        self.workshop.logger.logger.info(f"BTN action: next_step from {LC.STEP_NAMES.get(self.step_id, 'UNKNOWN')}")
-        await asyncio.sleep_ms(self.workshop.current_step_delay)
-        await self.next_step()
-
     async def next_step(self):
         """Transition to the next state"""
         pass

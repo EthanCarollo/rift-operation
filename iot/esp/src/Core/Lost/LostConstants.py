@@ -1,29 +1,35 @@
 """
-LostConstants - Shared constants for the LOST workshop
+LostConstants.py - Shared constants for the LOST workshop
 """
 
-# State machine steps
-STEP_IDLE = 0
-STEP_ACTIVE = 1
-STEP_DISTANCE = 2
-STEP_DRAWING = 3
-STEP_LIGHT = 4
-STEP_CAGE = 5
-STEP_DONE = 7
-# Step names for logging
-STEP_NAMES = {
-    STEP_IDLE: "IDLE",
-    STEP_ACTIVE: "ACTIVE",
-    STEP_DISTANCE: "DISTANCE", 
-    STEP_DRAWING: "DRAWING",
-    STEP_LIGHT: "LIGHT",
-    STEP_CAGE: "CAGE",
-    STEP_DONE: "DONE"
-}
+class LostSteps:
+    IDLE = 0
+    ACTIVE = 1
+    DISTANCE = 2
+    DRAWING = 3
+    LIGHT = 4
+    CAGE = 5
+    DONE = 7
 
-# Auto-start trigger values (children, parent)
-TARGET_COUNTS = (2, 2)
+    _NAMES = {
+        IDLE: "IDLE",
+        ACTIVE: "ACTIVE",
+        DISTANCE: "DISTANCE", 
+        DRAWING: "DRAWING",
+        LIGHT: "LIGHT",
+        CAGE: "CAGE",
+        DONE: "DONE"
+    }
 
-# Timing constants (ms)
-DEFAULT_STEP_DELAY = 250
-START_DELAY = 100
+    @classmethod
+    def get_name(cls, step_id):
+        return cls._NAMES.get(step_id, str(step_id))
+
+class LostGameConfig:
+    # Auto-start trigger values (children, parent)
+    TARGET_COUNTS = (2, 2)
+    # Validation key
+    VALID_RFID_UID = "0x93782102"
+    # Timing (ms)
+    DEFAULT_STEP_DELAY = 250
+    START_DELAY = 100

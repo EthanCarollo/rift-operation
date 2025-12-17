@@ -12,13 +12,11 @@ class LostWorkshop:
         self.controller = controller
         # Delegate logging to a dedicated helper, using controller's logger
         self.logger = LostLogger(controller.logger)
-        
         self.hardware = None
-        
         # State & Config
-        self.current_step_delay = LC.DEFAULT_STEP_DELAY
+        self.current_step_delay = LC.LostGameConfig.DEFAULT_STEP_DELAY
         self._last_payload = None
-        self._state_data = {"torch": None, "cage": None, "preset": None}
+        self._state_data = {"torch": None, "cage": None}
         self.state = None
         
         # Initialize State
@@ -28,20 +26,17 @@ class LostWorkshop:
         self.hardware = hardware
 
     def on_rfid_read(self, uid):
-        self.logger.logger.info(f"Workshop RFID Event: {uid}")
-        # Pass to current state
+        self.logger.info(f"Workshop RFID Event: {uid}")
         if self.state and hasattr(self.state, "handle_rfid"):
-             # We need to make this async safe or call generic handle
-             # Since this is called from main loop (sync), we should task it?
-             # But handle_rfid in State might want to be async.
-             # Actually on_read comes from hardware.update() which is called in update() which is async!
-             # Wait, Controller.update() is async def update(self).
-             # It calls self.hardware.update().
-             # Hardware.update() calls rfid.check() which is sync.
-             # rfid.check() calls delegate.on_read().
-             # So we are inside async loop but in a sync stack.
-             # We can spawn a task.
              asyncio.create_task(self.state.handle_rfid(uid))
+
+    def on_distance_event(self, distance, name):
+        if self.state and hasattr(self.state, "handle_distance"):
+             asyncio.create_task(self.state.handle_distance(distance))
+
+    def on_servo_event(self, angle, name):
+        if self.state and hasattr(self.state, "handle_servo"):
+             asyncio.create_task(self.state.handle_servo(angle))
 
     async def swap_state(self, new_state):
         try:
@@ -76,13 +71,13 @@ class LostWorkshop:
         
         # Fast-forward triggers
         if payload.get("cage_is_on_monster") is True:
-             if self.state and self.state.step_id < LC.STEP_DONE:
-                 await self.fast_forward_to(LC.STEP_DONE)
+             if self.state and self.state.step_id < LC.LostSteps.DONE:
+                 await self.fast_forward_to(LC.LostSteps.DONE)
                  return 
         
         elif payload.get("torch_scanned") is True:
-             if self.state and self.state.step_id < LC.STEP_DRAWING:
-                 await self.fast_forward_to(LC.STEP_DRAWING)
+             if self.state and self.state.step_id < LC.LostSteps.DRAWING:
+                 await self.fast_forward_to(LC.LostSteps.DRAWING)
                  return
 
         if self.state:
@@ -92,7 +87,7 @@ class LostWorkshop:
         if not self.state or self.state.step_id >= target_step:
             return
 
-        self.controller.logger.info("FAST FORWARD -> {}".format(LC.STEP_NAMES.get(target_step, target_step)))
+        self.controller.logger.info("FAST FORWARD -> {}".format(LC.LostSteps.get_name(target_step)))
         
         original_delay = self.current_step_delay
         self.current_step_delay = 0
@@ -103,39 +98,37 @@ class LostWorkshop:
             while self.state.step_id < target_step and max_loops > 0:
                 current_id = self.state.step_id
                 await self.state.next_step()
-                if self.state.step_id == current_id: # Stuck?
+                if self.state.step_id == current_id:
                     break
                 max_loops -= 1
         finally:
             self.current_step_delay = original_delay
 
-    async def send_rift_json(self, torch=None, cage=None, preset=None):
+    async def send_rift_json(self, torch=None, cage=None):
         if not self._last_payload:
             self.controller.logger.error("Cannot send: no payload received")
             return
 
         if torch is not None: self._state_data["torch"] = torch
         if cage is not None: self._state_data["cage"] = cage
-        if preset is not None: self._state_data["preset"] = preset
 
         payload = dict(self._last_payload)
         payload["device_id"] = self.controller.config.device_id
         
         for key, val in [("torch_scanned", self._state_data["torch"]),
-                         ("cage_is_on_monster", self._state_data["cage"]),
-                         ("preset_lost", self._state_data["preset"])]:
+                         ("cage_is_on_monster", self._state_data["cage"])]:
             if val is not None:
                 payload[key] = val
 
         try:
-            self.logger.log_ws("torch={}, cage={}, preset={}".format(
-                self._state_data["torch"], self._state_data["cage"], self._state_data["preset"]
+            self.logger.log_ws("torch={}, cage={}".format(
+                self._state_data["torch"], self._state_data["cage"]
             ))
             await self.controller.websocket_client.send(json.dumps(payload))
         except Exception as e:
             self.controller.logger.error("Send failed: {}".format(e))
 
     async def reset(self):
-        self._state_data = {"torch": None, "cage": None, "preset": None}
+        self._state_data = {"torch": None, "cage": None}
         await self.swap_state(LostStateIdle(self))
         self.controller.logger.info("Lost workshop reset")
