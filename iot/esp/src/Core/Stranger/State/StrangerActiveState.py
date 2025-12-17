@@ -17,35 +17,37 @@ class StrangerActiveState(StrangerControllerState):
             miso=Pin(19)
         )
 
-
-        self.rfid_letter_1 = RFIDFactory.create_reader(
-            spi=spi, 
-            cs_pin=32, 
-            rst_pin=33, 
-            delegate= StrangerRFIDDelegate(),
-            name= "Letter_1_RFID_Stranger"
-        )
-        self.rfid_letter_2 = RFIDFactory.create_reader(
-            spi=spi, 
-            cs_pin=16, 
-            rst_pin=4, 
-            delegate= StrangerRFIDDelegate(),
-            name= "Letter_2_RFID_Stranger"
-        )
-        self.rfid_letter_3 = RFIDFactory.create_reader(
-            spi=spi, 
-            cs_pin=17, 
-            rst_pin=21, 
-            delegate= StrangerRFIDDelegate(),
-            name= "Letter_3_RFID_Stranger"
-        )
-        self.rfid_letter_4 = RFIDFactory.create_reader(
-            spi=spi, 
-            cs_pin=5, 
-            rst_pin=22, 
-            delegate= StrangerRFIDDelegate(),
-            name= "Letter_4_RFID_Stranger"
-        )
+        try:
+            self.rfid_letter_1 = RFIDFactory.create_reader(
+                spi=spi, 
+                cs_pin=32, 
+                rst_pin=33, 
+                delegate= StrangerRFIDDelegate(),
+                name= "Letter_1_RFID_Stranger"
+            )
+            self.rfid_letter_2 = RFIDFactory.create_reader(
+                spi=spi, 
+                cs_pin=16, 
+                rst_pin=4, 
+                delegate= StrangerRFIDDelegate(),
+                name= "Letter_2_RFID_Stranger"
+            )
+            self.rfid_letter_3 = RFIDFactory.create_reader(
+                spi=spi, 
+                cs_pin=17, 
+                rst_pin=21, 
+                delegate= StrangerRFIDDelegate(),
+                name= "Letter_3_RFID_Stranger"
+            )
+            self.rfid_letter_4 = RFIDFactory.create_reader(
+                spi=spi, 
+                cs_pin=5, 
+                rst_pin=22, 
+                delegate= StrangerRFIDDelegate(),
+                name= "Letter_4_RFID_Stranger"
+            )
+        except Exception as error:
+            print(error)
 
     def process_json_message(self, json):
         pass

@@ -240,6 +240,11 @@
                      <button onclick="toggleTheme()" class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors" style="border-color: var(--border);">
                         Mode: <span id="theme-label">LIGHT</span>
                     </button>
+                    <!-- SERVER STATUS -->
+                    <div class="text-[10px] font-bold uppercase border px-2 py-1 transition-colors flex items-center gap-2" style="border-color: var(--border);">
+                        SERVER: <span id="header-ws-status">CONNECTING...</span>
+                        <div id="header-ws-dot" class="h-2 w-2 rounded-full bg-orange-500"></div>
+                    </div>
                     <!-- TABS -->
                     <div class="flex gap-2">
                         <button onclick="switchTab('staged')" class="nav-tab active" id="tab-staged">Predefined</button>
@@ -840,29 +845,76 @@
         }
 
         // --- WebSocket & Clients ---
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+        // --- WebSocket & Clients ---
+        let ws;
+        let reconnectTimer = null;
         const statusEl = document.getElementById('ws-status');
+        const headerStatusEl = document.getElementById('header-ws-status');
+        const headerDotEl = document.getElementById('header-ws-dot');
 
-        ws.onopen = () => {
-            statusEl.textContent = "CONNECTED";
-            statusEl.className = "text-green-500";
-        };
-        ws.onclose = () => {
-            statusEl.textContent = "DISCONNECTED";
-            statusEl.className = "text-red-500";
-        };
-        ws.onmessage = (event) => {
-             // Try to parse prettily
-             let displayMsg = event.data;
-             try {
-                 const json = JSON.parse(event.data);
-                 // Ignore heartbeat or internal if needed, currently showing all
-                 displayMsg = JSON.stringify(json, null, 2);
-             } catch(e) {}
-             
-             addLog(displayMsg, 'rx');
-        };
+        function updateStatus(state) {
+            if (state === 'CONNECTED') {
+                statusEl.textContent = "CONNECTED";
+                statusEl.className = "text-green-500";
+                headerStatusEl.textContent = "CONNECTED";
+                headerStatusEl.className = "text-green-600";
+                headerDotEl.className = "h-2 w-2 rounded-full bg-green-500";
+            } else if (state === 'DISCONNECTED') {
+                statusEl.textContent = "DISCONNECTED";
+                statusEl.className = "text-red-500";
+                headerStatusEl.textContent = "DISCONNECTED";
+                headerStatusEl.className = "text-red-600";
+                headerDotEl.className = "h-2 w-2 rounded-full bg-red-500";
+            } else {
+                statusEl.textContent = "CONNECTING...";
+                statusEl.className = "text-orange-500";
+                headerStatusEl.textContent = "CONNECTING...";
+                headerStatusEl.className = "text-orange-500";
+                headerDotEl.className = "h-2 w-2 rounded-full bg-orange-500 animate-pulse";
+            }
+        }
+
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                updateStatus('CONNECTED');
+                if (reconnectTimer) {
+                    clearInterval(reconnectTimer);
+                    reconnectTimer = null;
+                }
+            };
+
+            ws.onclose = () => {
+                updateStatus('DISCONNECTED');
+                // Auto reconnect
+                if (!reconnectTimer) {
+                    reconnectTimer = setInterval(() => {
+                        updateStatus('CONNECTING'); // Visual feedback
+                        connectWebSocket();
+                    }, 3000);
+                }
+            };
+
+            ws.onmessage = (event) => {
+                 // Try to parse prettily
+                 let displayMsg = event.data;
+                 try {
+                     const json = JSON.parse(event.data);
+                     displayMsg = JSON.stringify(json, null, 2);
+                 } catch(e) {}
+                 
+                 addLog(displayMsg, 'rx');
+            };
+            
+            ws.onerror = (err) => {
+                console.error("WS Error", err);
+                ws.close(); // Ensure onclose is called
+            };
+        }
+
+        connectWebSocket();
 
         async function fetchClients() {
             try {
