@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rift Panel</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -232,9 +233,12 @@
             
             <!-- HEADER -->
             <header class="mb-8 flex justify-between items-end border-b-2" style="border-color: var(--border-focus);">
-                <div class="pb-4">
-                    <h1 class="text-3xl font-bold tracking-tight">RIFT PANEL</h1>
-                    <p class="text-xs mt-1 uppercase" style="color: var(--text-sec)">Dev Panel for Escape Game</p>
+                <div class="pb-4 flex items-center gap-4">
+                    <img src="riftoperation.png" alt="Logo" class="h-10 w-auto filter grayscale opacity-80" />
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight">RIFT PANEL</h1>
+                        <p class="text-xs mt-1 uppercase" style="color: var(--text-sec)">Dev Panel for Escape Game</p>
+                    </div>
                 </div>
                 <div class="pb-4 flex flex-col items-end gap-2">
                      <button onclick="toggleTheme()" class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors" style="border-color: var(--border);">
