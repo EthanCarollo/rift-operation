@@ -19,9 +19,9 @@ class LostStateCage(LostState):
              await self.next_step()
              
     async def handle_rfid(self, uid):
-        # Synchronisation: Wait for Parent (Light) before accepting RFID
+        # Synchronisation: Wait for Nightmare (Light) before accepting RFID
         if not self.workshop.light_triggered:
-            self.workshop.logger.info("Wait for LOST-Parent-ESP Step3 : Light -> Finished...")
+            self.workshop.logger.info("Wait for LOST-NIGHTMARE-ESP Step3 : Light -> Finished...")
             return
         
         if self.workshop.light_triggered:

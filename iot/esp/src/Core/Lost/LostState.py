@@ -40,7 +40,6 @@ class LostState:
             return
 
         self.workshop.controller.logger.info("FAST FORWARD -> {}".format(LC.LostSteps.get_name(target_step)))
-        
         # Direct jump to DONE
         if target_step == LC.LostSteps.DONE:
             from src.Core.Lost.State.LostStateDone import LostStateDone

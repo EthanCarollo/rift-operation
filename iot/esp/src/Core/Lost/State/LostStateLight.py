@@ -15,23 +15,23 @@ class LostStateLight(LostState):
         self.light_triggered = False
         role = self.workshop.hardware.role
         
-        if role == "parent":
+        if role == "nightmare":
             self.workshop.logger.info("Futur implementation : Allumage des Leds du Hibou")
             self.workshop.logger.info("State: LIGHT -> Waiting for button press (Simulating Light Sensor)")
         else:
-            self.workshop.logger.info("State: LIGHT -> Waiting for Parent Light Sensor signal...")
+            self.workshop.logger.info("State: LIGHT -> Waiting for Nightmare Light Sensor signal...")
 
     async def handle_button(self):
-        # Only Parent handles the light sensor button
-        if self.workshop.hardware.role != "parent":
+        # Only Nightmare handles the light sensor button
+        if self.workshop.hardware.role != "nightmare":
             return
 
         if not self.light_triggered:
             self.light_triggered = True
             self.workshop.logger.info("Button pressed -> Light triggered")
             self.workshop.logger.info("Futur implementation : Changement Mapping Video")
-            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Maintenant qu'on voit le monstre qui bully ton parent, identifiez le et capturez le avec la bonne cage!\"")
-            # Send signal to sync with Child
+            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Maintenant qu'on voit le monstre qui bully le parent, identifiez le et capturez le avec la bonne cage!\"")
+            # Send signal to sync with Dream
             device_id = self.workshop.controller.config.device_id
             await self.workshop.controller.websocket_client.send(json.dumps({"signal": "light_sensor_triggered", "device_id": device_id}))
             # Also self-trigger signal handling to transition

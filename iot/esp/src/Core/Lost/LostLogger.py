@@ -20,7 +20,7 @@ class LostLogger:
 
     def log_event(self, room, deco, module, action):
         """Log telemetry event in readable format"""
-        rooms = {"parent": "Parent", "child": "Enfant", "system": "System"}
+        rooms = {"nightmare": "Nightmare", "dream": "Dream", "system": "System"}
         self.logger.debug(f"Room: {rooms.get(room, room)} | Deco: {deco} | Module: {module} | Action: {action}")
 
     # Passthrough methods to avoid .logger.logger access

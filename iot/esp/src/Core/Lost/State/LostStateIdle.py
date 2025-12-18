@@ -23,14 +23,14 @@ class LostStateIdle(LostState):
 
         role = self.workshop.hardware.role
         
-        if role == "child":
+        if role == "dream":
             # Just wait for start signal
             device_id = self.workshop.controller.config.device_id
             await self.workshop.controller.websocket_client.send(json.dumps({"signal": "Active", "device_id": device_id}))
             from src.Core.Lost.State.LostStateDistance import LostStateDistance
             await self.workshop.swap_state(LostStateDistance(self.workshop))
 
-        elif role == "parent":
+        elif role == "nightmare":
             # Check torch_scanned
             if payload.get("torch_scanned") is True:
                 device_id = self.workshop.controller.config.device_id

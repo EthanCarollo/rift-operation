@@ -46,7 +46,7 @@ class LostHardware:
         self.button_delegate.workshop = callback
 
     def update(self):
-        if self.role == "child":
+        if self.role == "dream":
             if self.rfid:
                 self.rfid.check()
             
@@ -69,8 +69,8 @@ class LostHardware:
     def init_hardware(self):
         self.logger.info(f"Initializing Hardware for Role: {self.role}")
         
-        if self.role == "child":
-            # Child: Servo (32), Distance (Trig 25, Echo 33), RFID (SPI), Button (35)
+        if self.role == "dream":
+            # Dream: Servo (32), Distance (Trig 25, Echo 33), RFID (SPI), Button (35)
             # Distance
             try:
                 self.distance = DistanceSensor(trigger_pin=25, echo_pin=33, 
@@ -80,7 +80,7 @@ class LostHardware:
                 self.logger.error(f"Distance init failed: {e}")
             # Servo
             try:
-                self.servo = Servo(pin_id=32, delegate=self.servo_delegate, name="ChildServo")
+                self.servo = Servo(pin_id=32, delegate=self.servo_delegate, name="DreamServo")
                 # self.logger.info("Servo initialized (32)")
             except Exception as e:
                 self.logger.error(f"Servo init failed: {e}")
@@ -88,7 +88,7 @@ class LostHardware:
             try:
                 sck = 18; mosi = 17; miso = 19; cs = 5; rst = 21
                 spi = SPI(2, baudrate=2500000, polarity=0, phase=0, sck=Pin(sck), mosi=Pin(mosi), miso=Pin(miso))
-                self.rfid = RFIDReader(spi, cs, rst, self.rfid_delegate, name="ChildReader")
+                self.rfid = RFIDReader(spi, cs, rst, self.rfid_delegate, name="DreamReader")
                 # self.logger.info("RFID initialized")
             except Exception as e:
                 self.logger.error(f"RFID init failed: {e}")
@@ -99,10 +99,10 @@ class LostHardware:
             except Exception as e:
                 self.logger.error(f"Button init failed: {e}")
 
-        elif self.role == "parent":
-            # Parent: Servo (2), Button (27)
+        elif self.role == "nightmare":
+            # Nightmare: Servo (2), Button (27)
             try:
-                self.servo = Servo(pin_id=2, delegate=self.servo_delegate, name="ParentServo")
+                self.servo = Servo(pin_id=2, delegate=self.servo_delegate, name="NightmareServo")
                 # self.logger.info("Servo initialized (2)")
             except Exception as e:
                 self.logger.error(f"Servo init failed: {e}")
