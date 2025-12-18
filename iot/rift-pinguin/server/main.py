@@ -98,19 +98,19 @@ async def audio_websocket(websocket: WebSocket):
             chunk_count += 1
             
             # DEBUG: Log received data info
-            print(f"[Chunk {chunk_count}] Received {len(data)} bytes")
+            # print(f"[Chunk {chunk_count}] Received {len(data)} bytes")
             
             # Convert to numpy array
             audio_chunk = np.frombuffer(data, dtype=np.float32)
             
             # DEBUG: Log audio stats
-            print(f"  -> {len(audio_chunk)} float32 samples, min={audio_chunk.min():.4f}, max={audio_chunk.max():.4f}, mean={audio_chunk.mean():.4f}")
+            # print(f"  -> {len(audio_chunk)} float32 samples, min={audio_chunk.min():.4f}, max={audio_chunk.max():.4f}, mean={audio_chunk.mean():.4f}")
             
             # Expected: kyutai_test uses blocksize=1920 samples at 24kHz
             # That's 80ms of audio per block
             # Check if we're getting reasonable chunk sizes
-            expected_samples = 1920  # What kyutai_test uses
-            print(f"  -> Expected ~{expected_samples} samples (80ms at 24kHz), got {len(audio_chunk)}")
+            # expected_samples = 1920  # What kyutai_test uses
+            # print(f"  -> Expected ~{expected_samples} samples (80ms at 24kHz), got {len(audio_chunk)}")
             
             # Adapt input to shape (1, 1, N) for encode_step
             audio_chunk = audio_chunk[None, None, :] 
@@ -119,7 +119,7 @@ async def audio_websocket(websocket: WebSocket):
             other_audio_tokens = mx.array(other_audio_tokens).transpose(0, 2, 1)[:, :, :other_codebooks]
             
             # DEBUG: Log token info
-            print(f"  -> Audio tokens shape: {other_audio_tokens.shape}")
+            # print(f"  -> Audio tokens shape: {other_audio_tokens.shape}")
             
             # Process each frame separately if multiple frames returned
             num_frames = other_audio_tokens.shape[1]
@@ -132,13 +132,13 @@ async def audio_websocket(websocket: WebSocket):
                 text_token = text_token[0].item()
                 
                 # DEBUG: Log token
-                if frame_idx == 0:  # Only log first frame to reduce noise
-                    print(f"  -> Text token: {text_token}")
+                # if frame_idx == 0:  # Only log first frame to reduce noise
+                #     print(f"  -> Text token: {text_token}")
                 
                 if text_token not in (0, 3):
                     text = text_tokenizer.id_to_piece(text_token)
                     text = text.replace("▁", " ")
-                    print(f"  -> Transcribed: '{text}'")
+                    # print(f"  -> Transcribed: '{text}'")
                     if text:
                         await websocket.send_text(text)
 

@@ -1,7 +1,7 @@
 import Foundation
 
 struct AppConfig {
-    static let serverHost = "172.28.55.51"
+    static let serverHost = "172.28.55.56"
     static let serverPort = 8000
     static let wsPath = "/ws"
     

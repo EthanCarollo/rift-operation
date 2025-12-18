@@ -5,13 +5,21 @@ struct LogView: View {
     
     var body: some View {
         ScrollView {
-            Text(text.isEmpty ? "Transcription will appear here..." : text)
-                .font(.system(size: 36, weight: .regular, design: .default))
-                .foregroundStyle(.black)
-                .multilineTextAlignment(.leading)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .animation(.default, value: text)
+            ScrollViewReader { proxy in
+                Text(text.isEmpty ? "Transcription will appear here..." : text)
+                    .font(.system(size: 36, weight: .regular, design: .default))
+                    .foregroundStyle(.black)
+                    .multilineTextAlignment(.leading)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .animation(.default, value: text)
+                    .id("bottom")
+                    .onChange(of: text) { _ in
+                        withAnimation {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
+                    }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(

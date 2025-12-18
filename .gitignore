@@ -32,3 +32,5 @@ moshi-out.wav
 moshi-trace.json
 bria*safetensors
 bria*wav
+lab/pinguin/.jupyter_ystore.db
+.ipynb_checkpoints
