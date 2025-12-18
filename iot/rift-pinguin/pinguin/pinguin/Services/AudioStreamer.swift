@@ -4,12 +4,44 @@ internal import Combine
 
 class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     @Published var transcribedText: String = ""
+    @Published var latestAnswer: String = ""
     @Published var isRecording: Bool = false
     @Published var isConnected: Bool = false
+    @Published var isServerHealthy: Bool = false
     @Published var errorMessage: String? = nil
     
     private var engine = AVAudioEngine()
     private var socket: URLSessionWebSocketTask?
+    private var healthTimer: Timer?
+    
+    override init() {
+        super.init()
+        startHealthCheck()
+    }
+    
+    deinit {
+        healthTimer?.invalidate()
+    }
+    
+    private func startHealthCheck() {
+        healthTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+            self?.checkHealth()
+        }
+        checkHealth() // Initial check
+    }
+    
+    private func checkHealth() {
+        let url = AppConfig.httpURL.appendingPathComponent("health")
+        URLSession.shared.dataTask(with: url) { [weak self] _, response, error in
+            let healthy = (error == nil && (response as? HTTPURLResponse)?.statusCode == 200)
+            DispatchQueue.main.async {
+                if self?.isServerHealthy != healthy {
+                    self?.isServerHealthy = healthy
+                    print("[AudioStreamer] Server health changed: \(healthy)")
+                }
+            }
+        }.resume()
+    }
     
     func startRecording() {
         let url = AppConfig.websocketURL
@@ -161,8 +193,24 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
             case .success(let message):
                 switch message {
                 case .string(let text):
-                    DispatchQueue.main.async {
-                        self?.transcribedText += text
+                    if text.starts(with: "stt: ") {
+                        let content = String(text.dropFirst(5))
+                        DispatchQueue.main.async {
+                            self?.transcribedText += content
+                        }
+                    } else if let data = text.data(using: .utf8),
+                              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let type = json["type"] as? String, type == "qa_answer",
+                              let answer = json["answer"] as? String {
+                        DispatchQueue.main.async {
+                            self?.latestAnswer = answer
+                            print("[AudioStreamer] Received QA Answer: \(answer)")
+                        }
+                    } else {
+                        // Fallback/Legacy
+                        DispatchQueue.main.async {
+                            self?.transcribedText += text
+                        }
                     }
                 case .data(_):
                     break

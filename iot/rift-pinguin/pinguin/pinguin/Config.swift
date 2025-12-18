@@ -13,4 +13,13 @@ struct AppConfig {
         components.path = wsPath
         return components.url!
     }
+    
+    static var httpURL: URL {
+        var components = URLComponents()
+        components.scheme = "http"
+        components.host = serverHost
+        components.port = serverPort
+        components.path = ""
+        return components.url!
+    }
 }
