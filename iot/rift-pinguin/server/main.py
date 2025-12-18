@@ -32,6 +32,7 @@ async def audio_websocket(websocket: WebSocket):
     session_transcription = ""
     chunk_count = 0
     words_since_last_index = 0
+    streaming_buffer = "" # 📝 Buffer for reactive QA
     
     try:
         while True:
@@ -58,21 +59,21 @@ async def audio_websocket(websocket: WebSocket):
                     # Update session context
                     session_transcription += text
                     current_batch_text += text
+                    streaming_buffer += text
                     words_since_last_index += 1
                 
-                # 🧠 Reactive QA: Detect if the current transcription contains a question
-                # We check for a question mark or common French interrogative keywords
+                # 🧠 Reactive QA: Detect if the buffer contains a question
                 interrogative_keywords = ["?", "qui", "quoi", "où", "quand", "comment", "pourquoi", "quel", "quelle", "est-ce que"]
-                lower_batch = current_batch_text.lower()
+                lower_buffer = streaming_buffer.lower()
                 
-                contains_question = any(kw in lower_batch for kw in interrogative_keywords)
+                contains_question = any(kw in lower_buffer for kw in interrogative_keywords)
                 
-                if contains_question and len(current_batch_text) > 5:
-                    print(f"🔍 Question détectée par écoute : {current_batch_text}")
+                # If we detect a question OR the buffer is getting long
+                if (contains_question and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
+                    print(f"🔍 Question détectée (buffer) : {streaming_buffer}")
                     
                     # Try to answer (threshold slightly higher for auto-triggers)
-                    # Note: We NO LONGER re-index session_transcription here.
-                    qa_result = qa_service.answer(current_batch_text, min_confidence=0.4)
+                    qa_result = qa_service.answer(streaming_buffer, min_confidence=0.4)
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
@@ -82,8 +83,12 @@ async def audio_websocket(websocket: WebSocket):
                             "confidence": qa_result['confidence'],
                             "time_ms": qa_result['time_ms']
                         })
+                        # Clear buffer after successful answer to avoid repeat triggers
+                        streaming_buffer = ""
+                    elif len(streaming_buffer) > 200:
+                        # Clear buffer if it's too long without a match
+                        streaming_buffer = ""
 
-                # Note: We NO LONGER periodically update the QA index from live speech.
                 # The index only contains what was loaded from the DB at startup.
                 
             elif "text" in message:
