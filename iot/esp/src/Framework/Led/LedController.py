@@ -5,7 +5,7 @@ from src.Framework.Led.LedStrip import LedStrip
 class LedController:
     """
     Plays JSON-based animations on a LedStrip.
-    Handles color interpolation (gradients) between defined positions.
+    Handles color interpolation (gradients) and smooth transitions (LERP) between frames.
     """
     def __init__(self, strip: LedStrip):
         self.strip = strip
@@ -22,8 +22,7 @@ class LedController:
     async def play(self, animation_data, loop=True):
         """
         Play an animation defined by animation_data dictionary.
-        :param animation_data: dict containing "frames" list.
-        :param loop: bool, whether to loop the animation indefinitely.
+        Smoothly interpolates between frames.
         """
         self.stop()
         self.is_playing = True
@@ -34,36 +33,87 @@ class LedController:
         if not frames:
             return
 
+        # Pre-calculate what the strip should look like for each frame
+        # This saves computation during the tight loop.
+        # Structure: list of lists of (r, g, b) tuples
+        rendered_frames = []
+        for frame in frames:
+            rendered_frames.append(self._calculate_frame_pixels(frame))
+
+        current_frame_idx = 0
+        num_frames = len(frames)
+        
+        # FPS for interpolation
+        FPS = 30 
+        frame_delay_ms = int(1000 / FPS)
+
         try:
             while self.is_playing:
-                for frame in frames:
-                    duration = frame.get("time", 100)
-                    color_stops = frame.get("colors", [])
-                    
-                    self._render_frame(color_stops)
-                    
-                    # Wait for the frame duration
-                    await asyncio.sleep_ms(duration)
+                # Current frame data
+                current_pixel_target = rendered_frames[current_frame_idx]
                 
-                if not loop:
-                    break
+                # Next frame data (for interpolation target)
+                next_idx = (current_frame_idx + 1) % num_frames
+                if not loop and next_idx == 0 and num_frames > 1:
+                     # End of animation if not looping
+                     # Just render the final frame and hold? Or stop?
+                     # Let's hold final frame state
+                     self._render_pixels(current_pixel_target)
+                     break
+
+                next_pixel_target = rendered_frames[next_idx]
+                
+                # Duration of the CURRENT frame creates the transition time to the NEXT frame
+                duration = frames[current_frame_idx].get("time", 500)
+                if duration < frame_delay_ms: duration = frame_delay_ms # Avoid divide by zero
+
+                steps = int(duration / frame_delay_ms)
+                
+                for step in range(steps + 1):
+                    if not self.is_playing: break
+                    
+                    alpha = step / steps
+                    
+                    # Interpolate every pixel
+                    mixed_pixels = []
+                    for i in range(self.strip.num_pixels):
+                        c1 = current_pixel_target[i]
+                        c2 = next_pixel_target[i]
+                        
+                        r = int(c1[0] + (c2[0] - c1[0]) * alpha)
+                        g = int(c1[1] + (c2[1] - c1[1]) * alpha)
+                        b = int(c1[2] + (c2[2] - c1[2]) * alpha)
+                        mixed_pixels.append((r, g, b))
+                    
+                    self._render_pixels(mixed_pixels)
+                    await asyncio.sleep_ms(frame_delay_ms)
+
+                current_frame_idx = next_idx
+                
         except asyncio.CancelledError:
             pass
         finally:
             self.is_playing = False
 
-    def _render_frame(self, color_stops):
-        """
-        Render a single frame's color gradient onto the strip.
-        color_stops: list of dicts { "color": "r,g,b", "position": 0-100 }
-        """
-        if not color_stops:
-            return
+    def _render_pixels(self, pixels):
+        for i, color in enumerate(pixels):
+            self.strip.set_pixel(i, color)
+        self.strip.show()
 
-        # Sort stops by position just in case
+    def _calculate_frame_pixels(self, frame):
+        """
+        Returns a list of (r,g,b) tuples for the strip based on frame gradients.
+        """
+        color_stops = frame.get("colors", [])
+        num_pixels = self.strip.num_pixels
+        result = [(0,0,0)] * num_pixels
+
+        if not color_stops:
+            return result
+
         stops = sorted(color_stops, key=lambda x: x.get("position", 0))
 
-        # Parse string colors "255,0,0" to tuples (255, 0, 0)
+        # Parse colors
         parsed_stops = []
         for s in stops:
             try:
@@ -72,47 +122,41 @@ class LedController:
                 pos = float(s.get("position", 0))
                 parsed_stops.append((pos, rgb))
             except:
-                pass # Skip invalid
-
-        if not parsed_stops:
-            return
-
-        num_pixels = self.strip.num_pixels
+                pass
         
+        if not parsed_stops:
+            return result
+
         for i in range(num_pixels):
-            # Calculate position of current pixel in % (0 - 100)
-            pixel_pos_pct = (i / (num_pixels - 1)) * 100 if num_pixels > 1 else 0
-
-            # Find the two stops surrounding this pixel
-            start_stop = None
-            end_stop = None
-
-            # Handle edge cases: pixel before first stop or after last stop
-            if pixel_pos_pct <= parsed_stops[0][0]:
-                self.strip.set_pixel(i, parsed_stops[0][1])
+            pct = (i / (num_pixels - 1)) * 100 if num_pixels > 1 else 0
+            
+            # Interpolate spatial
+            # Find bounds
+            start_stop = parsed_stops[0]
+            end_stop = parsed_stops[-1]
+            
+            if pct <= parsed_stops[0][0]:
+                result[i] = parsed_stops[0][1]
                 continue
-            if pixel_pos_pct >= parsed_stops[-1][0]:
-                self.strip.set_pixel(i, parsed_stops[-1][1])
+            if pct >= parsed_stops[-1][0]:
+                result[i] = parsed_stops[-1][1]
                 continue
-
-            # Find bounding stops
+            
             for j in range(len(parsed_stops) - 1):
-                if parsed_stops[j][0] <= pixel_pos_pct <= parsed_stops[j+1][0]:
+                if parsed_stops[j][0] <= pct <= parsed_stops[j+1][0]:
                     start_stop = parsed_stops[j]
                     end_stop = parsed_stops[j+1]
                     break
             
-            if start_stop and end_stop:
-                # Interpolate
-                dst = end_stop[0] - start_stop[0]
-                if dst == 0:
-                    ratio = 0
-                else:
-                    ratio = (pixel_pos_pct - start_stop[0]) / dst
-                
-                r = int(start_stop[1][0] + (end_stop[1][0] - start_stop[1][0]) * ratio)
-                g = int(start_stop[1][1] + (end_stop[1][1] - start_stop[1][1]) * ratio)
-                b = int(start_stop[1][2] + (end_stop[1][2] - start_stop[1][2]) * ratio)
-                self.strip.set_pixel(i, (r, g, b))
-
-        self.strip.show()
+            dst = end_stop[0] - start_stop[0]
+            if dst == 0:
+                ratio = 0
+            else:
+                ratio = (pct - start_stop[0]) / dst
+            
+            r = int(start_stop[1][0] + (end_stop[1][0] - start_stop[1][0]) * ratio)
+            g = int(start_stop[1][1] + (end_stop[1][1] - start_stop[1][1]) * ratio)
+            b = int(start_stop[1][2] + (end_stop[1][2] - start_stop[1][2]) * ratio)
+            result[i] = (r, g, b)
+            
+        return result
