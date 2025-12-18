@@ -11,6 +11,11 @@ class LedController:
         self.strip = strip
         self._play_task = None
         self.is_playing = False
+        self.brightness = 1.0
+
+    def set_brightness(self, value: float):
+        """Set global brightness (0.0 to 1.0)."""
+        self.brightness = max(0.0, min(1.0, value))
 
     def stop(self):
         """Stop the current animation."""
@@ -83,7 +88,8 @@ class LedController:
                         r = int(c1[0] + (c2[0] - c1[0]) * alpha)
                         g = int(c1[1] + (c2[1] - c1[1]) * alpha)
                         b = int(c1[2] + (c2[2] - c1[2]) * alpha)
-                        mixed_pixels.append((r, g, b))
+                        a = int(c1[3] + (c2[3] - c1[3]) * alpha)
+                        mixed_pixels.append((r, g, b, a))
                     
                     self._render_pixels(mixed_pixels)
                     await asyncio.sleep_ms(frame_delay_ms)
@@ -97,7 +103,17 @@ class LedController:
 
     def _render_pixels(self, pixels):
         for i, color in enumerate(pixels):
-            self.strip.set_pixel(i, color)
+            # color is (r, g, b, a)
+            # Alpha factor (0.0 to 1.0)
+            alpha_factor = color[3] / 255.0
+            
+            # Combine Global Brightness * Pixel Alpha
+            total_factor = self.brightness * alpha_factor
+            
+            r = int(color[0] * total_factor)
+            g = int(color[1] * total_factor)
+            b = int(color[2] * total_factor)
+            self.strip.set_pixel(i, (r, g, b))
         self.strip.show()
 
     def _calculate_frame_pixels(self, frame):
@@ -106,7 +122,7 @@ class LedController:
         """
         color_stops = frame.get("colors", [])
         num_pixels = self.strip.num_pixels
-        result = [(0,0,0)] * num_pixels
+        result = [(0,0,0,0)] * num_pixels
 
         if not color_stops:
             return result
@@ -118,7 +134,23 @@ class LedController:
         for s in stops:
             try:
                 c_str = s.get("color", "0,0,0")
-                rgb = tuple(map(int, c_str.split(',')))
+                parts = list(map(float, c_str.split(','))) # Use float for precision, esp for Alpha if 0-1 provided
+                
+                # Normalize to R,G,B,A (0-255 scale)
+                val_r = int(parts[0])
+                val_g = int(parts[1])
+                val_b = int(parts[2])
+                
+                val_a = 255
+                if len(parts) > 3:
+                    # If alpha is provided. Check if it's 0-1 or 0-255
+                    raw_a = parts[3]
+                    if raw_a <= 1.0 and raw_a > 0:
+                        val_a = int(raw_a * 255)
+                    else:
+                        val_a = int(raw_a)
+                
+                rgb = (val_r, val_g, val_b, val_a)
                 pos = float(s.get("position", 0))
                 parsed_stops.append((pos, rgb))
             except:
@@ -157,6 +189,7 @@ class LedController:
             r = int(start_stop[1][0] + (end_stop[1][0] - start_stop[1][0]) * ratio)
             g = int(start_stop[1][1] + (end_stop[1][1] - start_stop[1][1]) * ratio)
             b = int(start_stop[1][2] + (end_stop[1][2] - start_stop[1][2]) * ratio)
-            result[i] = (r, g, b)
+            a = int(start_stop[1][3] + (end_stop[1][3] - start_stop[1][3]) * ratio)
+            result[i] = (r, g, b, a)
             
         return result

@@ -15,20 +15,12 @@ class DepthConfig:
         }
 
 class Config:
-    def __init__(self, role="child", wifi=None, websocket=None, device_id="DEPTH_ESP"):
-        self.wifi = wifi if wifi else WifiConfig()
-        self.websocket = websocket if websocket else WebsocketConfig()
+    def __init__(self, role="child"):
         self.depth = DepthConfig(role=role)
-        self.device_id = device_id
-        self.debug_mode = True
-        self.heartbeat_interval = 15
 
 class DepthConfigFactory:
     @staticmethod
     def create_default_child():
         return Config(
-            role="child",
-            device_id="DEPTH-CUDY-ESP",
-            wifi=WifiConfig(ssid="Cudy-FA5C", password="58448069"), # From create_cudy
-            websocket=WebsocketConfig(server="ws://server.riftoperation.ethan-folio.fr", path="/ws") # From create_prod
+            role="parent"
         )
