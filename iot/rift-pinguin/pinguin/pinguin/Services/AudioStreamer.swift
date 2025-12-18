@@ -67,9 +67,9 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         print("[AudioStreamer] setupAudio() called")
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try session.setActive(true)
-            print("[AudioStreamer] Audio session configured successfully")
+            print("[AudioStreamer] Audio session configured for PlayAndRecord (Speaker/Bluetooth)")
         } catch {
             print("[AudioStreamer] Failed to setup audio session: \(error)")
             DispatchQueue.main.async { self.errorMessage = "Audio session error: \(error.localizedDescription)" }
@@ -210,11 +210,11 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
                             self?.latestConfidence = Float(json["confidence"] as? Double ?? 0.0)
                             print("[AudioStreamer] Received QA Answer: \(answer) (conf: \(self?.latestConfidence ?? 0))")
                             
-                            // Handle Audio Playback
-                            if let audioUrlString = json["audio_url"] as? String,
-                               let audioUrl = URL(string: audioUrlString) {
-                                print("[AudioStreamer] Playing associated audio: \(audioUrlString)")
-                                self?.playAudio(url: audioUrl)
+                            // Handle Audio Playback (Base64)
+                            if let audioBase64 = json["audio_base64"] as? String,
+                               let audioData = Data(base64Encoded: audioBase64) {
+                                let filename = json["audio_file"] as? String ?? "unknown"
+                                self?.playAudioData(data: audioData, filename: filename)
                             }
                         }
                     } else {
@@ -238,14 +238,17 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         }
     }
     
-    private func playAudio(url: URL) {
-        let playerItem = AVPlayerItem(url: url)
-        if audioPlayer == nil {
-            audioPlayer = AVPlayer(playerItem: playerItem)
-        } else {
-            audioPlayer?.replaceCurrentItem(with: playerItem)
+    private var audioPlayerFn: AVAudioPlayer?
+    
+    private func playAudioData(data: Data, filename: String) {
+        do {
+            print("🔊 [MOBILE] STARTING AUDIO PLAYBACK: \(filename) (\(data.count) bytes) 🔊")
+            audioPlayerFn = try AVAudioPlayer(data: data)
+            audioPlayerFn?.prepareToPlay()
+            audioPlayerFn?.play()
+        } catch {
+            print("❌ [AudioStreamer] Failed to play audio data: \(error)")
         }
-        audioPlayer?.play()
     }
     
     // MARK: - URLSessionWebSocketDelegate

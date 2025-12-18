@@ -5,7 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.KyutaiSttService import KyutaiSttService
 from services.PinguinQaService import PinguinQaService
 
+from typing import Dict, Any
 import socket
+import base64
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -38,6 +40,34 @@ app = FastAPI(lifespan=lifespan)
 import os
 os.makedirs("audio", exist_ok=True)
 app.mount("/audio", StaticFiles(directory="audio"), name="audio")
+
+async def send_qa_response(websocket: WebSocket, qa_result: Dict[str, Any]):
+    """Helper to consistently send QA answers with Base64 audio."""
+    audio_base64 = None
+    audio_file = qa_result.get('audio_file')
+    
+    if audio_file:
+        try:
+            audio_path = os.path.join("audio", audio_file)
+            print(f"📂 [QA] Loading audio: {audio_path}")
+            if os.path.exists(audio_path):
+                with open(audio_path, "rb") as f:
+                    file_content = f.read()
+                    audio_base64 = base64.b64encode(file_content).decode('utf-8')
+                    print(f"✅ [QA] Audio encoded ({len(audio_base64)} chars)")
+            else:
+                print(f"❌ [QA] Audio file missing: {audio_path}")
+        except Exception as e:
+            print(f"❌ [QA] Error encoding audio: {e}")
+    
+    await websocket.send_json({
+        "type": "qa_answer",
+        "answer": qa_result['answer'],
+        "confidence": qa_result['confidence'],
+        "audio_base64": audio_base64,
+        "audio_file": audio_file,
+        "time_ms": qa_result['time_ms']
+    })
 
 @app.get("/health")
 async def health_check():
@@ -100,18 +130,7 @@ async def audio_websocket(websocket: WebSocket):
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
-                        
-                        audio_url = None
-                        if qa_result.get('audio_file'):
-                            audio_url = f"http://{local_ip}:8000/audio/{qa_result['audio_file']}"
-                            
-                        await websocket.send_json({
-                            "type": "qa_answer",
-                            "answer": qa_result['answer'],
-                            "confidence": qa_result['confidence'],
-                            "audio_url": audio_url,
-                            "time_ms": qa_result['time_ms']
-                        })
+                        await send_qa_response(websocket, qa_result)
                         # Clear buffer after successful answer to avoid repeat triggers
                         streaming_buffer = ""
                     elif len(streaming_buffer) > 200:
@@ -129,18 +148,8 @@ async def audio_websocket(websocket: WebSocket):
                 qa_result = qa_service.answer(question)
                 print(f"Answer generated: {qa_result['answer']} (confidence: {qa_result['confidence']:.2f})")
                 
-                audio_url = None
-                if qa_result.get('audio_file'):
-                    audio_url = f"http://{local_ip}:8000/audio/{qa_result['audio_file']}"
-                
-                # Send answer back
-                await websocket.send_json({
-                    "type": "qa_answer",
-                    "answer": qa_result['answer'],
-                    "confidence": qa_result['confidence'],
-                    "audio_url": audio_url,
-                    "time_ms": qa_result['time_ms']
-                })
+                # Send answer back using helper
+                await send_qa_response(websocket, qa_result)
 
     except WebSocketDisconnect:
         print(f"Client disconnected via disconnect exception after {chunk_count} chunks")

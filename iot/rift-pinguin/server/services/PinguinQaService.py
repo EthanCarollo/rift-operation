@@ -204,7 +204,12 @@ class PinguinQaService:
         
         # Recherche du fichier audio associé (clé normalisée)
         norm_match = self.normalize_text(best_match)
+        print(f"🔍 [DEBUG] Normalized match key: '{norm_match}'")
+        
         audio_entry = self.audio_map.get(norm_match)
+        if not audio_entry:
+            print(f"⚠️ [DEBUG] No audio entry found for '{norm_match}'. Available keys: {list(self.audio_map.keys())[:3]}...")
+
         audio_file = None
         
         if audio_entry:
