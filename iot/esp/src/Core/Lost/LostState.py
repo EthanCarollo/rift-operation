@@ -46,7 +46,3 @@ class LostState:
             from src.Core.Lost.State.LostStateDone import LostStateDone
             await self.workshop.swap_state(LostStateDone(self.workshop))
             return
-
-        original_delay = self.workshop.current_step_delay
-        finally:
-            self.workshop.current_step_delay = original_delay

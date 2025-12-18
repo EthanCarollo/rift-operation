@@ -72,7 +72,7 @@ struct ContentView: View {
                                     Image(systemName: "sparkles")
                                         .font(.system(size: 14, weight: .semibold))
                                         .foregroundStyle(.blue)
-                                    Text("RITUAL INSIGHT")
+                                    Text("RÉPONSE DU PINGUIN")
                                         .font(.system(size: 11, weight: .black))
                                         .foregroundStyle(.blue.opacity(0.8))
                                         .tracking(1.5)
@@ -94,7 +94,7 @@ struct ContentView: View {
                             .padding(.horizontal, 24)
                             .transition(.asymmetric(
                                 insertion: .move(edge: .top).combined(with: .opacity),
-                                removal: .opacity.combined(with: .scale(scale: 0.9))
+                                removal: .opacity.combined(with: .scale(0.9))
                             ))
                         }
                     }
