@@ -6,3 +6,5 @@ numpy
 rustymimi
 sentencepiece
 mlx
+sentence-transformers
+faiss-cpu
