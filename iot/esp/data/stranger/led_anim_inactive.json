@@ -2,7 +2,7 @@
     "name": "My Animation",
     "frames": [
         {
-            "time": 2000,
+            "time": 1000,
             "colors": [
                 {
                     "color": "255,0,0",
@@ -23,7 +23,7 @@
             ]
         },
         {
-            "time": 2000,
+            "time": 1000,
             "colors": [
                 {
                     "color": "255,77,77",

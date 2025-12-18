@@ -41,6 +41,7 @@ class LedController:
         try:
             with open(file_path, "r") as f:
                 data = ujson.load(f)
+            print(data)
             await self.play(data, loop)
         except Exception as e:
             print(f"Error loading animation from {file_path}: {e}")

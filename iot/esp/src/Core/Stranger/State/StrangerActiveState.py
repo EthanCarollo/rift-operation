@@ -5,6 +5,7 @@ from machine import SPI, Pin
 
 from src.Framework.Servo.Servo import Servo
 from src.Framework.Servo.ServoDelegate import ServoDelegate
+import asyncio
 
 
 class StrangerActiveState(StrangerControllerState):
@@ -58,6 +59,10 @@ class StrangerActiveState(StrangerControllerState):
         self.servo_motor = Servo(14, ServoDelegate())
 
         self.servo_motor.off()
+
+        asyncio.run(
+            self.controller.led_controller.play_from_json("data/stranger/led_anim_active.json")
+        )
 
     def on_letter_detected(self, reader_name, letter):
         index = -1
