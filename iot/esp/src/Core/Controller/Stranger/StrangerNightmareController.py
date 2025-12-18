@@ -9,7 +9,7 @@ class StrangerNightmareController(EspController):
     def __init__(self, config: Config):
         super().__init__(config)
         self.logger.name = "StrangerController"
-        self.led_strip: LedStrip = LedStrip(13, 22)
+        self.led_strip: LedStrip = LedStrip(13, 32)
         self.led_controller: LedController = LedController(self.led_strip)
 
         self.swap_state(StrangerInactiveState(self))

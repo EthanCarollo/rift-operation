@@ -5,9 +5,7 @@ class StrangerInactiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
 
-        asyncio.run(
-            self.controller.led_controller.play_from_json("data/stranger/led_anim_inactive.json")
-        )
+        self.controller.led_controller.play_from_json("data/stranger/led_anim_inactive.json")
 
     def process_json_message(self, json):
         if json["start_system"] is not None and json["start_system"] == True:
@@ -15,4 +13,4 @@ class StrangerInactiveState(StrangerControllerState):
             self.controller.swap_state(StrangerActiveState(self.controller))
 
     def update(self):
-        pass
+        self.controller.led_controller.update()

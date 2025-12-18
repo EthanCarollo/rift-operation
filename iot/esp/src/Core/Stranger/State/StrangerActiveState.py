@@ -60,9 +60,7 @@ class StrangerActiveState(StrangerControllerState):
 
         self.servo_motor.off()
 
-        asyncio.run(
-            self.controller.led_controller.play_from_json("data/stranger/led_anim_active.json")
-        )
+        self.controller.led_controller.play_from_json("data/stranger/led_anim_active.json")
 
     def on_letter_detected(self, reader_name, letter):
         index = -1
@@ -109,3 +107,5 @@ class StrangerActiveState(StrangerControllerState):
         self.rfid_letter_2.check()
         self.rfid_letter_3.check()
         self.rfid_letter_4.check()
+        print("ended check")
+        self.controller.led_controller.update()

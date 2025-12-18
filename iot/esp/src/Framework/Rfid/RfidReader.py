@@ -1,6 +1,5 @@
 from machine import Pin
 from libs.mfrc.mfrc522 import MFRC522
-import time
 
 class RFIDReader:
     def __init__(self, spi, cs_pin, rst_pin, delegate, name="RFID"):

@@ -1,4 +1,4 @@
-import uasyncio as asyncio
+import time
 import math
 import ujson
 from src.Framework.Led.LedStrip import LedStrip
@@ -7,13 +7,20 @@ class LedController:
     """
     Plays JSON-based animations on a LedStrip.
     Handles color interpolation (gradients) and smooth transitions (LERP) between frames.
+    Synchronous version using update() method.
     """
     def __init__(self, strip: LedStrip):
         self.strip = strip
-        self._play_task = None
         self.is_playing = False
         self.brightness = 1.0
-
+        
+        # Animation state
+        self.rendered_frames = []
+        self.loop = False
+        self.current_frame_idx = 0
+        self.frame_start_time = 0
+        self.num_frames = 0
+        
     def set_brightness(self, value: float):
         """Set global brightness (0.0 to 1.0)."""
         self.brightness = max(0.0, min(1.0, value))
@@ -21,107 +28,116 @@ class LedController:
     def stop(self):
         """Stop the current animation."""
         self.is_playing = False
-        if self._play_task:
-            self._play_task.cancel()
-            self._play_task = None
 
-    async def play(self, animation_data, loop=True):
+    def play(self, animation_data, loop=True):
         """
-        Play an animation defined by animation_data dictionary.
-        Smoothly interpolates between frames.
+        Setup an animation defined by animation_data dictionary.
+        Does not block. Call update() frequently to animate.
         """
         self.stop()
-        self.is_playing = True
-        self._play_task = asyncio.create_task(self._animation_loop(animation_data, loop))
+        
+        frames = animation_data.get("frames", [])
+        if not frames:
+            return
 
-    async def play_from_json(self, file_path, loop=True):
+        # Pre-calculate what the strip should look like for each frame
+        self.rendered_frames = []
+        for frame in frames:
+            self.rendered_frames.append(self._calculate_frame_pixels(frame))
+            
+        self.frames_data = frames # Keep original data for duration info
+        self.num_frames = len(frames)
+        self.current_frame_idx = 0
+        self.loop = loop
+        self.is_playing = True
+        self.frame_start_time = time.ticks_ms()
+        
+        # Render initial state immediately
+        if self.num_frames > 0:
+            self._render_pixels(self.rendered_frames[0])
+
+    def play_from_json(self, file_path, loop=True):
         """
         Load an animation from a JSON file and play it.
         """
         try:
             with open(file_path, "r") as f:
                 data = ujson.load(f)
-            print(data)
-            await self.play(data, loop)
+            self.play(data, loop)
         except Exception as e:
             print(f"Error loading animation from {file_path}: {e}")
 
-
-    async def _animation_loop(self, animation_data, loop):
-        frames = animation_data.get("frames", [])
-        if not frames:
+    def update(self):
+        """
+        Update the animation state. Must be called frequently.
+        """
+        if not self.is_playing or self.num_frames == 0:
             return
 
-        # Pre-calculate what the strip should look like for each frame
-        # This saves computation during the tight loop.
-        # Structure: list of lists of (r, g, b) tuples
-        rendered_frames = []
-        for frame in frames:
-            rendered_frames.append(self._calculate_frame_pixels(frame))
-
-        current_frame_idx = 0
-        num_frames = len(frames)
+        now = time.ticks_ms()
         
-        # FPS for interpolation
-        FPS = 30 
-        frame_delay_ms = int(1000 / FPS)
+        # Get duration of current frame
+        duration = self.frames_data[self.current_frame_idx].get("time", 500)
+        
+        # Check if we need to advance to next frame
+        elapsed = time.ticks_diff(now, self.frame_start_time)
+        
+        if elapsed >= duration:
+            # Advance frame
+            next_idx = self.current_frame_idx + 1
+            
+            if next_idx >= self.num_frames:
+                if self.loop:
+                    next_idx = 0
+                else:
+                    self.is_playing = False
+                    return
 
-        try:
-            while self.is_playing:
-                # Current frame data
-                current_pixel_target = rendered_frames[current_frame_idx]
-                
-                # Next frame data (for interpolation target)
-                next_idx = (current_frame_idx + 1) % num_frames
-                if not loop and next_idx == 0 and num_frames > 1:
-                     # End of animation if not looping
-                     # Just render the final frame and hold? Or stop?
-                     # Let's hold final frame state
-                     self._render_pixels(current_pixel_target)
-                     break
+            self.current_frame_idx = next_idx
+            self.frame_start_time = now
+            elapsed = 0 # Reset elapsed for new frame
+            
+        # Interpolation
+        # Target is the NEXT frame in the sequence (logic differs slightly from previous async loop)
+        # We are interpolating FROM current_frame_idx TO (current_frame_idx + 1)
+        # Wait, if we advanced frame above, we are at start of that frame.
+        # Actually it's better to think: We are at 'current_frame_idx'. We are moving towards 'next_frame_idx'.
+        
+        current_pixel_target = self.rendered_frames[self.current_frame_idx]
+        
+        next_idx = (self.current_frame_idx + 1) % self.num_frames
+        if not self.loop and next_idx == 0 and self.current_frame_idx == self.num_frames - 1:
+             # Last frame, no loop. Just hold current.
+             next_pixel_target = current_pixel_target
+        else:
+             next_pixel_target = self.rendered_frames[next_idx]
 
-                next_pixel_target = rendered_frames[next_idx]
-                
-                # Duration of the CURRENT frame creates the transition time to the NEXT frame
-                duration = frames[current_frame_idx].get("time", 500)
-                if duration < frame_delay_ms: duration = frame_delay_ms # Avoid divide by zero
-
-                steps = int(duration / frame_delay_ms)
-                
-                for step in range(steps + 1):
-                    if not self.is_playing: break
-                    
-                    alpha = step / steps
-                    
-                    # Interpolate every pixel
-                    mixed_pixels = []
-                    for i in range(self.strip.num_pixels):
-                        c1 = current_pixel_target[i]
-                        c2 = next_pixel_target[i]
-                        
-                        r = int(c1[0] + (c2[0] - c1[0]) * alpha)
-                        g = int(c1[1] + (c2[1] - c1[1]) * alpha)
-                        b = int(c1[2] + (c2[2] - c1[2]) * alpha)
-                        a = int(c1[3] + (c2[3] - c1[3]) * alpha)
-                        mixed_pixels.append((r, g, b, a))
-                    
-                    self._render_pixels(mixed_pixels)
-                    await asyncio.sleep_ms(frame_delay_ms)
-
-                current_frame_idx = next_idx
-                
-        except asyncio.CancelledError:
-            pass
-        finally:
-            self.is_playing = False
+        # Calculate alpha (0.0 to 1.0)
+        if duration > 0:
+            alpha = elapsed / duration
+        else:
+            alpha = 1.0
+        
+        if alpha > 1.0: alpha = 1.0
+        
+        # Render
+        mixed_pixels = []
+        for i in range(self.strip.num_pixels):
+            c1 = current_pixel_target[i]
+            c2 = next_pixel_target[i]
+            
+            r = int(c1[0] + (c2[0] - c1[0]) * alpha)
+            g = int(c1[1] + (c2[1] - c1[1]) * alpha)
+            b = int(c1[2] + (c2[2] - c1[2]) * alpha)
+            a = int(c1[3] + (c2[3] - c1[3]) * alpha)
+            mixed_pixels.append((r, g, b, a))
+        
+        self._render_pixels(mixed_pixels)
 
     def _render_pixels(self, pixels):
         for i, color in enumerate(pixels):
             # color is (r, g, b, a)
-            # Alpha factor (0.0 to 1.0)
             alpha_factor = color[3] / 255.0
-            
-            # Combine Global Brightness * Pixel Alpha
             total_factor = self.brightness * alpha_factor
             
             r = int(color[0] * total_factor)
@@ -132,7 +148,7 @@ class LedController:
 
     def _calculate_frame_pixels(self, frame):
         """
-        Returns a list of (r,g,b) tuples for the strip based on frame gradients.
+        Returns a list of (r,g,b,a) tuples for the strip based on frame gradients.
         """
         color_stops = frame.get("colors", [])
         num_pixels = self.strip.num_pixels
@@ -148,16 +164,14 @@ class LedController:
         for s in stops:
             try:
                 c_str = s.get("color", "0,0,0")
-                parts = list(map(float, c_str.split(','))) # Use float for precision, esp for Alpha if 0-1 provided
+                parts = list(map(float, c_str.split(',')))
                 
-                # Normalize to R,G,B,A (0-255 scale)
                 val_r = int(parts[0])
                 val_g = int(parts[1])
                 val_b = int(parts[2])
                 
                 val_a = 255
                 if len(parts) > 3:
-                    # If alpha is provided. Check if it's 0-1 or 0-255
                     raw_a = parts[3]
                     if raw_a <= 1.0 and raw_a > 0:
                         val_a = int(raw_a * 255)
@@ -175,11 +189,6 @@ class LedController:
 
         for i in range(num_pixels):
             pct = (i / (num_pixels - 1)) * 100 if num_pixels > 1 else 0
-            
-            # Interpolate spatial
-            # Find bounds
-            start_stop = parsed_stops[0]
-            end_stop = parsed_stops[-1]
             
             if pct <= parsed_stops[0][0]:
                 result[i] = parsed_stops[0][1]
