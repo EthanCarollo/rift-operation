@@ -70,10 +70,8 @@ async def audio_websocket(websocket: WebSocket):
                 if contains_question and len(current_batch_text) > 5:
                     print(f"🔍 Question détectée par écoute : {current_batch_text}")
                     
-                    # Refresh index with latest context before answering
-                    qa_service.index_transcription(session_transcription, save_to_db=False)
-                    
                     # Try to answer (threshold slightly higher for auto-triggers)
+                    # Note: We NO LONGER re-index session_transcription here.
                     qa_result = qa_service.answer(current_batch_text, min_confidence=0.4)
                     
                     if qa_result['confidence'] > 0.4:
@@ -85,27 +83,15 @@ async def audio_websocket(websocket: WebSocket):
                             "time_ms": qa_result['time_ms']
                         })
 
-                # Periodically update the QA index (every 5 new word-pieces)
-                if words_since_last_index >= 5:
-                    # Save the latest session transcription to DB
-                    qa_service.index_transcription(current_batch_text)
-                    words_since_last_index = 0
-                    current_batch_text = ""
-                    
+                # Note: We NO LONGER periodically update the QA index from live speech.
+                # The index only contains what was loaded from the DB at startup.
+                
             elif "text" in message:
                 # ❓ Handle Text (Question for the QA system)
                 question = message["text"]
                 print(f"Question received: {question}")
                 
-                # Make sure we've indexed the latest words (without double saving)
-                if words_since_last_index > 0:
-                    # Just refresh the index with current session context, don't save to file again
-                    # This is slightly subtle: index_transcription with save_to_db=True appends.
-                    # Here we want to make sure the LATEST words are in memory.
-                    qa_service.index_transcription(session_transcription, save_to_db=False)
-                    words_since_last_index = 0
-                
-                # Get answer from QA module
+                # Get answer from QA module (Directly from static index)
                 qa_result = qa_service.answer(question)
                 print(f"Answer generated: {qa_result['answer']} (confidence: {qa_result['confidence']:.2f})")
                 
