@@ -12,7 +12,7 @@ class DepthController(EspController):
         self.logger.name = "DepthController"
         self.depthConfig = DepthConfigFactory.create_default_child()
 
-        self.role = self.depthConfig.depth.role  # "parent" ou "enfant"
+        self.role = self.depthConfig.depth.role  # "nightmare" ou "dream"
         self.partitions = self.depthConfig.depth.partitions
 
         self.state = {}               # état global reçu du serveur
@@ -27,7 +27,7 @@ class DepthController(EspController):
 
         # LEDs uniquement pour le parent
         self.leds = None
-        if self.role == "parent":
+        if self.role == "nightmare":
             self.leds = {
                 name: Pin(pin, Pin.OUT)
                 for name, pin in self.depthConfig.depth.led_pins.items()
@@ -45,8 +45,8 @@ class DepthController(EspController):
 
     def depth_finished(self):
         return (
-            self.state.get("depth_step_3_parent_sucess") == True
-            and self.state.get("depth_step_3_enfant_sucess") == True
+            self.state.get("depth_step_3_nightmare_sucess") == True
+            and self.state.get("depth_step_3_dream_sucess") == True
         )
 
     def current_step(self):
@@ -82,7 +82,7 @@ class DepthController(EspController):
     # --------------------------------------------------
 
     def play_partition(self, sequence):
-        if self.role == "parent":
+        if self.role == "nightmare":
             self.play_leds(sequence)
 
         index = 0
@@ -139,21 +139,21 @@ class DepthController(EspController):
         if step is None:
             return
 
-        # 🔒 Parent attend l’enfant (step en cours)
-        if self.role == "parent":
-            child_key = f"depth_step_{step}_enfant_sucess"
+        # 🔒 Nightmare attend le dream (step en cours)
+        if self.role == "nightmare":
+            child_key = f"depth_step_{step}_dream_sucess"
             if self.state.get(child_key) is not True:
                 self.logger.info(
-                    f"⏳ Parent attend enfant (step {step})"
+                    f"⏳ Nightmare attend dream (step {step})"
                 )
                 return
 
-        # 🔒 Enfant attend le parent (step précédent)
-        if self.role == "enfant" and step > 1:
-            parent_prev_key = f"depth_step_{step - 1}_parent_sucess"
+        # 🔒 Dream attend le nightmare (step précédent)
+        if self.role == "dream" and step > 1:
+            parent_prev_key = f"depth_step_{step - 1}_nightmare_sucess"
             if self.state.get(parent_prev_key) is not True:
                 self.logger.info(
-                    f"⏳ Enfant attend parent (step {step - 1})"
+                    f"⏳ Dream attend nightmare (step {step - 1})"
                 )
                 return
 

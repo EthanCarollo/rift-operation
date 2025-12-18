@@ -1,0 +1,4 @@
+spherov2
+bleak>=0.20.0
+websocket-client
+websockets

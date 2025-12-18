@@ -22,5 +22,5 @@ class DepthConfigFactory:
     @staticmethod
     def create_default_child():
         return Config(
-            role="parent"
+            role="nightmare"
         )
