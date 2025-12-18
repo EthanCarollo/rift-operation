@@ -40,7 +40,7 @@ class PinguinQaService:
             with open(self.db_path, "r", encoding="utf-8") as f:
                 history = f.read()
                 if history.strip():
-                    self.index_transcription(history, save_to_db=False)
+                    self.index_transcription(history, window_size=0, save_to_db=False)
         
         self.is_loaded = True
         print("✓ Modèle Q&A chargé!")
@@ -74,7 +74,7 @@ class PinguinQaService:
         
         return segments
     
-    def index_transcription(self, transcription: str, window_size: int = 1, save_to_db: bool = True):
+    def index_transcription(self, transcription: str, window_size: int = 0, save_to_db: bool = True):
         """
         Indexe la transcription pour recherche rapide.
         """
@@ -162,6 +162,23 @@ class PinguinQaService:
                 'confidence': score,
                 'time_ms': elapsed_ms
             }
+        
+        # --- [AMÉLIORATION] Vérification des mots-clés (Noms) ---
+        # Si la question contient des mots spécifiques (en majuscules ou clés),
+        # on vérifie si le segment choisi les contient bien.
+        words_in_question = [w.strip("?,!").lower() for w in question.split() if len(w) > 2]
+        
+        # On recherche d'autres résultats si le premier ne contient pas un nom important
+        important_keywords = [w for w in question.split() if w[0].isupper() and len(w) > 1]
+        
+        if important_keywords:
+            results_top3 = self.search(question, top_k=5)
+            for seg, sc in results_top3:
+                if any(name.lower() in seg.lower() for name in important_keywords):
+                    best_match = seg
+                    score = sc
+                    break
+        # -------------------------------------------------------
         
         answer = self._format_answer(best_match, score)
         

@@ -94,7 +94,7 @@ struct ContentView: View {
                             .padding(.horizontal, 24)
                             .transition(.asymmetric(
                                 insertion: .move(edge: .top).combined(with: .opacity),
-                                removal: .opacity.combined(with: .scale(0.9))
+                                removal: .opacity.combined(with: .scale(scale: 0.9))
                             ))
                         }
                     }

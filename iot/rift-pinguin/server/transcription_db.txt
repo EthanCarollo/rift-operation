@@ -1,5 +1,6 @@
 Le bob de John est rouge.
-Le pantalon de Jeremy est noir.
-La veste de Marie est bleue.
-Les chaussures de Pierre sont blanches.
-La casquette de Sophie est jaune.
+Le pantalon de Marc est noir.
+La veste de Paul est bleue.
+Les chaussures de Theo sont blanches.
+La casquette de Alex est jaune.
+La montre de Eric est grise.
