@@ -21,7 +21,6 @@ class RFIDReader:
         self.reader = MFRC522(spi, self.cs, self.rst)
         self.delegate = delegate
         self._last_uid = None
-        self.last_scan_time = 0
 
     def _read_uid(self):
         status, _ = self.reader.request(self.reader.REQIDL)
@@ -42,7 +41,7 @@ class RFIDReader:
                     self.delegate.on_read(uid, self.name)
                 except Exception as e:
                     print(f"Error in RFID delegate on_read: {e}")
-                self.reader.halt()
+            self.reader.halt()
         elif self._last_uid is not None:
             try:
                 if hasattr(self.delegate, "on_card_lost"):
