@@ -1,7 +1,25 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from services.KyutaiSttService import KyutaiSttService
 from services.PinguinQaService import PinguinQaService
+
+import socket
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('8.8.8.8', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+local_ip = get_local_ip()
+print(f"Local network address: http://{local_ip}:8000")
 
 stt_service = KyutaiSttService()
 qa_service = PinguinQaService()
@@ -15,6 +33,11 @@ async def lifespan(app: FastAPI):
     pass
 
 app = FastAPI(lifespan=lifespan)
+
+# Servir les fichiers audio
+import os
+os.makedirs("audio", exist_ok=True)
+app.mount("/audio", StaticFiles(directory="audio"), name="audio")
 
 @app.get("/health")
 async def health_check():
@@ -77,10 +100,16 @@ async def audio_websocket(websocket: WebSocket):
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
+                        
+                        audio_url = None
+                        if qa_result.get('audio_file'):
+                            audio_url = f"http://{local_ip}:8000/audio/{qa_result['audio_file']}"
+                            
                         await websocket.send_json({
                             "type": "qa_answer",
                             "answer": qa_result['answer'],
                             "confidence": qa_result['confidence'],
+                            "audio_url": audio_url,
                             "time_ms": qa_result['time_ms']
                         })
                         # Clear buffer after successful answer to avoid repeat triggers
@@ -100,11 +129,16 @@ async def audio_websocket(websocket: WebSocket):
                 qa_result = qa_service.answer(question)
                 print(f"Answer generated: {qa_result['answer']} (confidence: {qa_result['confidence']:.2f})")
                 
+                audio_url = None
+                if qa_result.get('audio_file'):
+                    audio_url = f"http://{local_ip}:8000/audio/{qa_result['audio_file']}"
+                
                 # Send answer back
                 await websocket.send_json({
                     "type": "qa_answer",
                     "answer": qa_result['answer'],
                     "confidence": qa_result['confidence'],
+                    "audio_url": audio_url,
                     "time_ms": qa_result['time_ms']
                 })
 

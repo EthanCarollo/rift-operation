@@ -5,10 +5,13 @@ internal import Combine
 class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     @Published var transcribedText: String = ""
     @Published var latestAnswer: String = ""
+    @Published var latestConfidence: Float = 0.0
     @Published var isRecording: Bool = false
     @Published var isConnected: Bool = false
     @Published var isServerHealthy: Bool = false
     @Published var errorMessage: String? = nil
+    
+    private var audioPlayer: AVPlayer?
     
     private var engine = AVAudioEngine()
     private var socket: URLSessionWebSocketTask?
@@ -204,7 +207,15 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
                               let answer = json["answer"] as? String {
                         DispatchQueue.main.async {
                             self?.latestAnswer = answer
-                            print("[AudioStreamer] Received QA Answer: \(answer)")
+                            self?.latestConfidence = Float(json["confidence"] as? Double ?? 0.0)
+                            print("[AudioStreamer] Received QA Answer: \(answer) (conf: \(self?.latestConfidence ?? 0))")
+                            
+                            // Handle Audio Playback
+                            if let audioUrlString = json["audio_url"] as? String,
+                               let audioUrl = URL(string: audioUrlString) {
+                                print("[AudioStreamer] Playing associated audio: \(audioUrlString)")
+                                self?.playAudio(url: audioUrl)
+                            }
                         }
                     } else {
                         // Fallback/Legacy
@@ -225,6 +236,16 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
                 }
             }
         }
+    }
+    
+    private func playAudio(url: URL) {
+        let playerItem = AVPlayerItem(url: url)
+        if audioPlayer == nil {
+            audioPlayer = AVPlayer(playerItem: playerItem)
+        } else {
+            audioPlayer?.replaceCurrentItem(with: playerItem)
+        }
+        audioPlayer?.play()
     }
     
     // MARK: - URLSessionWebSocketDelegate

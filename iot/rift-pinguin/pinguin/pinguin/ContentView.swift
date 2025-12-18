@@ -76,6 +76,12 @@ struct ContentView: View {
                                         .font(.system(size: 11, weight: .black))
                                         .foregroundStyle(.blue.opacity(0.8))
                                         .tracking(1.5)
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(Int(streamer.latestConfidence * 100))%")
+                                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(.blue.opacity(0.6))
                                 }
                                 
                                 Text(streamer.latestAnswer)

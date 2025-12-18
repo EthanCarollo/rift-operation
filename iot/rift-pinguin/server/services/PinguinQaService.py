@@ -5,6 +5,7 @@ from typing import List, Tuple, Dict, Any
 import re
 import time
 import random
+import os
 
 class PinguinQaService:
     """
@@ -12,15 +13,17 @@ class PinguinQaService:
     Transposé depuis le notebook lab/pinguin/1-qa-test.ipynb.
     """
     
-    def __init__(self, model_name: str = 'paraphrase-multilingual-MiniLM-L12-v2', db_path: str = "transcription_db.txt"):
+    def __init__(self, model_name: str = 'paraphrase-multilingual-MiniLM-L12-v2', db_path: str = "transcription_db.txt", audio_map_path: str = "audio_map.json"):
         """
         Initialise le service.
         """
         self.model_name = model_name
         self.db_path = db_path
+        self.audio_map_path = audio_map_path
         self.model = None
         self.index = None
         self.segments = []
+        self.audio_map = {}
         self.is_loaded = False
         
     def load_model(self):
@@ -42,8 +45,25 @@ class PinguinQaService:
                 if history.strip():
                     self.index_transcription(history, window_size=0, save_to_db=False)
         
+        # Chargement de la table de correspondance audio
+        import json
+        if os.path.exists(self.audio_map_path):
+            print(f"🎵 Chargement de la map audio depuis {self.audio_map_path}...")
+            with open(self.audio_map_path, "r", encoding="utf-8") as f:
+                raw_map = json.load(f)
+                # Normalisation des clés pour faciliter la correspondance
+                self.audio_map = {self.normalize_text(k): v for k, v in raw_map.items()}
+        
         self.is_loaded = True
         print("✓ Modèle Q&A chargé!")
+    
+    def normalize_text(self, text: str) -> str:
+        """
+        Normalise le texte pour la recherche (minuscules, sans ponctuation).
+        """
+        text = text.lower().strip()
+        text = re.sub(r'[.!?,\d]', '', text)
+        return text.strip()
         
     def prepare_transcription(self, transcription: str, window_size: int = 1) -> List[str]:
         """
@@ -182,11 +202,30 @@ class PinguinQaService:
         
         answer = self._format_answer(best_match, score)
         
+        # Recherche du fichier audio associé (clé normalisée)
+        norm_match = self.normalize_text(best_match)
+        audio_entry = self.audio_map.get(norm_match)
+        audio_file = None
+        
+        if audio_entry:
+            if isinstance(audio_entry, list) and audio_entry:
+                audio_file = random.choice(audio_entry)
+            elif isinstance(audio_entry, str):
+                audio_file = audio_entry
+        
+        # Vérification de l'existence du fichier sur le disque
+        if audio_file:
+            audio_path = os.path.join("audio", audio_file)
+            if not os.path.exists(audio_path):
+                print(f"⚠️ Fichier audio introuvable sur le disque : {audio_path}")
+                audio_file = None
+        
         return {
             'answer': answer,
             'confidence': score,
             'time_ms': elapsed_ms,
-            'raw_segment': best_match
+            'raw_segment': best_match,
+            'audio_file': audio_file
         }
     
     def _format_answer(self, text: str, confidence: float) -> str:
