@@ -11,6 +11,7 @@ class StrangerNightmareController(EspController):
         self.logger.name = "StrangerController"
         self.led_strip: LedStrip = LedStrip(13, 32)
         self.led_controller: LedController = LedController(self.led_strip)
+        self.led_controller.start_thread()
 
         self.swap_state(StrangerInactiveState(self))
 

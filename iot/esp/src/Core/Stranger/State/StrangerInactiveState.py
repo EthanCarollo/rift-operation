@@ -13,4 +13,4 @@ class StrangerInactiveState(StrangerControllerState):
             self.controller.swap_state(StrangerActiveState(self.controller))
 
     def update(self):
-        self.controller.led_controller.update()
+        pass

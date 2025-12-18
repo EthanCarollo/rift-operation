@@ -55,6 +55,8 @@ class StrangerActiveState(StrangerControllerState):
             print(error)
 
         self.detected_word = [None, None, None, None]
+        self.current_reader_index = 0
+
 
         self.servo_motor = Servo(14, ServoDelegate())
 
@@ -102,10 +104,14 @@ class StrangerActiveState(StrangerControllerState):
         pass
 
     def update(self):
-        # On check tous les lecteurs
-        self.rfid_letter_1.check()
-        self.rfid_letter_2.check()
-        self.rfid_letter_3.check()
-        self.rfid_letter_4.check()
-        print("ended check")
-        self.controller.led_controller.update()
+        # Check one reader per frame to save CPU for LED thread
+        if self.current_reader_index == 0:
+             self.rfid_letter_1.check()
+        elif self.current_reader_index == 1:
+             self.rfid_letter_2.check()
+        elif self.current_reader_index == 2:
+             self.rfid_letter_3.check()
+        elif self.current_reader_index == 3:
+             self.rfid_letter_4.check()
+        
+        self.current_reader_index = (self.current_reader_index + 1) % 4
