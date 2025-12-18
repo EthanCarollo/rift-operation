@@ -9,10 +9,10 @@ class StrangerNightmareController(EspController):
     def __init__(self, config: Config):
         super().__init__(config)
         self.logger.name = "StrangerController"
+        self.led_strip: LedStrip = LedStrip(13, 22)
+        self.led_controller: LedController = LedController(self.led_strip)
 
         self.swap_state(StrangerInactiveState(self))
-        self.led_strip: LedStrip = LedStrip(25, 22)
-        self.led_controller: LedController = LedController(self.led_strip)
 
     def swap_state(self, state):
         self.logger.debug(f"Swapping to StrangerController to new state : {state.__class__.__name__}")

@@ -1,9 +1,10 @@
 from src.Core.Stranger.State.StrangerControllerState import StrangerControllerState
+import asyncio
 
 class StrangerInactiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
-        
+
         asyncio.run(
             self.controller.led_controller.play_from_json("data/stranger/led_anim_inactive.json")
         )
