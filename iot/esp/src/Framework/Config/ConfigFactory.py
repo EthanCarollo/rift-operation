@@ -63,11 +63,11 @@ class WebsocketConfigFactory:
 
 class ConfigFactory:
     @staticmethod
-    def create_table_config():
+    def create_rift_config():
         return Config(
-            wifi=WifiConfigFactory.create_cudy(),
+            wifi=WifiConfigFactory.create_appartment_aix(),
             websocket=WebsocketConfigFactory.create_prod(),
-            device_id=f"TABLE-ESP",
+            device_id=f"RIFT-ESP",
             debug_mode=True,
             heartbeat_interval=15
         )
