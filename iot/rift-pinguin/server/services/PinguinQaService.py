@@ -12,14 +12,37 @@ class PinguinQaService:
     Transposé depuis le notebook lab/pinguin/1-qa-test.ipynb.
     """
     
-    def __init__(self, model_name: str = 'paraphrase-multilingual-MiniLM-L12-v2'):
+    def __init__(self, model_name: str = 'paraphrase-multilingual-MiniLM-L12-v2', db_path: str = "transcription_db.txt"):
         """
-        Initialise le service avec un modèle d'embeddings.
+        Initialise le service.
         """
-        print(f"📦 Chargement du modèle de Q&A: {model_name}...")
-        self.model = SentenceTransformer(model_name)
+        self.model_name = model_name
+        self.db_path = db_path
+        self.model = None
         self.index = None
         self.segments = []
+        self.is_loaded = False
+        
+    def load_model(self):
+        """
+        Charge le modèle d'embeddings et restaure l'historique si présent.
+        """
+        if self.is_loaded:
+            return
+            
+        print(f"📦 Chargement du modèle de Q&A: {self.model_name}...")
+        self.model = SentenceTransformer(self.model_name)
+        
+        # Restauration de la base de données (fichier texte)
+        import os
+        if os.path.exists(self.db_path):
+            print(f"📂 Restauration de la base de données depuis {self.db_path}...")
+            with open(self.db_path, "r", encoding="utf-8") as f:
+                history = f.read()
+                if history.strip():
+                    self.index_transcription(history, save_to_db=False)
+        
+        self.is_loaded = True
         print("✓ Modèle Q&A chargé!")
         
     def prepare_transcription(self, transcription: str, window_size: int = 1) -> List[str]:
@@ -51,7 +74,7 @@ class PinguinQaService:
         
         return segments
     
-    def index_transcription(self, transcription: str, window_size: int = 1):
+    def index_transcription(self, transcription: str, window_size: int = 1, save_to_db: bool = True):
         """
         Indexe la transcription pour recherche rapide.
         """
@@ -60,7 +83,18 @@ class PinguinQaService:
             return
 
         print("🔄 Indexation de la transcription...")
-        self.segments = self.prepare_transcription(transcription, window_size)
+        
+        # Sauvegarde dans la base de données si demandé
+        if save_to_db:
+            with open(self.db_path, "a", encoding="utf-8") as f:
+                f.write(transcription + "\n")
+            
+            # Re-charger tout pour l'indexation (si on veut que l'index contienne TOUT)
+            with open(self.db_path, "r", encoding="utf-8") as f:
+                full_history = f.read()
+            self.segments = self.prepare_transcription(full_history, window_size)
+        else:
+            self.segments = self.prepare_transcription(transcription, window_size)
         
         if not self.segments:
             return

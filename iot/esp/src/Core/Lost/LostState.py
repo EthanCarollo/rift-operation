@@ -41,20 +41,12 @@ class LostState:
 
         self.workshop.controller.logger.info("FAST FORWARD -> {}".format(LC.LostSteps.get_name(target_step)))
         
-        original_delay = self.workshop.current_step_delay
-        self.workshop.current_step_delay = 0
-        
-        try:
-            max_loops = 10
-            while self.step_id < target_step and max_loops > 0:
-                current_id = self.step_id
-                await self.next_step()
+        # Direct jump to DONE
+        if target_step == LC.LostSteps.DONE:
+            from src.Core.Lost.State.LostStateDone import LostStateDone
+            await self.workshop.swap_state(LostStateDone(self.workshop))
+            return
 
-                if self.workshop.state.step_id == current_id:
-                    break # Stupid loop check
-                
-                if self.workshop.state.step_id < target_step:
-                     await self.workshop.state.fast_forward_to(target_step)
-                return # We are done, the recursive chain handles it
+        original_delay = self.workshop.current_step_delay
         finally:
             self.workshop.current_step_delay = original_delay
