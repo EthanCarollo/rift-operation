@@ -17,7 +17,7 @@ class LostStateIdle(LostState):
         self.workshop.hardware.set_servo(0)
 
     async def handle_message(self, payload):
-        counts = (payload.get("children_rift_part_count"), payload.get("parent_rift_part_count"))
+        counts = (payload.get("dream_rift_part_count"), payload.get("nightmare_rift_part_count"))
         if counts != LC.LostGameConfig.TARGET_COUNTS:
             return
 

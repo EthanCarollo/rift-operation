@@ -279,12 +279,12 @@
                                 <span class="section-title">00_Rift_Table</span>
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="control-group" data-type="int">
-                                        <label class="block text-xs font-bold mb-2 uppercase">Children Rift Parts</label>
-                                        <input type="number" name="children_rift_part_count" class="raw-input" placeholder="NULL">
+                                        <label class="block text-xs font-bold mb-2 uppercase">Dream Rift Parts</label>
+                                        <input type="number" name="dream_rift_part_count" class="raw-input" placeholder="NULL">
                                     </div>
                                     <div class="control-group" data-type="int">
-                                        <label class="block text-xs font-bold mb-2 uppercase">Parent Rift Parts</label>
-                                        <input type="number" name="parent_rift_part_count" class="raw-input" placeholder="NULL">
+                                        <label class="block text-xs font-bold mb-2 uppercase">Nightmare Rift Parts</label>
+                                        <input type="number" name="nightmare_rift_part_count" class="raw-input" placeholder="NULL">
                                     </div>
                                 </div>
                             </section>
@@ -303,6 +303,10 @@
                                                 <div class="tri-state-btn" data-value="false">FALSE</div>
                                                 <div class="tri-state-btn" data-value="true">TRUE</div>
                                             </div>
+                                        </div>
+                                        <div class="control-group" data-type="text">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Stranger State</label>
+                                            <input type="text" name="stranger_state" class="raw-input" placeholder="NULL">
                                         </div>
                                         <div class="control-group" data-type="bool">
                                             <label class="block text-xs font-bold mb-2 uppercase">Recognized Stranger</label>
@@ -335,13 +339,17 @@
                             <section class="section-box">
                                 <span class="section-title">02_Depth_Sequence</span>
                                 <div class="grid grid-cols-2 gap-8">
-                                    <!-- Parent Group -->
+                                    <!-- Nightmare Group -->
                                     <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Parent Steps</h3>
+                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Nightmare Steps</h3>
+                                        <div class="control-group" data-type="text">
+                                            <label class="block text-[10px] font-bold mb-1 uppercase">Depth State</label>
+                                            <input type="text" name="depth_state" class="raw-input" placeholder="NULL">
+                                        </div>
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
-                                            <input type="hidden" name="depth_step_1_parent_sucess" value="null">
+                                            <input type="hidden" name="depth_step_1_nightmare_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -351,7 +359,7 @@
                                         <!-- Step 2 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 2 Success</label>
-                                            <input type="hidden" name="depth_step_2_parent_sucess" value="null">
+                                            <input type="hidden" name="depth_step_2_nightmare_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -361,7 +369,7 @@
                                         <!-- Step 3 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 3 Success</label>
-                                            <input type="hidden" name="depth_step_3_parent_sucess" value="null">
+                                            <input type="hidden" name="depth_step_3_nightmare_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -370,13 +378,13 @@
                                         </div>
                                     </div>
 
-                                    <!-- Child Group -->
+                                    <!-- Dream Group -->
                                     <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Child Steps</h3>
+                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Dream Steps</h3>
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
-                                            <input type="hidden" name="depth_step_1_enfant_sucess" value="null">
+                                            <input type="hidden" name="depth_step_1_dream_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -386,7 +394,7 @@
                                         <!-- Step 2 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 2 Success</label>
-                                            <input type="hidden" name="depth_step_2_enfant_sucess" value="null">
+                                            <input type="hidden" name="depth_step_2_dream_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -396,7 +404,7 @@
                                         <!-- Step 3 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 3 Success</label>
-                                            <input type="hidden" name="depth_step_3_enfant_sucess" value="null">
+                                            <input type="hidden" name="depth_step_3_dream_sucess" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                                 <div class="tri-state-btn" data-value="false">F</div>
@@ -410,6 +418,10 @@
                             <!-- 4. IMAGINATION -->
                             <section class="section-box">
                                 <span class="section-title">03_Imagination</span>
+                                <div class="control-group mb-4" data-type="text">
+                                    <label class="block text-xs font-bold mb-2 uppercase">Lost State</label>
+                                    <input type="text" name="lost_state" class="raw-input" placeholder="NULL">
+                                </div>
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="control-group" data-type="bool">
                                         <label class="block text-xs font-bold mb-2 uppercase">Torch Scanned</label>
@@ -458,8 +470,8 @@
                                     </div>
                                     <!-- Lost -->
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Lost Preset</label>
-                                        <input type="hidden" name="preset_lost" value="null">
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination Preset</label>
+                                        <input type="hidden" name="preset_imagination" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
                                             <div class="tri-state-btn" data-value="false">OFF</div>
@@ -478,6 +490,15 @@
                                     </div>
                                 </div>
                             </section>
+
+                             <!-- 6. ENDING -->
+                            <section class="section-box">
+                                <span class="section-title">05_Ending</span>
+                                <div class="control-group" data-type="text">
+                                    <label class="block text-xs font-bold mb-2 uppercase">End System State</label>
+                                    <input type="text" name="end_system" class="raw-input" placeholder="NULL">
+                                </div>
+                            </section>
                         </form>
                     </div>
 
@@ -488,15 +509,15 @@
                         <section class="section-box">
                             <span class="section-title">00_Part_Table</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({children_rift_part_count: 1, parent_rift_part_count: 1})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({dream_rift_part_count: 1, nightmare_rift_part_count: 1})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE 2</span>
                                     <span class="fast-cmd-desc">Counts: 1</span>
                                 </button>
-                                <button onclick="sendFastCmd({children_rift_part_count: 1, parent_rift_part_count: 1})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({dream_rift_part_count: 1, nightmare_rift_part_count: 1})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE 3</span>
                                     <span class="fast-cmd-desc">Counts: 1</span>
                                 </button>
-                                <button onclick="sendFastCmd({children_rift_part_count: 1, parent_rift_part_count: 1})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({dream_rift_part_count: 1, nightmare_rift_part_count: 1})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE END</span>
                                     <span class="fast-cmd-desc">Counts: 1</span>
                                 </button>
@@ -523,12 +544,12 @@
                             <span class="section-title">02_Depth</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({
-                                    depth_step_1_parent_sucess: true,
-                                    depth_step_2_parent_sucess: true,
-                                    depth_step_3_parent_sucess: true,
-                                    depth_step_1_enfant_sucess: true,
-                                    depth_step_2_enfant_sucess: true,
-                                    depth_step_3_enfant_sucess: true
+                                    depth_step_1_nightmare_sucess: true,
+                                    depth_step_2_nightmare_sucess: true,
+                                    depth_step_3_nightmare_sucess: true,
+                                    depth_step_1_dream_sucess: true,
+                                    depth_step_2_dream_sucess: true,
+                                    depth_step_3_dream_sucess: true
                                 })" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">ALL SUCCESS</span>
                                     <span class="fast-cmd-desc">Parents & Children 1-3 Success</span>
@@ -540,7 +561,7 @@
                         <section class="section-box">
                             <span class="section-title">03_Part_2</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({children_rift_part_count: 2, parent_rift_part_count: 2})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({dream_rift_part_count: 2, nightmare_rift_part_count: 2})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE (2)</span>
                                     <span class="fast-cmd-desc">Counts: 2</span>
                                 </button>
@@ -559,9 +580,9 @@
                                     <span class="fast-cmd-title">DEPTH PRESET</span>
                                     <span class="fast-cmd-desc">{ preset_depth: true }</span>
                                 </button>
-                                <button onclick="sendFastCmd({preset_lost: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">LOST PRESET</span>
-                                    <span class="fast-cmd-desc">{ preset_lost: true }</span>
+                                <button onclick="sendFastCmd({preset_imagination: true})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">IMAGINATION PRESET</span>
+                                    <span class="fast-cmd-desc">{ preset_imagination: true }</span>
                                 </button>
                                 <button onclick="sendFastCmd({preset_ending: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">ENDING PRESET</span>
@@ -574,7 +595,7 @@
                         <section class="section-box">
                             <span class="section-title">Ending</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({children_rift_part_count: 3, parent_rift_part_count: 3})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({dream_rift_part_count: 3, nightmare_rift_part_count: 3})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE (3)</span>
                                     <span class="fast-cmd-desc">Counts: 3</span>
                                 </button>
@@ -698,7 +719,7 @@
             device_id: "RIFT_PANEL",
             start_system: true,
             recognized_stranger_name: null,
-            depth_step_1_parent_sucess: null
+            depth_step_1_nightmare_sucess: null
         }, null, 2), -1);
 
         // Apply initial theme

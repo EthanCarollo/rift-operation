@@ -36,13 +36,18 @@ class DepthController(EspController):
         state = self.websocket_client.state
         return (
             state.get("preset_depth") is True
-            and state.get("children_rift_part_count", 0)
-            + state.get("parent_rift_part_count", 0) == 2
+            and state.get("dream_rift_part_count", 0)
+            + state.get("nightmare_rift_part_count", 0) == 2
         )
 
     def get_current_step(self):
+        # Mapping role to json key part
+        # parent -> nightmare
+        # anything else (child) -> dream 
+        role_key = "nightmare" if self.role == "parent" else "dream"
+        
         for step in (1, 2, 3):
-            key = f"step_{step}_{self.role}_sucess"
+            key = f"depth_step_{step}_{role_key}_sucess"
             if self.websocket_client.state.get(key) is None:
                 return step
         return None
@@ -138,9 +143,9 @@ class DepthController(EspController):
         if step is None:
             return
 
-        # Parent attend la réussite de l’enfant
+        # Parent waits for child (dream) success
         if self.role == "parent":
-            child_key = f"step_{step}_child_sucess"
+            child_key = f"depth_step_{step}_dream_sucess"
             if self.websocket_client.state.get(child_key) is not True:
                 return
 
@@ -151,6 +156,7 @@ class DepthController(EspController):
         self.logger.info(f"{self.role} joue l'étape {step}")
 
         if self.play_partition(partition):
-            key = f"step_{step}_{self.role}_sucess"
+            role_key = "nightmare" if self.role == "parent" else "dream"
+            key = f"depth_step_{step}_{role_key}_sucess"
             self.websocket_client.send_state(key, True)
             self.websocket_client.state[key] = True

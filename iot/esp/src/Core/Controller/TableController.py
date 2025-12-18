@@ -9,10 +9,10 @@ from src.Framework.Config import Config
 # This is only for debugging
 
 class PartCountDelegate(ButtonDelegate):
-    def __init__(self, controller, children_count, parent_count):
+    def __init__(self, controller, dream_count, nightmare_count):
         self.controller = controller
-        self.children_count = children_count
-        self.parent_count = parent_count
+        self.dream_count = dream_count
+        self.nightmare_count = nightmare_count
 
     def on_click(self):
         asyncio.create_task(self.send_counts())
@@ -21,8 +21,8 @@ class PartCountDelegate(ButtonDelegate):
         try:
             json_data = RiftOperationJsonData(
                 device_id=self.controller.config.device_id,
-                children_rift_part_count=self.children_count,
-                parent_rift_part_count=self.parent_count
+                dream_rift_part_count=self.dream_count,
+                nightmare_rift_part_count=self.nightmare_count
             )
             await self.controller.websocket_client.send(json_data.to_json())
         except Exception as e:

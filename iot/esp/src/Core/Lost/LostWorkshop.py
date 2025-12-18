@@ -71,7 +71,7 @@ class LostWorkshop:
                 await self.state.handle_signal("light_sensor_triggered")
             return
 
-        if "children_rift_part_count" not in payload and "parent_rift_part_count" not in payload:
+        if "dream_rift_part_count" not in payload and "nightmare_rift_part_count" not in payload:
             return
         self._last_payload = payload
         
