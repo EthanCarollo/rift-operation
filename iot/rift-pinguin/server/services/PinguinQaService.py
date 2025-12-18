@@ -36,26 +36,23 @@ class PinguinQaService:
         print(f"📦 Chargement du modèle de Q&A: {self.model_name}...")
         self.model = SentenceTransformer(self.model_name)
         
-        # Restauration de la base de données (fichier texte)
-        import os
-        if os.path.exists(self.db_path):
-            print(f"📂 Restauration de la base de données depuis {self.db_path}...")
-            with open(self.db_path, "r", encoding="utf-8") as f:
-                history = f.read()
-                if history.strip():
-                    self.index_transcription(history, window_size=0, save_to_db=False)
-        
         # Chargement de la table de correspondance audio
         import json
         if os.path.exists(self.audio_map_path):
             print(f"🎵 Chargement de la map audio depuis {self.audio_map_path}...")
             with open(self.audio_map_path, "r", encoding="utf-8") as f:
                 raw_map = json.load(f)
-                # Normalisation des clés pour faciliter la correspondance
+                # On garde les segments originaux pour l'indexation (pour avoir les majuscules/ponctuation dans la réponse)
+                self.segments = list(raw_map.keys())
+                # Normalisation des clés pour faciliter la correspondance lors du lookup final si besoin
                 self.audio_map = {self.normalize_text(k): v for k, v in raw_map.items()}
+            
+            # Indexation immédiate des clés
+            if self.segments:
+                self._build_index()
         
         self.is_loaded = True
-        print("✓ Modèle Q&A chargé!")
+        print(f"✓ Modèle Q&A chargé avec {len(self.segments)} clés!")
     
     def normalize_text(self, text: str) -> str:
         """
@@ -94,31 +91,15 @@ class PinguinQaService:
         
         return segments
     
-    def index_transcription(self, transcription: str, window_size: int = 0, save_to_db: bool = True):
+    def _build_index(self):
         """
-        Indexe la transcription pour recherche rapide.
+        Construit l'index FAISS à partir de self.segments.
         """
-        if not transcription.strip():
-            print("⚠️ Transcription vide, rien à indexer.")
-            return
-
-        print("🔄 Indexation de la transcription...")
-        
-        # Sauvegarde dans la base de données si demandé
-        if save_to_db:
-            with open(self.db_path, "a", encoding="utf-8") as f:
-                f.write(transcription + "\n")
-            
-            # Re-charger tout pour l'indexation (si on veut que l'index contienne TOUT)
-            with open(self.db_path, "r", encoding="utf-8") as f:
-                full_history = f.read()
-            self.segments = self.prepare_transcription(full_history, window_size)
-        else:
-            self.segments = self.prepare_transcription(transcription, window_size)
-        
         if not self.segments:
             return
 
+        print(f"🔄 Indexation de {len(self.segments)} clés...")
+        
         # Encodage des segments
         embeddings = self.model.encode(
             self.segments, 
@@ -128,13 +109,19 @@ class PinguinQaService:
         
         # Création de l'index FAISS
         dimension = embeddings.shape[1]
-        self.index = faiss.IndexFlatIP(dimension)  # Inner Product pour similarité cosinus (sur vecteurs normalisés)
+        self.index = faiss.IndexFlatIP(dimension)
         
         # Normalise pour utiliser la similarité cosinus
         faiss.normalize_L2(embeddings)
         self.index.add(embeddings)
         
-        print(f"✓ Indexation terminée! ({self.index.ntotal} vecteurs)")
+        print("✓ Indexation terminée!")
+
+    def index_transcription(self, transcription: str, window_size: int = 0, save_to_db: bool = True):
+        """
+        DEPRECATED: L'indexation se fait désormais via audio_map.json.
+        """
+        pass
     
     def search(self, question: str, top_k: int = 3) -> List[Tuple[str, float]]:
         """

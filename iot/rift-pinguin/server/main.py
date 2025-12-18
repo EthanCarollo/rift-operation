@@ -102,7 +102,21 @@ async def audio_websocket(websocket: WebSocket):
                 data = message["bytes"]
                 chunk_count += 1
                 
-                texts = await stt_service.process_audio_chunk(data, local_gen)
+                # 🛡️ Protection: Reset generator if context is getting full (8192 is hard limit)
+                if hasattr(local_gen, 'step_idx') and local_gen.step_idx > 7500:
+                    print(f"⚠️ [STT] Resetting generator (step_idx: {local_gen.step_idx}) to avoid context overflow")
+                    local_gen = stt_service.create_generator()
+
+                try:
+                    texts = await stt_service.process_audio_chunk(data, local_gen)
+                except Exception as e:
+                    print(f"❌ [STT] Error processing chunk: {e}")
+                    await websocket.send_json({
+                        "type": "system_error",
+                        "message": "STT processing error. Resetting session."
+                    })
+                    local_gen = stt_service.create_generator()
+                    continue
                 
                 current_batch_text = ""
                 for text in texts:
@@ -123,10 +137,17 @@ async def audio_websocket(websocket: WebSocket):
                 
                 # If we detect a question OR the buffer is getting long
                 if (contains_question and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
-                    print(f"🔍 Question détectée (buffer) : {streaming_buffer}")
+                    # 🎯 Extraction de la dernière phrase uniquement (la question)
+                    import re
+                    sentences = re.split(r'[.!?]+', streaming_buffer)
+                    sentences = [s.strip() for s in sentences if s.strip()]
+                    
+                    question_to_ask = sentences[-1] if sentences else streaming_buffer
+                    
+                    print(f"🔍 Question détectée (sentence) : {question_to_ask}")
                     
                     # Try to answer (threshold slightly higher for auto-triggers)
-                    qa_result = qa_service.answer(streaming_buffer, min_confidence=0.4)
+                    qa_result = qa_service.answer(question_to_ask, min_confidence=0.4)
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")

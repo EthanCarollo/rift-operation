@@ -2,7 +2,7 @@ import Foundation
 import AVFoundation
 internal import Combine
 
-class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
+class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AVAudioPlayerDelegate {
     @Published var transcribedText: String = ""
     @Published var latestAnswer: String = ""
     @Published var latestConfidence: Float = 0.0
@@ -10,6 +10,7 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     @Published var isConnected: Bool = false
     @Published var isServerHealthy: Bool = false
     @Published var errorMessage: String? = nil
+    @Published var isPlayingAnswer: Bool = false
     
     private var audioPlayer: AVPlayer?
     
@@ -182,6 +183,8 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
             print("[AudioStreamer] Sending chunk #\(sendCount): \(data.count) bytes, \(frameLength) samples")
         }
         
+        if isPlayingAnswer { return }
+        
         let message = URLSessionWebSocketTask.Message.data(data)
         socket?.send(message) { error in
             if let error = error {
@@ -217,6 +220,12 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
                                 self?.playAudioData(data: audioData, filename: filename)
                             }
                         }
+                    } else if let data = text.data(using: .utf8),
+                              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let type = json["type"] as? String, type == "system_error" {
+                        DispatchQueue.main.async {
+                            self?.errorMessage = json["message"] as? String
+                        }
                     } else {
                         // Fallback/Legacy
                         DispatchQueue.main.async {
@@ -244,10 +253,32 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate {
         do {
             print("🔊 [MOBILE] STARTING AUDIO PLAYBACK: \(filename) (\(data.count) bytes) 🔊")
             audioPlayerFn = try AVAudioPlayer(data: data)
+            audioPlayerFn?.delegate = self
             audioPlayerFn?.prepareToPlay()
+            
+            DispatchQueue.main.async {
+                self.isPlayingAnswer = true
+            }
+            
             audioPlayerFn?.play()
         } catch {
             print("❌ [AudioStreamer] Failed to play audio data: \(error)")
+        }
+    }
+    
+    // MARK: - AVAudioPlayerDelegate
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        print("🔈 [MOBILE] AUDIO PLAYBACK FINISHED 🔈")
+        DispatchQueue.main.async {
+            self.isPlayingAnswer = false
+        }
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        print("❌ [MOBILE] AUDIO DECODE ERROR: \(String(describing: error))")
+        DispatchQueue.main.async {
+            self.isPlayingAnswer = false
         }
     }
     
