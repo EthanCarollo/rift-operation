@@ -63,6 +63,16 @@ class WebsocketConfigFactory:
 
 class ConfigFactory:
     @staticmethod
+    def create_table_config():
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id=f"TABLE-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+    
+    @staticmethod
     def create_lost_config(role):
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
