@@ -1,5 +1,6 @@
 import uasyncio as asyncio
 import math
+import ujson
 from src.Framework.Led.LedStrip import LedStrip
 
 class LedController:
@@ -32,6 +33,18 @@ class LedController:
         self.stop()
         self.is_playing = True
         self._play_task = asyncio.create_task(self._animation_loop(animation_data, loop))
+
+    async def play_from_json(self, file_path, loop=True):
+        """
+        Load an animation from a JSON file and play it.
+        """
+        try:
+            with open(file_path, "r") as f:
+                data = ujson.load(f)
+            await self.play(data, loop)
+        except Exception as e:
+            print(f"Error loading animation from {file_path}: {e}")
+
 
     async def _animation_loop(self, animation_data, loop):
         frames = animation_data.get("frames", [])
