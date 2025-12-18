@@ -29,6 +29,22 @@ class TableController(EspController):
             name= "Dream_1_Rfid_Lector"
         )
 
+        self.rfid_dream_2 = RFIDFactory.create_reader(
+            spi=spi, 
+            cs_pin=16, 
+            rst_pin=4, 
+            delegate= PilarRfidDelegate(self),
+            name= "Dream_2_Rfid_Lector"
+        )
+
+        self.rfid_dream_3 = RFIDFactory.create_reader(
+            spi=spi, 
+            cs_pin=17, 
+            rst_pin=21, 
+            delegate= PilarRfidDelegate(self),
+            name= "Dream_3_Rfid_Lector"
+        )
+
         self.logger.info("TableController initialized")
 
     async def process_message(self, message):
@@ -42,4 +58,6 @@ class TableController(EspController):
 
     async def update(self):
         self.rfid_dream_1.check()
+        self.rfid_dream_2.check()
+        self.rfid_dream_3.check()
         pass

@@ -36,15 +36,13 @@ class RFIDReader:
         uid = self._read_uid()
 
         if uid:
-            current_time = time.ticks_ms()
-            # Allow re-trigger if different UID OR if 2 seconds passed since last trigger
-            if uid != self._last_uid or time.ticks_diff(current_time, self.last_scan_time) > 2000:
+            if uid != self._last_uid :
                 self._last_uid = uid
-                self.last_scan_time = current_time
                 try:
                     self.delegate.on_read(uid, self.name)
                 except Exception as e:
                     print(f"Error in RFID delegate on_read: {e}")
+                self.reader.halt()
         elif self._last_uid is not None:
             try:
                 if hasattr(self.delegate, "on_card_lost"):
