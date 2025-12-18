@@ -1,7 +1,7 @@
 # Rift Operation
 
 <div align="center">
-  <img src="server/public/riftoperation.png" alt="Rift Operation Logo" width="100%" />
+  <img src="website/public/riftoperation.png" alt="Rift Operation Logo" width="100%" />
 </div>
 
 Vous êtes deux agents spéciaux déployés dans les mondes parallèles pour réparer une faille critique dans le tissu de la réalité onirique.
