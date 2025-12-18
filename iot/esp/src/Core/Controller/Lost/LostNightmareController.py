@@ -1,5 +1,5 @@
 """
-LostParentController - ESP32 Controller for the LOST workshop (Parent Role)
+LostNightmareController - ESP32 Controller for the LOST workshop (Nightmare Role)
 
 State Machine:
     IDLE -> INTERNE STEPS -> DONE
@@ -13,16 +13,16 @@ from src.Framework.EspController import EspController
 from src.Core.Lost.LostWorkshop import LostWorkshop
 from src.Core.Lost.LostHardware import LostHardware
 
-class LostParentController(EspController):
-    """LOST workshop controller - Parent Role"""
+class LostNightmareController(EspController):
+    """LOST workshop controller - Nightmare Role"""
 
     def __init__(self, config):
         super().__init__(config)
-        self.logger.name = "LostParentController"
+        self.logger.name = "LostNightmareController"
         # Instantiate Workshop and Hardware
         self.workshop = LostWorkshop(self)
-        # Explicitly pass role="parent"
-        self.hardware = LostHardware(config, self, role="parent")
+        # Explicitly pass role="nightmare"
+        self.hardware = LostHardware(config, self, role="nightmare")
         # Setup Links
         self.workshop.attach_hardware(self.hardware)
         self.hardware.attach_callback(self.workshop)

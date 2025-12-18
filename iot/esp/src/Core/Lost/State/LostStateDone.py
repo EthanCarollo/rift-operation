@@ -32,11 +32,10 @@ class LostStateDone(LostState):
              # Send signal BEFORE long sleep to ensure it leaves the ESP
              device_id = self.workshop.controller.config.device_id
              await self.workshop.controller.websocket_client.send(json.dumps({"signal": "Inactif", "device_id": device_id}))
-             await asyncio.sleep_ms(3000)
-             
-             # Wait a moment before reset
-             await asyncio.sleep(1)
+             await asyncio.sleep_ms(2000)
+
              # Reset to Idle to restart the loop
+             await asyncio.sleep(1)
              await self.workshop.reset()
 
     async def next_step(self):

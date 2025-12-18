@@ -24,7 +24,7 @@ class LostStateDrawing(LostState):
             self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
             self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Je n'ai pas compris ce que tu as dessiné, il faut quelque chose pour éclairer\"")
             self.workshop.logger.info("Futur implementation : LLM reconnait dessin")
-            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo je crois on va pouvoir aider ton parent avec ça\"")
+            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo je crois on va pouvoir aider le parent avec ça\"")
 
         self.workshop.logger.info("State: DRAWING -> Sending json with value : \"torch_scanned=True\"")
         await self.workshop.send_rift_json(torch=True)
