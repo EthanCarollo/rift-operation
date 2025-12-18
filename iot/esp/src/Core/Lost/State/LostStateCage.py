@@ -14,6 +14,10 @@ class LostStateCage(LostState):
         self.cage_triggered = False
         self.workshop.logger.info("State: CAGE -> Waiting for RFID Scan")
 
+    async def handle_message(self, payload):
+        if payload.get("cage_is_on_monster") is True:
+             await self.next_step()
+             
     async def handle_rfid(self, uid):
         # Synchronisation: Wait for Parent (Light) before accepting RFID
         if not self.workshop.light_triggered:

@@ -94,8 +94,8 @@ class LostHardware:
                 self.logger.error(f"RFID init failed: {e}")
             # Button
             try:
-                self.button = Button(pin_id=35, delegate=self.button_delegate)
-                # self.logger.info("Button initialized (35)")
+                self.button = Button(pin_id=26, delegate=self.button_delegate)
+                # self.logger.info("Button initialized (26)")
             except Exception as e:
                 self.logger.error(f"Button init failed: {e}")
 
@@ -103,12 +103,12 @@ class LostHardware:
             # Parent: Servo (2), Button (27)
             try:
                 self.servo = Servo(pin_id=2, delegate=self.servo_delegate, name="ParentServo")
-                self.logger.info("Servo initialized (2)")
+                # self.logger.info("Servo initialized (2)")
             except Exception as e:
                 self.logger.error(f"Servo init failed: {e}")
             # Button
             try:
                 self.button = Button(pin_id=27, delegate=self.button_delegate)
-                self.logger.info("Button initialized (27)")
+                # self.logger.info("Button initialized (27)")
             except Exception as e:
                 self.logger.error(f"Button init failed: {e}")

@@ -21,6 +21,7 @@ class RFIDReader:
         self.reader = MFRC522(spi, self.cs, self.rst)
         self.delegate = delegate
         self._last_uid = None
+        self.last_scan_time = 0
 
     def _read_uid(self):
         status, _ = self.reader.request(self.reader.REQIDL)
@@ -35,13 +36,15 @@ class RFIDReader:
         uid = self._read_uid()
 
         if uid:
-            if uid != self._last_uid:
+            current_time = time.ticks_ms()
+            # Allow re-trigger if different UID OR if 2 seconds passed since last trigger
+            if uid != self._last_uid or time.ticks_diff(current_time, self.last_scan_time) > 2000:
                 self._last_uid = uid
+                self.last_scan_time = current_time
                 try:
                     self.delegate.on_read(uid, self.name)
                 except Exception as e:
                     print(f"Error in RFID delegate on_read: {e}")
-            # self.reader.halt() # Removed as library doesn't support it
         elif self._last_uid is not None:
             try:
                 if hasattr(self.delegate, "on_card_lost"):

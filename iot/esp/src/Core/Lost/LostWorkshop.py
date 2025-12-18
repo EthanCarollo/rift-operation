@@ -55,12 +55,6 @@ class LostWorkshop:
             await self.state.handle_button()
 
     async def process_message(self, message: str):
-        if message == "light_sensor_triggered":
-            self.light_triggered = True
-            if self.state:
-                await self.state.handle_signal("light_sensor_triggered")
-            return
-
         try:
             data = json.loads(message)
         except Exception:
@@ -69,6 +63,13 @@ class LostWorkshop:
         payload = data.get("value", data) if isinstance(data, dict) else data
         if not isinstance(payload, dict):
             return
+            
+        # Handle signals
+        if payload.get("signal") == "light_sensor_triggered":
+            self.light_triggered = True
+            if self.state:
+                await self.state.handle_signal("light_sensor_triggered")
+            return
 
         if "children_rift_part_count" not in payload and "parent_rift_part_count" not in payload:
             return
@@ -76,12 +77,8 @@ class LostWorkshop:
         
         # Fast-forward triggers
         if payload.get("cage_is_on_monster") is True:
-             if self.state and self.state.step_id < LC.LostSteps.DONE:
+             if self.state and LC.LostSteps.IDLE < self.state.step_id < LC.LostSteps.DONE:
                  await self.state.fast_forward_to(LC.LostSteps.DONE)
-                 return 
-        elif payload.get("torch_scanned") is True:
-             if self.state and self.state.step_id < LC.LostSteps.DRAWING:
-                 await self.state.fast_forward_to(LC.LostSteps.DRAWING)
                  return
 
         if self.state:
@@ -102,6 +99,8 @@ class LostWorkshop:
                          ("cage_is_on_monster", self._state_data["cage"])]:
             if val is not None:
                 payload[key] = val
+        
+        self._last_payload = payload
 
         try:
             self.logger.log_ws("torch={}, cage={}".format(
@@ -114,5 +113,5 @@ class LostWorkshop:
     async def reset(self):
         self._state_data = {"torch": None, "cage": None}
         self.light_triggered = False
-        await self.swap_state(LostStateIdle(self))
         self.controller.logger.info("Lost workshop reset")
+        await self.swap_state(LostStateIdle(self))
