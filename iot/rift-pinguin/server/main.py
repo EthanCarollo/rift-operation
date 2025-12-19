@@ -46,7 +46,12 @@ async def send_qa_response(websocket: WebSocket, qa_result: Dict[str, Any]):
     audio_base64 = None
     audio_file = qa_result.get('audio_file')
     
-    if audio_file:
+    audio_base64 = None
+    audio_file = qa_result.get('audio_file')
+    confidence = qa_result.get('confidence', 0.0)
+    
+    # User Rule: Only play audio if confidence >= 65%
+    if audio_file and confidence >= 0.65:
         try:
             audio_path = os.path.join("audio", audio_file)
             print(f"📂 [QA] Loading audio: {audio_path}")
@@ -102,6 +107,9 @@ async def audio_websocket(websocket: WebSocket):
                 data = message["bytes"]
                 chunk_count += 1
                 
+                if chunk_count % 20 == 0:
+                    print(f"🎤 [SERVER] Received chunk #{chunk_count} ({len(data)} bytes)")
+                
                 # 🛡️ Protection: Reset generator if context is getting full (8192 is hard limit)
                 if hasattr(local_gen, 'step_idx') and local_gen.step_idx > 7500:
                     print(f"⚠️ [STT] Resetting generator (step_idx: {local_gen.step_idx}) to avoid context overflow")
@@ -130,10 +138,9 @@ async def audio_websocket(websocket: WebSocket):
                     words_since_last_index += 1
                 
                 # 🧠 Reactive QA: Detect if the buffer contains a question
-                interrogative_keywords = ["?", "qui", "quoi", "où", "quand", "comment", "pourquoi", "quel", "quelle", "est-ce que"]
-                lower_buffer = streaming_buffer.lower()
-                
-                contains_question = any(kw in lower_buffer for kw in interrogative_keywords)
+                # 🧠 Reactive QA: Detect if the buffer contains a question
+                # User Request: Only trigger on "?" (ignore keywords like 'quelle')
+                contains_question = "?" in streaming_buffer
                 
                 # If we detect a question OR the buffer is getting long
                 if (contains_question and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
@@ -151,7 +158,14 @@ async def audio_websocket(websocket: WebSocket):
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
+                        
+                        # LOGGING: Explicitly mark the start of "talking"
+                        print(f"🔊 [SERVER] SENDING ANSWER with audio to client ({len(qa_result.get('audio_file', ''))} chars filename)")
+                        
                         await send_qa_response(websocket, qa_result)
+                        
+                        print(f"🔇 [SERVER] ANSWER SENT")
+                        
                         # Clear buffer after successful answer to avoid repeat triggers
                         streaming_buffer = ""
                     elif len(streaming_buffer) > 200:

@@ -1,6 +1,7 @@
 {
   "La main en crochet est associé à la lettre U.": ["proto_u_letter.mp3"],
-  "Le chapeau avec deux barres dedans est associés à la lettre F.": ["proto_f_letter.mp3"],
-  "Le noeud papillon est associé à la lettre A.": ["proto_a_letter.mp3"],
-  "Les pieds en carré sont associés à la lettre T.": ["proto_t_letter.mp3"]
+  "Le chapeau avec deux barres dedans est associés à la lettre I.": ["proto_i_letter.mp3"],
+  "Le néo-papillon est associé à la lettre A.": ["proto_a_letter.mp3", "proto_a_letter_2.mp3"],
+  "Le noeud papillon est associé à la lettre A.": ["proto_a_letter.mp3", "proto_a_letter_2.mp3"],
+  "Les pieds en carré sont associés à la lettre G.": ["proto_g_letter.mp3", "proto_g_letter_2.mp3"]
 }

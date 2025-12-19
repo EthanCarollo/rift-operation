@@ -72,9 +72,9 @@ struct ContentView: View {
                                     Image(systemName: "sparkles")
                                         .font(.system(size: 14, weight: .semibold))
                                         .foregroundStyle(.blue)
-                                    Text("RÉPONSE DU PINGUIN")
+                                    Text(streamer.latestConfidence >= 0.65 ? "RÉPONSE DU PINGUIN" : "RÉPONSE PROBABLE")
                                         .font(.system(size: 11, weight: .black))
-                                        .foregroundStyle(.blue.opacity(0.8))
+                                        .foregroundStyle(streamer.latestConfidence >= 0.65 ? .blue.opacity(0.8) : .red.opacity(0.8))
                                         .tracking(1.5)
                                     
                                     Spacer()
