@@ -138,8 +138,7 @@ class RiftState:
 
         payload["device_id"] = self.workshop.controller.config.device_id
         payload["end_system"] = True
-        payload["dream_rift_part_count"] = len(self.workshop.scanned_dream_slots)
-        payload["nightmare_rift_part_count"] = len(self.workshop.scanned_nightmare_slots)
+        payload["rift_part_count"] = ( len(self.workshop.scanned_dream_slots) + len(self.workshop.scanned_nightmare_slots))
 
         try:
             await self.workshop.controller.websocket_client.send(

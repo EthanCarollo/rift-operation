@@ -50,9 +50,7 @@ class RiftWorkshop:
 
         payload["device_id"] = self.controller.config.device_id
         # UPDATED KEYS as per request
-        payload["dream_rift_part_count"] = len(self.scanned_dream_slots)
-        payload["nightmare_rift_part_count"] = len(self.scanned_nightmare_slots)
-
+        payload["rift_part_count"] = (len(self.scanned_dream_slots) + len(self.scanned_nightmare_slots))
         await self.controller.websocket_client.send(json.dumps(payload))
 
     async def reset(self):

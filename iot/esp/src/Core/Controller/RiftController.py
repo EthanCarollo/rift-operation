@@ -7,7 +7,8 @@ Uses RiftWorkshop for state-based logic.
 
 from src.Framework.EspController import EspController
 from src.Core.Rift.RiftWorkshop import RiftWorkshop
-from src.Core.Rift.RiftHardware import RiftHardware
+# from src.Core.Rift.RiftHardware import RiftHardware
+from src.Core.Rift.RiftHardwareRaspberry import RiftHardwareRaspberry
 
 class RiftController(EspController):
     """RIFT workshop controller"""
@@ -19,7 +20,8 @@ class RiftController(EspController):
         # Workshop handles state machine
         self.workshop = RiftWorkshop(self)
         # Hardware handles RFID readers
-        self.hardware = RiftHardware(self)
+        # self.hardware = RiftHardware(self)
+        self.hardware = RiftHardwareRaspberry(self)
         # Link them together
         self.hardware.attach_workshop(self.workshop)
         self.workshop.attach_hardware(self.hardware)
@@ -28,7 +30,7 @@ class RiftController(EspController):
         self.workshop.init_state()
         self.logger.info("RiftController initialized")
 
-    async def update(self):
+    def update(self):
         """Main loop callback - poll RFID readers"""
         self.hardware.update()
 
