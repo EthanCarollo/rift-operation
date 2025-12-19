@@ -42,21 +42,23 @@ class RiftHardware:
             # {"name": "NightmareSlot2", "cs": 17, "rst": 26},
             # {"name": "NightmareSlot3", "cs": 16, "rst": 25},
         ]
+        
+        # Prepare full config with delegate
+        full_configs = []
+        for cfg in configs:
+            full_configs.append({
+                "cs": cfg["cs"],
+                "rst": cfg["rst"],
+                "delegate": self.delegate,
+                "name": cfg["name"]
+            })
 
-        self.readers = RFIDFactory.create_multiple_readers(
-            self.spi,
-            [
-                {
-                    "cs": cfg["cs"],
-                    "rst": cfg["rst"],
-                    "delegate": self.delegate,
-                    "name": cfg["name"],
-                }
-                for cfg in configs
-            ],
-        )
-
-        self.logger.info(f"{len(self.readers)} RFID readers initialized")
+        try:
+            self.readers = RFIDFactory.create_multiple_readers(self.spi, full_configs)
+            self.logger.info(f"Initialized {len(self.readers)} RFID readers")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize RFID readers: {e}")
+            self.readers = []
 
     def update(self):
         for reader in self.readers:

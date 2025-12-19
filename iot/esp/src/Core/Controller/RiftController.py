@@ -28,7 +28,7 @@ class RiftController(EspController):
         self.workshop.init_state()
         self.logger.info("RiftController initialized")
 
-    def update(self):
+    async def update(self):
         """Main loop callback - poll RFID readers"""
         self.hardware.update()
 
