@@ -25,7 +25,7 @@ class RiftHardware:
         self.logger.info("Initializing RIFT Hardware")
         # SPI pins (ESP32 VSPI)
         self.spi = SPI(
-            1,
+            2,
             baudrate=100_000,
             polarity=0,
             phase=0,
@@ -33,14 +33,14 @@ class RiftHardware:
             mosi=Pin(23),
             miso=Pin(19),
         )
-        # RFID readers configuration (Dream only for now)
+        # RFID readers configuration (Dream + Nightmare)
         configs = [
-            {"name": "DreamSlot1", "cs": 5,  "rst": 27},
-            {"name": "DreamSlot2", "cs": 17, "rst": 26},
-            {"name": "DreamSlot3", "cs": 16, "rst": 25},
-            # {"name": "NightmareSlot1", "cs": 5,  "rst": 27},
-            # {"name": "NightmareSlot2", "cs": 17, "rst": 26},
-            # {"name": "NightmareSlot3", "cs": 16, "rst": 25},
+            {"name": "DreamSlot1",     "cs": 5,   "rst": 27},
+            {"name": "DreamSlot2",     "cs": 17,  "rst": 27},
+            {"name": "DreamSlot3",     "cs": 16,  "rst": 27},
+            # {"name": "NightmareSlot1", "cs": 4,   "rst": 27},
+            # {"name": "NightmareSlot2", "cs": 13,  "rst": 27},
+            # {"name": "NightmareSlot3", "cs": 14,  "rst": 27},
         ]
         
         # Prepare full config with delegate

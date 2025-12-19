@@ -24,14 +24,14 @@ class RiftSteps:
 class RiftTags:
     """Expected RFID UIDs for each slot"""
     DREAM = {
-        "DreamSlot1": "XX-XX-XX-XX-XX",  # MFD-1
-        "DreamSlot2": "XX-XX-XX-XX-XX",  # MFD-2
-        "DreamSlot3": "XX-XX-XX-XX-XX",  # MFD-3
+        "DreamSlot1": "AF-41-2B-1C-D9",  # MFD-1 a remplacer par le tag correct
+        "DreamSlot2": "9F-F8-46-1C-3D",  # MFD-2
+        "DreamSlot3": "F3-3B-50-AC-34",  # MFD-3
     }
     NIGHTMARE = {
-        "NightmareSlot1": "XX-XX-XX-XX-XX",  # MFN-1
-        "NightmareSlot2": "XX-XX-XX-XX-XX",  # MFN-2
-        "NightmareSlot3": "XX-XX-XX-XX-XX",  # MFN-3
+        "NightmareSlot1": "AF-41-2B-1C-D9",  # MFN-1
+        "NightmareSlot2": "D3-67-36-AC-2E",  # MFN-2
+        "NightmareSlot3": "53-66-92-AA-0D",  # MFN-3
     }
     # Helper methods
     @staticmethod

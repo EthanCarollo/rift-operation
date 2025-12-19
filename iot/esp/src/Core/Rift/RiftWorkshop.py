@@ -14,6 +14,7 @@ class RiftWorkshop:
         self._last_payload = None
 
         self.scanned_dream_slots = set()
+        self.scanned_nightmare_slots = set()
 
     def attach_hardware(self, hardware):
         self.hardware = hardware
@@ -49,11 +50,12 @@ class RiftWorkshop:
 
         payload["device_id"] = self.controller.config.device_id
         payload["children_rift_part_count"] = len(self.scanned_dream_slots)
-        # payload["parent_rift_part_count"] = ...
+        payload["parent_rift_part_count"] = len(self.scanned_nightmare_slots)
 
         await self.controller.websocket_client.send(json.dumps(payload))
 
     async def reset(self):
         self.scanned_dream_slots.clear()
+        self.scanned_nightmare_slots.clear()
         self.state = RiftState(self)
         self.state.enter()

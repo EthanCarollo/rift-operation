@@ -27,7 +27,7 @@ class RiftState:
 
         if self.step == RiftSteps.IDLE:
             self.workshop.scanned_dream_slots.clear()
-            # self.workshop.scanned_nightmare_slots.clear()
+            self.workshop.scanned_nightmare_slots.clear()
 
     # ------------------------------------------------------------------
     # WebSocket
@@ -48,7 +48,7 @@ class RiftState:
             return
 
         self._handle_dream(uid, reader_name)
-        # self._handle_nightmare(uid, reader_name)  # capteurs pas encore branchés
+        self._handle_nightmare(uid, reader_name)
 
         self._check_step_completion()
 
@@ -133,7 +133,7 @@ class RiftState:
         payload["device_id"] = self.workshop.controller.config.device_id
         payload["end_system"] = True
         payload["dream_rift_part_count"] = len(self.workshop.scanned_dream_slots)
-        # payload["nightmare_rift_part_count"] = len(self.workshop.scanned_nightmare_slots)
+        payload["nightmare_rift_part_count"] = len(self.workshop.scanned_nightmare_slots)
 
         try:
             await self.workshop.controller.websocket_client.send(
