@@ -3,12 +3,16 @@ import ujson
 class RiftOperationJsonData:
     def __init__(self, 
                 device_id,
-                dream_rift_part_count=None, 
-                nightmare_rift_part_count=None, 
+                rift_part_count=None,
                 
-                start_system=None, 
+                operator_launch_close_rift_step_1=None,
+                operator_launch_close_rift_step_2=None,
+                operator_launch_close_rift_step_3=None,
+                operator_start_system=None,
+                
                 stranger_state=None,
-                recognized_stranger_name=None, 
+                stranger_recognized_name=None,
+                
                 pinguin_micro=None, 
                 pinguin_audio=None,
                 
@@ -19,28 +23,29 @@ class RiftOperationJsonData:
                 depth_step_1_dream_sucess=None, 
                 depth_step_2_dream_sucess=None, 
                 depth_step_3_dream_sucess=None, 
-
+                
                 lost_state=None,
-                torch_scanned=None, 
-                cage_is_on_monster=None, 
+                lost_torch_scanned=None, 
+                lost_cage_is_on_monster=None, 
+                lost_light_is_triggered=None,
 
                 end_system=None,
-                
-                preset_stranger=None, 
-                preset_depth=None, 
-                preset_imagination=None, 
-                preset_ending=None):
+                reset_system=None):
         
         if device_id is None:
             raise ValueError("device_id is mandatory")
             
         self.device_id = device_id
-        self.dream_rift_part_count = dream_rift_part_count
-        self.nightmare_rift_part_count = nightmare_rift_part_count
+        self.rift_part_count = rift_part_count
         
-        self.start_system = start_system
+        self.operator_launch_close_rift_step_1 = operator_launch_close_rift_step_1
+        self.operator_launch_close_rift_step_2 = operator_launch_close_rift_step_2
+        self.operator_launch_close_rift_step_3 = operator_launch_close_rift_step_3
+        self.operator_start_system = operator_start_system
+        
         self.stranger_state = stranger_state
-        self.recognized_stranger_name = recognized_stranger_name
+        self.stranger_recognized_name = stranger_recognized_name
+        
         self.pinguin_micro = pinguin_micro
         self.pinguin_audio = pinguin_audio
         
@@ -53,15 +58,12 @@ class RiftOperationJsonData:
         self.depth_step_3_dream_sucess = depth_step_3_dream_sucess
         
         self.lost_state = lost_state
-        self.torch_scanned = torch_scanned
-        self.cage_is_on_monster = cage_is_on_monster
+        self.lost_torch_scanned = lost_torch_scanned
+        self.lost_cage_is_on_monster = lost_cage_is_on_monster
+        self.lost_light_is_triggered = lost_light_is_triggered
         
         self.end_system = end_system
-
-        self.preset_stranger = preset_stranger
-        self.preset_depth = preset_depth
-        self.preset_imagination = preset_imagination
-        self.preset_ending = preset_ending
+        self.reset_system = reset_system
 
     def to_json(self):
         return ujson.dumps(self.__dict__)

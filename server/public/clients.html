@@ -274,17 +274,41 @@
 
                         <form id="broadcastForm" class="space-y-8">
 
-                             <!-- 1. RIFT TABLE -->
+                            <!-- 1. RIFT TABLE -->
                             <section class="section-box">
                                 <span class="section-title">00_Rift_Table</span>
-                                <div class="grid grid-cols-2 gap-6">
+                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div class="control-group" data-type="int">
-                                        <label class="block text-xs font-bold mb-2 uppercase">Dream Rift Parts</label>
-                                        <input type="number" name="dream_rift_part_count" class="raw-input" placeholder="NULL">
+                                        <label class="block text-xs font-bold mb-2 uppercase">Rift Part Count</label>
+                                        <input type="number" name="rift_part_count" class="raw-input" placeholder="NULL">
                                     </div>
-                                    <div class="control-group" data-type="int">
-                                        <label class="block text-xs font-bold mb-2 uppercase">Nightmare Rift Parts</label>
-                                        <input type="number" name="nightmare_rift_part_count" class="raw-input" placeholder="NULL">
+                                    <!-- Operator Steps -->
+                                    <div class="control-group" data-type="bool">
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close Step 1</label>
+                                        <input type="hidden" name="operator_launch_close_rift_step_1" value="null">
+                                        <div class="tri-state-container">
+                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                            <div class="tri-state-btn" data-value="false">OFF</div>
+                                            <div class="tri-state-btn" data-value="true">ON</div>
+                                        </div>
+                                    </div>
+                                    <div class="control-group" data-type="bool">
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close Step 2</label>
+                                        <input type="hidden" name="operator_launch_close_rift_step_2" value="null">
+                                        <div class="tri-state-container">
+                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                            <div class="tri-state-btn" data-value="false">OFF</div>
+                                            <div class="tri-state-btn" data-value="true">ON</div>
+                                        </div>
+                                    </div>
+                                    <div class="control-group" data-type="bool">
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close Step 3</label>
+                                        <input type="hidden" name="operator_launch_close_rift_step_3" value="null">
+                                        <div class="tri-state-container">
+                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                            <div class="tri-state-btn" data-value="false">OFF</div>
+                                            <div class="tri-state-btn" data-value="true">ON</div>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -296,8 +320,8 @@
                                     <div class="grid grid-cols-2 gap-6">
                                         <!-- Toggle -->
                                         <div class="control-group" data-type="bool">
-                                            <label class="block text-xs font-bold mb-2 uppercase">Start System</label>
-                                            <input type="hidden" name="start_system" value="null">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Operator Start System</label>
+                                            <input type="hidden" name="operator_start_system" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
                                                 <div class="tri-state-btn" data-value="false">FALSE</div>
@@ -309,8 +333,8 @@
                                             <input type="text" name="stranger_state" class="raw-input" placeholder="NULL">
                                         </div>
                                         <div class="control-group" data-type="bool">
-                                            <label class="block text-xs font-bold mb-2 uppercase">Recognized Stranger</label>
-                                            <input type="hidden" name="recognized_stranger_name" value="null">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Stranger Recognized Name</label>
+                                            <input type="hidden" name="stranger_recognized_name" value="null">
                                             <div class="tri-state-container">
                                                 <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
                                                 <div class="tri-state-btn" data-value="false">NO</div>
@@ -425,7 +449,7 @@
                                 <div class="grid grid-cols-2 gap-6">
                                     <div class="control-group" data-type="bool">
                                         <label class="block text-xs font-bold mb-2 uppercase">Torch Scanned</label>
-                                        <input type="hidden" name="torch_scanned" value="null">
+                                        <input type="hidden" name="lost_torch_scanned" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
                                             <div class="tri-state-btn" data-value="false">FALSE</div>
@@ -434,7 +458,16 @@
                                     </div>
                                     <div class="control-group" data-type="bool">
                                         <label class="block text-xs font-bold mb-2 uppercase">Cage Is On Monster</label>
-                                        <input type="hidden" name="cage_is_on_monster" value="null">
+                                        <input type="hidden" name="lost_cage_is_on_monster" value="null">
+                                        <div class="tri-state-container">
+                                            <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                            <div class="tri-state-btn" data-value="false">FALSE</div>
+                                            <div class="tri-state-btn" data-value="true">TRUE</div>
+                                        </div>
+                                    </div>
+                                    <div class="control-group" data-type="bool">
+                                        <label class="block text-xs font-bold mb-2 uppercase">Light Is Triggered</label>
+                                        <input type="hidden" name="lost_light_is_triggered" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
                                             <div class="tri-state-btn" data-value="false">FALSE</div>
@@ -444,52 +477,7 @@
                                 </div>
                             </section>
 
-                            <!-- 5. SCENOGRAPHY -->
-                            <section class="section-box">
-                                <span class="section-title">04_Scenography (Presets)</span>
-                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <!-- Stranger -->
-                                    <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Stranger Preset</label>
-                                        <input type="hidden" name="preset_stranger" value="null">
-                                        <div class="tri-state-container">
-                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                            <div class="tri-state-btn" data-value="false">OFF</div>
-                                            <div class="tri-state-btn" data-value="true">ON</div>
-                                        </div>
-                                    </div>
-                                    <!-- Depth -->
-                                    <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Depth Preset</label>
-                                        <input type="hidden" name="preset_depth" value="null">
-                                        <div class="tri-state-container">
-                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                            <div class="tri-state-btn" data-value="false">OFF</div>
-                                            <div class="tri-state-btn" data-value="true">ON</div>
-                                        </div>
-                                    </div>
-                                    <!-- Lost -->
-                                    <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Imagination Preset</label>
-                                        <input type="hidden" name="preset_imagination" value="null">
-                                        <div class="tri-state-container">
-                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                            <div class="tri-state-btn" data-value="false">OFF</div>
-                                            <div class="tri-state-btn" data-value="true">ON</div>
-                                        </div>
-                                    </div>
-                                    <!-- Ending -->
-                                    <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Ending Preset</label>
-                                        <input type="hidden" name="preset_ending" value="null">
-                                        <div class="tri-state-container">
-                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                            <div class="tri-state-btn" data-value="false">OFF</div>
-                                            <div class="tri-state-btn" data-value="true">ON</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
+
 
                              <!-- 6. ENDING -->
                             <section class="section-box">
@@ -498,28 +486,37 @@
                                     <label class="block text-xs font-bold mb-2 uppercase">End System State</label>
                                     <input type="text" name="end_system" class="raw-input" placeholder="NULL">
                                 </div>
+                                <div class="control-group pt-4 border-t mt-4" data-type="bool" style="border-color: var(--border);">
+                                    <label class="block text-xs font-bold mb-2 uppercase text-red-500">Reset System</label>
+                                    <input type="hidden" name="reset_system" value="null">
+                                    <div class="tri-state-container">
+                                        <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                        <div class="tri-state-btn" data-value="false">F</div>
+                                        <div class="tri-state-btn" data-value="true">T</div>
+                                    </div>
+                                </div>
                             </section>
                         </form>
                     </div>
 
-                    <!-- VIEW: FAST COMMANDS -->
+                     <!-- VIEW: FAST COMMANDS -->
                     <div id="view-fast" class="hidden">
                         
                         <!-- 00. Part Table -->
                         <section class="section-box">
                             <span class="section-title">00_Part_Table</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({dream_rift_part_count: 1, nightmare_rift_part_count: 1})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({rift_part_count: 1})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE 2</span>
-                                    <span class="fast-cmd-desc">Counts: 1</span>
+                                    <span class="fast-cmd-desc">Count: 1</span>
                                 </button>
-                                <button onclick="sendFastCmd({dream_rift_part_count: 1, nightmare_rift_part_count: 1})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({rift_part_count: 1})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE 3</span>
-                                    <span class="fast-cmd-desc">Counts: 1</span>
+                                    <span class="fast-cmd-desc">Count: 1</span>
                                 </button>
-                                <button onclick="sendFastCmd({dream_rift_part_count: 1, nightmare_rift_part_count: 1})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({rift_part_count: 1})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE END</span>
-                                    <span class="fast-cmd-desc">Counts: 1</span>
+                                    <span class="fast-cmd-desc">Count: 1</span>
                                 </button>
                             </div>
                         </section>
@@ -528,13 +525,13 @@
                         <section class="section-box">
                             <span class="section-title">01_Stranger (System)</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({start_system: true, recognized_stranger_name: true})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({operator_start_system: true, stranger_recognized_name: true})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">START SYSTEM</span>
                                     <span class="fast-cmd-desc">System: ON, Stranger: YES</span>
                                 </button>
-                                <button onclick="sendFastCmd({start_system: false})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({operator_start_system: false})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">STOP SYSTEM</span>
-                                    <span class="fast-cmd-desc">{ start_system: false }</span>
+                                    <span class="fast-cmd-desc">{ operator_start_system: false }</span>
                                 </button>
                             </div>
                         </section>
@@ -561,32 +558,9 @@
                         <section class="section-box">
                             <span class="section-title">03_Part_2</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({dream_rift_part_count: 2, nightmare_rift_part_count: 2})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({rift_part_count: 2})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE (2)</span>
-                                    <span class="fast-cmd-desc">Counts: 2</span>
-                                </button>
-                            </div>
-                        </section>
-
-                        <!-- 04. Presets (Scenography) -->
-                        <section class="section-box">
-                            <span class="section-title">04_Presets (Scenography)</span>
-                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({preset_stranger: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">STRANGER PRESET</span>
-                                    <span class="fast-cmd-desc">{ preset_stranger: true }</span>
-                                </button>
-                                <button onclick="sendFastCmd({preset_depth: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">DEPTH PRESET</span>
-                                    <span class="fast-cmd-desc">{ preset_depth: true }</span>
-                                </button>
-                                <button onclick="sendFastCmd({preset_imagination: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">IMAGINATION PRESET</span>
-                                    <span class="fast-cmd-desc">{ preset_imagination: true }</span>
-                                </button>
-                                <button onclick="sendFastCmd({preset_ending: true})" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">ENDING PRESET</span>
-                                    <span class="fast-cmd-desc">{ preset_ending: true }</span>
+                                    <span class="fast-cmd-desc">Count: 2</span>
                                 </button>
                             </div>
                         </section>
@@ -595,9 +569,13 @@
                         <section class="section-box">
                             <span class="section-title">Ending</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({dream_rift_part_count: 3, nightmare_rift_part_count: 3})" class="fast-cmd-btn">
+                                <button onclick="sendFastCmd({rift_part_count: 3})" class="fast-cmd-btn">
                                     <span class="fast-cmd-title">OPENING SCENE (3)</span>
-                                    <span class="fast-cmd-desc">Counts: 3</span>
+                                    <span class="fast-cmd-desc">Count: 3</span>
+                                </button>
+                                <button onclick="sendFastCmd({reset_system: true})" class="fast-cmd-btn border-red-500">
+                                    <span class="fast-cmd-title text-red-500">RESET SYSTEM</span>
+                                    <span class="fast-cmd-desc">Danger!</span>
                                 </button>
                             </div>
                         </section>
@@ -717,8 +695,8 @@
         // Set default value
         rawEditor.setValue(JSON.stringify({
             device_id: "RIFT_PANEL",
-            start_system: true,
-            recognized_stranger_name: null,
+            operator_start_system: true,
+            stranger_recognized_name: null,
             depth_step_1_nightmare_sucess: null
         }, null, 2), -1);
 
