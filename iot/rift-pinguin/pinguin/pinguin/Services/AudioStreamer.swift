@@ -18,9 +18,20 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     private var socket: URLSessionWebSocketTask?
     private var healthTimer: Timer?
     
+    // Thread-safety for playback state
+    private let audioLock = NSLock()
+    private var _playbackActive: Bool = false
+    
     override init() {
         super.init()
         startHealthCheck()
+    }
+    
+    private func setPlaybackActive(_ active: Bool) {
+        audioLock.lock()
+        _playbackActive = active
+        audioLock.unlock()
+        print("[AudioStreamer] Playback state set to: \(active)")
     }
     
     deinit {
@@ -62,6 +73,7 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         engine.inputNode.removeTap(onBus: 0)
         socket?.cancel(with: .normalClosure, reason: nil)
         isRecording = false
+        setPlaybackActive(false) // Safety reset
     }
     
     private func setupAudio() {
@@ -90,10 +102,10 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         }
         
         // Target: 24kHz, 1 channel, Float32 - what the server expects
-        guard let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 24000, channels: 1, interleaved: false) else { 
+        guard let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 24000, channels: 1, interleaved: false) else {
             print("[AudioStreamer] ERROR: Failed to create target format")
             DispatchQueue.main.async { self.errorMessage = "Audio format error" }
-            return 
+            return
         }
         print("[AudioStreamer] Target format: \(targetFormat)")
         
@@ -140,9 +152,19 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
                 return
             }
             
-            // Only send if we have frames
+            // Only send if we have frames AND we are not playing back
             if outputBuffer.frameLength > 0 {
-                self.sendAudio(buffer: outputBuffer)
+                // Thread-safe check
+                var shouldSend = true
+                self.audioLock.lock()
+                if self._playbackActive {
+                    shouldSend = false
+                }
+                self.audioLock.unlock()
+                
+                if shouldSend {
+                    self.sendAudio(buffer: outputBuffer)
+                }
             }
         }
         print("[AudioStreamer] Tap installed")
@@ -164,9 +186,9 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     private var sendCount = 0
     
     private func sendAudio(buffer: AVAudioPCMBuffer) {
-        guard let floatChannelData = buffer.floatChannelData else { 
+        guard let floatChannelData = buffer.floatChannelData else {
             print("[AudioStreamer] No float channel data!")
-            return 
+            return
         }
         
         let frameLength = Int(buffer.frameLength)
@@ -183,7 +205,14 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
             print("[AudioStreamer] Sending chunk #\(sendCount): \(data.count) bytes, \(frameLength) samples")
         }
         
-        if isPlayingAnswer { return }
+
+        
+        // Final gate check (redundant but safe)
+        self.audioLock.lock()
+        let currentlyPlaying = self._playbackActive
+        self.audioLock.unlock()
+        
+        if currentlyPlaying { return }
         
         let message = URLSessionWebSocketTask.Message.data(data)
         socket?.send(message) { error in
@@ -252,6 +281,10 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     private func playAudioData(data: Data, filename: String) {
         do {
             print("🔊 [MOBILE] STARTING AUDIO PLAYBACK: \(filename) (\(data.count) bytes) 🔊")
+            
+            // SYNCHRONOUSLY lock out recording before we even touch the player
+            setPlaybackActive(true)
+            
             audioPlayerFn = try AVAudioPlayer(data: data)
             audioPlayerFn?.delegate = self
             audioPlayerFn?.prepareToPlay()
@@ -263,13 +296,20 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
             audioPlayerFn?.play()
         } catch {
             print("❌ [AudioStreamer] Failed to play audio data: \(error)")
+            setPlaybackActive(false) // Safety reset
+            DispatchQueue.main.async {
+                self.isPlayingAnswer = false
+            }
         }
     }
     
     // MARK: - AVAudioPlayerDelegate
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        print("🔈 [MOBILE] AUDIO PLAYBACK FINISHED 🔈")
+        print("🔈 [MOBILE] AUDIO PLAYBACK FINISHED (Success: \(flag)) 🔈")
+        
+        setPlaybackActive(false)
+        
         DispatchQueue.main.async {
             self.isPlayingAnswer = false
         }
@@ -277,6 +317,9 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         print("❌ [MOBILE] AUDIO DECODE ERROR: \(String(describing: error))")
+        
+        setPlaybackActive(false)
+        
         DispatchQueue.main.async {
             self.isPlayingAnswer = false
         }

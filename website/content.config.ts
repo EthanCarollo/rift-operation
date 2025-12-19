@@ -10,6 +10,7 @@ export default defineContentConfig({
                 title: z.string(),
                 description: z.string().optional(),
                 category: z.string().default('General'),
+                tags: z.array(z.string()).optional(),
             })
         })
     }

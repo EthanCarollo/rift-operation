@@ -53,8 +53,14 @@ useSeoMeta({
                         {{ doc.category || 'General' }}
                     </span>
                     <h2 class="text-xl font-bold mb-2 group-hover:text-accent transition-colors">{{ doc.title }}</h2>
-                    <p class="text-sm text-text-sec line-clamp-2">{{ doc.description || 'Aucune description disponible.'
+                    <p class="text-sm text-text-sec line-clamp-2 mb-3">{{ doc.description || 'Aucune description disponible.'
                     }}</p>
+                    <div v-if="doc.tags && doc.tags.length > 0" class="flex flex-wrap gap-1">
+                        <span v-for="tag in doc.tags" :key="tag" 
+                              class="px-1.5 py-0.5 text-[10px] bg-gray-100 text-gray-600 rounded border border-gray-200">
+                            #{{ tag }}
+                        </span>
+                    </div>
                 </div>
                 <div
                     class="mt-4 flex items-center text-xs font-bold uppercase tracking-wider text-accent opacity-0 group-hover:opacity-100 transition-opacity">
