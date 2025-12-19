@@ -15,11 +15,32 @@ class RFIDReader:
             raise TypeError("delegate must implement on_read(uid, reader_name)")
 
         self.name = name
-        self.cs = Pin(cs_pin, Pin.OUT, value=1)
-        self.rst = Pin(rst_pin, Pin.OUT)
+        
+        if isinstance(cs_pin, int):
+            self.cs = Pin(cs_pin, Pin.OUT, value=1)
+        else:
+            self.cs = cs_pin
+            
+        if isinstance(rst_pin, int):
+            self.rst = Pin(rst_pin, Pin.OUT)
+        else:
+            self.rst = rst_pin
         self.reader = MFRC522(spi, self.cs, self.rst)
         self.delegate = delegate
+        self.check_connection()
         self._last_uid = None
+
+    def check_connection(self):
+        """Checks if the reader is physically connected by reading version register"""
+        v = self.reader._rreg(0x37)
+        if v == 0x00 or v == 0xFF:
+             print(f"[{self.name}] Initialization FAILED (Version: 0x{v:02X}) - Check wiring!")
+             self.version = v
+             return False
+        else:
+             print(f"[{self.name}] Initialization OK (Version: 0x{v:02X})")
+             self.version = v
+             return True
 
     def _read_uid(self):
         status, _ = self.reader.request(self.reader.REQIDL)
