@@ -133,6 +133,12 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.light)
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
     }
     
     private func feedback() {
