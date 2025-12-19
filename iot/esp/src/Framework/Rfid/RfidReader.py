@@ -49,4 +49,3 @@ class RFIDReader:
                 print(f"Error in RFID delegate on_card_lost: {e}")
 
             self._last_uid = None
-
