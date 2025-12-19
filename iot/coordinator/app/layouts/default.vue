@@ -33,19 +33,32 @@
     <main class="flex-1 overflow-hidden relative">
       <slot />
     </main>
+
+    <!-- WebSocket Status Indicator -->
+    <div 
+      class="fixed bottom-4 right-4 w-3 h-3 rounded-full transition-colors duration-500 shadow-lg z-[100]"
+      :class="isConnected ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'"
+      :title="isConnected ? 'Connected' : 'Disconnected'"
+    ></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from '#app'
 import { useRiftState } from '~/composables/useRiftState'
 import { useWakeLock } from '~/composables/useWakeLock'
+import { useAppWebSocket } from '~/composables/useAppWebSocket'
 
 const { appMode, resetState } = useRiftState()
 const { isActive } = useWakeLock()
+const { isConnected, connect } = useAppWebSocket()
 const route = useRoute()
 const router = useRouter()
+
+onMounted(() => {
+  connect()
+})
 
 const handleReset = () => {
   resetState()
