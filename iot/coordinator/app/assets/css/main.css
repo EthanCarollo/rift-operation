@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --bg-main: #ffffff;
+  --bg-sec: #fafafa;
+  --text-main: #000000;
+  --text-sec: #666666;
+  --border: #e0e0e0;
+  --border-focus: #000000;
+  --card-hover: #ffffff;
+  --accent: #000000;
+  --accent-text: #ffffff;
+  --tri-state-bg: #fafafa;
+  --tri-state-hover: #f0f0f0;
+  --success: #10b981;
+  --code-bg: #f4f4f4;
+}
+
+.dark-mode {
+  --bg-main: #0a0a0a;
+  --bg-sec: #111111;
+  --text-main: #ffffff;
+  --text-sec: #a0a0a0;
+  --border: #333333;
+  --border-focus: #ffffff;
+  --card-hover: #1a1a1a;
+  --accent: #ffffff;
+  --accent-text: #000000;
+  --tri-state-bg: #151515;
+  --tri-state-hover: #222222;
+  --code-bg: #1a1a1a;
+}
+
+@layer base {
+  html, body {
+    @apply h-full w-full overflow-hidden m-0 p-0;
+  }
+  
+  body {
+    @apply font-mono antialiased;
+    font-family: 'Space Mono', monospace;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.3s, color 0.3s;
+  }
+}

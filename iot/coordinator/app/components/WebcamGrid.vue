@@ -1,0 +1,270 @@
+<template>
+  <div class="h-full w-full flex flex-col font-mono" :class="{'p-6': mode === 'selection'}">
+    
+    <!-- HEADER (Visible in Selection Mode) -->
+    <div v-if="mode === 'selection'" class="flex items-end justify-between mb-8 border-b border-[var(--border)] pb-4 flex-none">
+      <div>
+        <h2 class="text-xl font-bold uppercase tracking-tight text-[var(--text-main)]">
+          System Cameras
+        </h2>
+        <p class="text-xs text-[var(--text-sec)] uppercase mt-1">
+          Select active feeds & Assign Designators
+        </p>
+      </div>
+      <div class="flex gap-4">
+        <button 
+          @click="refreshDevices"
+          class="px-4 py-2 border border-[var(--border)] bg-[var(--bg-sec)] hover:bg-[var(--bg-main)] hover:border-[var(--border-focus)] text-xs font-bold uppercase transition-all flex items-center gap-2"
+        >
+          <span>Refresh</span>
+        </button>
+        <button 
+          v-if="selectionCount > 0"
+          @click="confirmSelection"
+          class="px-6 py-2 bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold uppercase hover:opacity-90 transition-all flex items-center gap-2"
+        >
+          <span>Continue ({{ selectionCount }})</span> →
+        </button>
+      </div>
+    </div>
+
+    <!-- Permission Error -->
+    <div v-if="error" class="flex-none border border-red-500 bg-red-500/5 p-4 mb-6 text-red-500 text-center text-xs font-bold uppercase">
+      {{ error }}
+      <button @click="requestPermissions" class="block mx-auto mt-2 underline">Retry Access</button>
+    </div>
+
+    <!-- Grid Container -->
+    <div 
+      class="flex-1 overflow-hidden" 
+      :class="{
+        'grid gap-4 auto-rows-min overflow-y-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-4': mode === 'selection',
+        'grid h-full w-full': mode === 'view'
+      }"
+      :style="mode === 'view' ? viewGridStyle : {}"
+    >
+      <div 
+        v-for="cam in displayList" 
+        :key="cam.deviceId"
+        class="relative bg-black group overflow-hidden border transition-all"
+        :class="getCellClass(cam.deviceId)"
+        @click="handleCellClick(cam.deviceId)"
+      >
+        <!-- Video Element -->
+        <video 
+          :ref="(el) => setVideoRef(el as HTMLVideoElement, cam.deviceId)"
+          autoplay 
+          playsinline 
+          muted 
+          class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          :class="{
+            'opacity-50 group-hover:opacity-80': mode === 'selection' && !currentSelection[cam.deviceId], 
+            'opacity-100': currentSelection[cam.deviceId] || mode === 'view',
+            'grayscale contrast-125 brightness-90': true /* SURVEILLANCE FILTER */
+          }"
+        ></video>
+
+        <!-- SELECTION MODE UI -->
+        <div v-if="mode === 'selection'" class="absolute inset-x-0 bottom-0 p-3 bg-black/90 border-t border-white/10 z-10 flex flex-col gap-2">
+            <div class="flex justify-between items-center">
+                 <span class="text-[10px] text-gray-400 uppercase truncate max-w-[70%]">
+                    {{ cam.label || 'CAM_' + cam.deviceId.slice(0, 4) }}
+                 </span>
+                 <!-- Checkbox Indicator -->
+                 <div 
+                    class="w-4 h-4 border border-white/50 transition-colors flex items-center justify-center"
+                    :class="{'bg-[var(--success)] border-transparent text-black': currentSelection[cam.deviceId]}"
+                  >
+                    <span v-if="currentSelection[cam.deviceId]" class="text-[10px] font-bold">✓</span>
+                  </div>
+            </div>
+            
+            <!-- Renaming Input (Only if selected) -->
+            <div v-if="currentSelection[cam.deviceId]" @click.stop>
+                <input 
+                    type="text" 
+                    v-model="currentSelection[cam.deviceId]"
+                    class="w-full bg-white/10 border border-white/20 text-white text-xs px-2 py-1 focus:border-[var(--success)] focus:outline-none placeholder-white/30 font-bold uppercase"
+                    placeholder="ENTER DESIGNATOR"
+                />
+            </div>
+        </div>
+
+
+        <!-- VIEW MODE OVERLAY -->
+        <div 
+          v-if="mode === 'view'"
+          class="absolute top-4 left-4 z-20"
+        >
+            <div class="bg-black/80 border border-white/20 px-3 py-1 flex flex-col">
+                <span class="text-[14px] font-bold text-white uppercase tracking-widest font-mono leading-none mb-1">
+                    {{ customNames[cam.deviceId] || 'UNKNOWN_CAM' }}
+                </span>
+                <span class="text-[8px] text-[var(--success)] uppercase tracking-wide font-mono animate-pulse">
+                    ● {{ props.initialSelected ? 'REC' : 'LIVE' }}
+                </span>
+            </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-if="webcams.length === 0 && !error" class="flex-1 flex flex-col items-center justify-center text-[var(--text-sec)] min-h-[300px]">
+      <div class="text-4xl mb-4 grayscale opacity-50">📷</div>
+      <p class="text-sm uppercase font-bold">No Signal</p>
+      <p class="text-xs">Check connections</p>
+    </div>
+    
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+
+const props = defineProps<{
+  mode: 'selection' | 'view'
+  initialSelected?: Record<string, string>
+}>()
+
+const emit = defineEmits<{
+  (e: 'continue', selection: Record<string, string>): void
+}>()
+
+interface WebcamInfo {
+  deviceId: string
+  label: string
+}
+
+const webcams = ref<WebcamInfo[]>([])
+const streams = ref<Map<string, MediaStream>>(new Map())
+const error = ref<string | null>(null)
+const videoRefs = ref<Map<string, HTMLVideoElement>>(new Map())
+
+// State for selection mode: Map<ID, CustomName>
+// In view mode, we use props.initialSelected directly
+const currentSelection = ref<Record<string, string>>({ ...props.initialSelected })
+
+const customNames = computed(() => {
+    return props.mode === 'view' ? (props.initialSelected || {}) : currentSelection.value
+})
+
+const selectionCount = computed(() => Object.keys(currentSelection.value).length)
+
+// Determine which cameras to show
+const displayList = computed(() => {
+  if (props.mode === 'view') {
+    const selectedIds = Object.keys(props.initialSelected || {})
+    return webcams.value.filter(c => selectedIds.includes(c.deviceId))
+  }
+  return webcams.value
+})
+
+// Dynamic Tiling (Same as before)
+const viewGridStyle = computed(() => {
+  const count = displayList.value.length
+  if (count === 0) return {}
+  const cols = Math.ceil(Math.sqrt(count))
+  const rows = Math.ceil(count / cols)
+  return {
+    gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
+  }
+})
+
+const getCellClass = (id: string) => {
+  if (props.mode === 'view') {
+    return 'border-r border-b border-black'
+  }
+  return currentSelection.value[id]
+    ? 'border-[var(--success)] shadow-lg ring-1 ring-[var(--success)] aspect-video' 
+    : 'border-[var(--border)] hover:border-[var(--border-focus)] cursor-pointer aspect-video'
+}
+
+const handleCellClick = (id: string) => {
+    if (props.mode === 'view') return
+
+    if (currentSelection.value[id]) {
+        delete currentSelection.value[id]
+    } else {
+        // Default name
+        const cam = webcams.value.find(c => c.deviceId === id)
+        const count = Object.keys(currentSelection.value).length + 1
+        // Create a default designator like "CAM_01"
+        currentSelection.value[id] = `CAM_FEED_${String(count).padStart(2, '0')}`
+    }
+}
+
+const confirmSelection = () => {
+    emit('continue', currentSelection.value)
+}
+
+// ... Camera logic ...
+const setVideoRef = (el: HTMLVideoElement, id: string) => {
+  if (el) {
+    videoRefs.value.set(id, el)
+    if (streams.value.has(id)) {
+      el.srcObject = streams.value.get(id)!
+    }
+  }
+}
+
+const requestPermissions = async () => {
+  try {
+    error.value = null
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    stream.getTracks().forEach(t => t.stop())
+    await refreshDevices()
+  } catch (err) {
+    console.error(err)
+    error.value = "ACCESS DENIED"
+  }
+}
+
+const refreshDevices = async () => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoInputs = devices.filter(d => d.kind === 'videoinput')
+    
+    // Stop all streams first if refreshing list (optional, might flicker)
+    // For stability in selection mode, we might want to keep running streams
+    // But for simplicity let's stop/start to ensure clean state
+    stopAllStreams()
+    
+    webcams.value = videoInputs.map(d => ({
+      deviceId: d.deviceId,
+      label: d.label || `CAM_${d.deviceId.slice(0, 4)}`
+    }))
+
+    const toStart = props.mode === 'view' ? displayList.value : webcams.value
+    for (const cam of toStart) {
+      startStream(cam.deviceId)
+    }
+  } catch (err) {
+    console.error('Error refreshing devices:', err)
+  }
+}
+
+const startStream = async (deviceId: string) => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: deviceId } }
+    })
+    streams.value.set(deviceId, stream)
+    const videoEl = videoRefs.value.get(deviceId)
+    if (videoEl) videoEl.srcObject = stream
+  } catch (err) {
+    console.warn(`Failed to start stream ${deviceId}`, err)
+  }
+}
+
+const stopAllStreams = () => {
+  streams.value.forEach(s => s.getTracks().forEach(t => t.stop()))
+  streams.value.clear()
+}
+
+onMounted(() => requestPermissions())
+onUnmounted(() => stopAllStreams())
+
+watch(() => props.mode, () => refreshDevices())
+</script>
