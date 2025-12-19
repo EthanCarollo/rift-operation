@@ -15,6 +15,7 @@ class RiftState:
         # Validation flags for current step
         self._dream_valid = False
         self._nightmare_valid = False
+        self._transitioning = False
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -24,6 +25,7 @@ class RiftState:
 
         self._dream_valid = False
         self._nightmare_valid = False
+        self._transitioning = False
 
         if self.step == RiftSteps.IDLE:
             self.workshop.scanned_dream_slots.clear()
@@ -50,8 +52,6 @@ class RiftState:
         self._handle_dream(uid, reader_name)
         self._handle_nightmare(uid, reader_name)
 
-        self._check_step_completion()
-
     def on_rfid_lost(self, uid, reader_name):
         pass
 
@@ -76,7 +76,7 @@ class RiftState:
             self.logger.info(f"RIFT: VALID Dream tag on {reader_name}")
             self._dream_valid = True
             self.workshop.scanned_dream_slots.add(expected_slot)
-            asyncio.create_task(self.workshop.send_counts())
+            self._check_step_completion()
 
     def _handle_nightmare(self, uid: str, reader_name: str):
         expected_slot = f"NightmareSlot{self.step}"
@@ -96,7 +96,7 @@ class RiftState:
             self.logger.info(f"RIFT: VALID Nightmare tag on {reader_name}")
             self._nightmare_valid = True
             self.workshop.scanned_nightmare_slots.add(expected_slot)
-            asyncio.create_task(self.workshop.send_counts())
+            self._check_step_completion()
 
     # ------------------------------------------------------------------
     # Step management
@@ -105,8 +105,14 @@ class RiftState:
         """
         Transition ONLY if all required tags for this step are validated
         """
+        if self._transitioning:
+            return
+
         # Pour l’instant : Dream obligatoire, Nightmare prêt mais optionnel
-        if self._dream_valid:  # and self._nightmare_valid:
+        if self._dream_valid and self._nightmare_valid:
+            # Send updated counts only when both are valid
+            asyncio.create_task(self.workshop.send_counts())
+            self._transitioning = True
             asyncio.create_task(self._next_step())
 
     async def _next_step(self):

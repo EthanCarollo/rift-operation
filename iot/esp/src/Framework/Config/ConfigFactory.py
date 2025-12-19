@@ -65,7 +65,7 @@ class ConfigFactory:
     @staticmethod
     def create_rift_config():
         return Config(
-            wifi=WifiConfigFactory.create_appartment_aix(),
+            wifi=WifiConfigFactory.create_cudy(),
             websocket=WebsocketConfigFactory.create_prod(),
             device_id=f"RIFT-ESP",
             debug_mode=True,

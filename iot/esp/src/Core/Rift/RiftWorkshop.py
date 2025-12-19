@@ -49,8 +49,9 @@ class RiftWorkshop:
         payload = dict(self._last_payload) if self._last_payload else {}
 
         payload["device_id"] = self.controller.config.device_id
-        payload["children_rift_part_count"] = len(self.scanned_dream_slots)
-        payload["parent_rift_part_count"] = len(self.scanned_nightmare_slots)
+        # UPDATED KEYS as per request
+        payload["dream_rift_part_count"] = len(self.scanned_dream_slots)
+        payload["nightmare_rift_part_count"] = len(self.scanned_nightmare_slots)
 
         await self.controller.websocket_client.send(json.dumps(payload))
 
