@@ -2,6 +2,7 @@ import { config } from '../../config.js'
 
 export const useAppWebSocket = () => {
   const isConnected = useState<boolean>('websocket-connected', () => false)
+  const lastMessage = useState<any>('websocket-last-message', () => null)
   let socket: WebSocket | null = null
   let reconnectInterval: any = null
 
@@ -22,6 +23,15 @@ export const useAppWebSocket = () => {
         if (reconnectInterval) {
           clearInterval(reconnectInterval)
           reconnectInterval = null
+        }
+      }
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          lastMessage.value = data
+        } catch (e) {
+          console.warn('Failed to parse WebSocket message:', event.data)
         }
       }
 
@@ -51,6 +61,7 @@ export const useAppWebSocket = () => {
 
   return {
     isConnected,
+    lastMessage,
     connect
   }
 }

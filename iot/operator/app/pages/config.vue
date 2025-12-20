@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full w-full overflow-hidden">
+  <div class="h-full w-full overflow-hidden flex items-center justify-center">
     <WebcamGrid 
       mode="selection"
       :initial-selected="selectedWebcams"
@@ -17,6 +17,6 @@ const { selectedWebcams } = useRiftState()
 
 const handleContinue = (selection: Record<string, string>) => {
   selectedWebcams.value = selection
-  router.push('/monitor')
+  router.push('/standby')
 }
 </script>

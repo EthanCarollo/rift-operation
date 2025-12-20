@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full w-full overflow-y-auto">
+  <div class="h-full w-full overflow-y-auto flex items-center justify-center">
     <ModeSelector @select="handleModeSelect" />
   </div>
 </template>
