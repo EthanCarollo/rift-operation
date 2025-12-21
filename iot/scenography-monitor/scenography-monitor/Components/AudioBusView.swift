@@ -17,6 +17,11 @@ struct AudioBusView: View {
     @State private var isSolo: Bool = false
     @State private var selectedDevice: String = ""
     
+    // Drag States
+    @State private var isDraggingKnob: Bool = false
+    @State private var isDraggingFader: Bool = false
+    @State private var initialValue: Double = 0.0
+    
     // Mock devices
     let devices = ["Built-in Output", "Scarlett 2i2", "Virtual Cable 1", "HDMI Audio"]
     
@@ -69,14 +74,19 @@ struct AudioBusView: View {
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
-                            NSCursor.hide() // Hide cursor for effect
+                            if !isDraggingKnob {
+                                isDraggingKnob = true
+                                initialValue = pan
+                                NSCursor.hide()
+                            }
                             // Allow dragging up/right to increase, down/left to decrease
-                            let sensitivity: Double = 0.005
+                            let sensitivity: Double = 0.002
                             let delta = value.translation.width - value.translation.height // Combine axes
-                            pan = max(0, min(1, pan + (delta * sensitivity)))
+                            pan = max(0, min(1, initialValue + (delta * sensitivity)))
                         }
                         .onEnded { _ in
-                            NSCursor.unhide() // Restore cursor
+                            isDraggingKnob = false
+                            NSCursor.unhide()
                         }
                 )
                 
@@ -124,20 +134,21 @@ struct AudioBusView: View {
                                 .gesture(
                                     DragGesture(minimumDistance: 0)
                                         .onChanged { value in
-                                            NSCursor.hide()
-                                            // Calculate volume based on touch position relative to track height
-                                            let trackHeight = geo.size.height
-                                            let handleHeight: CGFloat = 32
-                                            let usableHeight = trackHeight - handleHeight
+                                            if !isDraggingFader {
+                                                isDraggingFader = true
+                                                initialValue = volume
+                                                NSCursor.hide()
+                                            }
                                             
-                                            // Invert Y because 0 is at top
-                                            let touchYFromBottom = trackHeight - value.location.y - (handleHeight / 2)
+                                            // Relative Drag Logic
+                                            let sensitivity: Double = 0.003
+                                            // Invert deltaY because dragging UP should increase volume
+                                            let delta = -value.translation.height
                                             
-                                            // Normalize
-                                            let newVol = touchYFromBottom / usableHeight
-                                            volume = max(0, min(1, newVol))
+                                            volume = max(0, min(1, initialValue + (delta * sensitivity)))
                                         }
                                         .onEnded { _ in
+                                            isDraggingFader = false
                                             NSCursor.unhide()
                                         }
                                 )
