@@ -111,10 +111,9 @@ const stopDrag = () => {
 };
 
 // Fake meter animation
+// Fake meter animation removed
 onMounted(() => {
-    setInterval(() => {
-        meterLevel.value = Math.random() * (faderPosition.value + 10);
-    }, 100);
+    meterLevel.value = 0;
 });
 </script>
 
