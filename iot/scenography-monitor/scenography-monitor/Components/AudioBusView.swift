@@ -253,11 +253,84 @@ struct AudioBusView: View {
             }
             .frame(height: 50)
             .frame(maxWidth: .infinity)
-            .background(Color(nsColor: .windowBackgroundColor))
+            .background(Color(hex: bus?.colorHex ?? "#F0F0F0"))
         }
         .frame(width: 90)
         .frame(maxHeight: .infinity)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color(hex: bus?.colorHex ?? "#F0F0F0"))
         .border(Color(nsColor: .separatorColor), width: 0.5)
+        .contextMenu {
+            Text("Bus Color")
+            Button("Reset") { soundManager.setBusColor("#F0F0F0", onBus: busId) }
+            Divider()
+            ForEach(PastelColor.allCases, id: \.self) { color in
+                Button(action: {
+                    soundManager.setBusColor(color.hex, onBus: busId)
+                }) {
+                    HStack {
+                        Image(systemName: "circle.fill")
+                            .foregroundColor(Color(hex: color.hex))
+                        Text(color.name)
+                    }
+                }
+            }
+        }
+    }
+}
+
+enum PastelColor: CaseIterable {
+    case orange, blue, green, pink, purple, yellow, gray, white
+    
+    var name: String {
+        switch self {
+        case .orange: return "Pastel Orange"
+        case .blue: return "Pastel Blue"
+        case .green: return "Pastel Green"
+        case .pink: return "Pastel Pink"
+        case .purple: return "Pastel Purple"
+        case .yellow: return "Pastel Yellow"
+        case .gray: return "Light Gray"
+        case .white: return "White"
+        }
+    }
+    
+    var hex: String {
+        switch self {
+        case .orange: return "#FFD1A4"
+        case .blue: return "#AEC6CF"
+        case .green: return "#B0E57C"
+        case .pink: return "#F4C2C2"
+        case .purple: return "#C3B1E1"
+        case .yellow: return "#FDFD96"
+        case .gray: return "#F0F0F0"
+        case .white: return "#FFFFFF"
+        }
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }

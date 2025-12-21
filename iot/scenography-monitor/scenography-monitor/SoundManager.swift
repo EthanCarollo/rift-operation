@@ -54,6 +54,7 @@ class SoundManager: NSObject, ObservableObject {
         var isSolo: Bool = false
         var outputDeviceUID: String = "default"
         var outputDeviceName: String = "System/Default"
+        var colorHex: String = "#F0F0F0" // Default light grey/white
     }
     
     @Published var audioBuses: [AudioBus] = []
@@ -83,14 +84,24 @@ class SoundManager: NSObject, ObservableObject {
         // Initialize 36 Fixed Buses
         for i in 1...36 {
             var name = "BUS \(i)"
+            var color = "#F0F0F0" // Default
+            
             switch i {
-            case 1: name = "SAS"
-            case 2: name = "Nightmare"
-            case 3: name = "Dream"
-            case 4: name = "Rift"
+            case 1: 
+                name = "SAS"
+                color = "#FFD1A4" // Pastel Orange
+            case 2: 
+                name = "Nightmare"
+                color = "#FFD1A4"
+            case 3: 
+                name = "Dream"
+                color = "#FFD1A4"
+            case 4: 
+                name = "Rift"
+                color = "#FFD1A4"
             default: break
             }
-            audioBuses.append(AudioBus(id: i, name: name))
+            audioBuses.append(AudioBus(id: i, name: name, colorHex: color))
         }
         
         restoreBookmark()
@@ -332,6 +343,12 @@ class SoundManager: NSObject, ObservableObject {
     func setBusName(_ name: String, onBus busId: Int) {
         if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
             audioBuses[index].name = name
+        }
+    }
+    
+    func setBusColor(_ hex: String, onBus busId: Int) {
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].colorHex = hex
         }
     }
     

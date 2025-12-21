@@ -25,7 +25,7 @@ struct SoundLibraryView: View {
                 Spacer()
                 
                 // Filter Picker
-                Picker("", selection: $filterId) {
+                Picker("Filter", selection: $filterId) {
                     Text("ALL").tag(-1)
                     Divider()
                     Text("Unassigned").tag(0)
