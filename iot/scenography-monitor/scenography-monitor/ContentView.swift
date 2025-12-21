@@ -91,29 +91,6 @@ struct ContentView: View {
                                 AudioBusView(busName: bus.name, busId: bus.id)
                                     .frame(width: 90)
                             }
-                            
-                            // Add Bus Button
-                            VStack {
-                                Spacer()
-                                Button(action: { soundManager.addBus() }) {
-                                    VStack(spacing: 4) {
-                                        Image(systemName: "plus")
-                                            .font(.system(size: 20))
-                                        Text("ADD BUS")
-                                            .font(.system(size: 9, weight: .bold))
-                                    }
-                                    .frame(width: 80, height: 200)
-                                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                                    .cornerRadius(8)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(Color.gray.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [4]))
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                                Spacer()
-                            }
-                            .padding(.leading, 8)
                         }
                         .padding(.leading, 1) // Tiny offset
                         .frame(maxHeight: .infinity)

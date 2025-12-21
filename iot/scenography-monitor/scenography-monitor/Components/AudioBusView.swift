@@ -36,13 +36,24 @@ struct AudioBusView: View {
         
         return VStack(spacing: 0) {
             // Bus Header
-            Text(busName)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.black)
-                .frame(height: 30)
+            Text("BUS \(busId)")
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .border(Color(nsColor: .separatorColor), width: 0.5)
+                .padding(.top, 4)
+            
+            TextField("Name", text: Binding(
+                get: { bus?.name ?? "BUS \(busId)" },
+                set: { soundManager.setBusName($0, onBus: busId) }
+            ))
+            .font(.system(size: 10, weight: .bold, design: .monospaced))
+            .multilineTextAlignment(.center)
+            .textFieldStyle(.plain)
+            .foregroundColor(.black)
+            .frame(height: 16)
+            .frame(maxWidth: .infinity)
+            .background(Color(nsColor: .windowBackgroundColor))
+            .border(Color(nsColor: .separatorColor), width: 0.5)
             
             // FX/Inserts / Info Area
             VStack(spacing: 1) {
@@ -226,7 +237,11 @@ struct AudioBusView: View {
                     .font(.system(size: 8, weight: .bold))
                     .foregroundColor(.secondary)
                 
-                Picker("", selection: $selectedDevice) {
+                Picker("", selection: Binding(
+                    get: { bus?.outputDeviceName ?? "System/Default" },
+                    set: { soundManager.setOutput($0, onBus: busId) }
+                )) {
+                    Text("System Default").tag("System/Default")
                     Text("-- Out --").tag("")
                     ForEach(soundManager.availableOutputs, id: \.self) { device in
                         Text(device).tag(device)

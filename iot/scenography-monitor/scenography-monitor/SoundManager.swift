@@ -9,14 +9,22 @@ import Foundation
 import AVFoundation
 import SwiftUI
 import Combine
+import CoreAudio
 
-class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
+// Helper for Audio Devices
+struct AudioDeviceInput: Hashable {
+    let id: AudioObjectID
+    let name: String
+    let uid: String
+}
+
+class SoundManager: NSObject, ObservableObject {
     static let shared = SoundManager()
     
     // Dynamic path, user selectable
     @Published var soundDirectoryURL: URL
     
-    // File Node Structure for recursive view
+    // File Node Structure
     struct FileNode: Identifiable, Hashable {
         let id = UUID()
         let name: String
@@ -26,16 +34,17 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     @Published var rootNodes: [FileNode] = []
-    @Published var availableSounds: [String] = []
-    @Published var activeBusIds: Set<Int> = []
     
-    // Routing state: Sound Filename -> Bus ID. 0 = Unassigned.
+    // Routing state: Sound Filename -> Bus ID
     @Published var soundRoutes: [String: Int] = [:]
+    
+    // Playback state
+    @Published var activeBusIds: Set<Int> = []
     
     // Metering state: Bus ID -> Normalized Level (0.0 - 1.0)
     @Published var busLevels: [Int: Float] = [:]
     
-    // Dynamic Buses with Persistence
+    // Buses
     struct AudioBus: Identifiable, Hashable {
         let id: Int
         var name: String
@@ -43,50 +52,47 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         var pan: Float = 0.5
         var isMuted: Bool = false
         var isSolo: Bool = false
+        var outputDeviceUID: String = "default"
+        var outputDeviceName: String = "System/Default"
     }
     
-    @Published var audioBuses: [AudioBus] = [
-        AudioBus(id: 1, name: "Nightmare"),
-        AudioBus(id: 2, name: "Dream"),
-        AudioBus(id: 3, name: "Rift"),
-        AudioBus(id: 4, name: "SAS")
-    ]
+    @Published var audioBuses: [AudioBus] = []
     
-    // Available Audio Devices (Mock for now, would use CoreAudio/AVFoundation in real internal impl)
-    @Published var availableOutputs: [String] = [
-        "MacBook Pro Speakers",
-        "External Headphones", 
-        "BlackHole 16ch",
-        "HDMI (LG Monitor)",
-        "Scarlett 2i2 USB"
-    ]
+    // Available Audio Devices
+    @Published var availableOutputs: [String] = [] // Names for UI
+    private var availableOutputDevices: [AudioDeviceInput] = [] // Internal Full Objects
     
-    private var nextBusId = 5
+    // Engine & Player Storage
+    // One Engine per Output Device UID
+    private var engines: [String: AVAudioEngine] = [:]
+    // One PlayerNode per Bus ID
+    private var players: [Int: AVAudioPlayerNode] = [:]
+    // Files for looping logic
+    private var activeFiles: [Int: AVAudioFile] = [:]
     
-    private var audioPlayers: [Int: AVAudioPlayer] = [:]
     private let bookmarkKey = "soundDirectoryBookmark"
     private var meteringTimer: Timer?
     
     override init() {
-        // Default to container docs
         let defaultURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             .appendingPathComponent("rift-operation-sounds")
         self.soundDirectoryURL = defaultURL
         
         super.init()
         
-        // Try to restore saved location
-        restoreBookmark()
+        // Initialize 36 Fixed Buses
+        for i in 1...36 {
+            audioBuses.append(AudioBus(id: i, name: "BUS \(i)"))
+        }
         
+        restoreBookmark()
         createDirectoryIfNeeded()
         refreshSounds()
-        
-        // Start metering loop
+        refreshAudioDevices()
         startMetering()
     }
     
     // MARK: - Directory Management
-    
     func selectSoundDirectory() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
@@ -114,15 +120,10 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     
     private func restoreBookmark() {
         guard let data = UserDefaults.standard.data(forKey: bookmarkKey) else { return }
-        
         var isStale = false
         do {
             let url = try URL(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-            
-            if isStale {
-                saveBookmark(for: url) // Refresh if stale
-            }
-            
+            if isStale { saveBookmark(for: url) }
             if url.startAccessingSecurityScopedResource() {
                 self.soundDirectoryURL = url
             }
@@ -140,22 +141,18 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     func refreshSounds() {
         _ = soundDirectoryURL.startAccessingSecurityScopedResource()
         defer { soundDirectoryURL.stopAccessingSecurityScopedResource() }
-        
         rootNodes = scanDirectory(at: soundDirectoryURL)
     }
     
     private func scanDirectory(at url: URL) -> [FileNode] {
         var nodes: [FileNode] = []
-        
         do {
             let resourceKeys: [URLResourceKey] = [.isDirectoryKey, .nameKey]
             let contents = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: resourceKeys, options: [.skipsHiddenFiles])
-            
             for itemURL in contents {
                 let resourceValues = try itemURL.resourceValues(forKeys: Set(resourceKeys))
                 let isDirectory = resourceValues.isDirectory ?? false
                 let name = resourceValues.name ?? itemURL.lastPathComponent
-                
                 if isDirectory {
                     let children = scanDirectory(at: itemURL)
                     nodes.append(FileNode(name: name, url: itemURL, isDirectory: true, children: children.sorted { $0.name < $1.name }))
@@ -165,23 +162,14 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
                     }
                 }
             }
-        } catch {
-            print("Error scanning directory \(url): \(error)")
-        }
-        
-        return nodes.sorted {
-            if $0.isDirectory && !$1.isDirectory { return true }
-            if !$0.isDirectory && $1.isDirectory { return false }
-            return $0.name < $1.name
-        }
+        } catch { print("scan error: \(error)") }
+        return nodes.sorted { ($0.isDirectory ? 0 : 1) < ($1.isDirectory ? 0 : 1) }
     }
     
-    // Helper to get helper text for AudioBusView
     func getAssignedSound(forBus busId: Int) -> String? {
         return soundRoutes.first(where: { $0.value == busId })?.key
     }
     
-    // Helper to get all files flattened (for filtering)
     func getAllFiles() -> [FileNode] {
         return flatten(nodes: rootNodes)
     }
@@ -189,66 +177,161 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private func flatten(nodes: [FileNode]) -> [FileNode] {
         var result: [FileNode] = []
         for node in nodes {
-            if node.isDirectory {
-                if let children = node.children {
-                    result.append(contentsOf: flatten(nodes: children))
-                }
-            } else {
-                result.append(node)
-            }
+            if let children = node.children { result.append(contentsOf: flatten(nodes: children)) }
+            else { result.append(node) }
         }
         return result
     }
     
-    // MARK: - Bus Management
-    
-    func addBus() {
-        let newBus = AudioBus(id: nextBusId, name: "BUS \(nextBusId)")
-        audioBuses.append(newBus)
-        nextBusId += 1
+    // MARK: - CoreAudio Device Management
+    func refreshAudioDevices() {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        var dataSize: UInt32 = 0
+        AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &propertyAddress, 0, nil, &dataSize)
+        
+        let deviceCount = Int(dataSize) / MemoryLayout<AudioObjectID>.size
+        var deviceIDs = [AudioObjectID](repeating: 0, count: deviceCount)
+        
+        AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &propertyAddress, 0, nil, &dataSize, &deviceIDs)
+        
+        var newDevices: [AudioDeviceInput] = []
+        
+        for id in deviceIDs {
+            // Get Name
+            var nameSize = UInt32(MemoryLayout<CFString>.size)
+            var deviceName: CFString = "" as CFString
+            var nameAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyDeviceNameCFString, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+            AudioObjectGetPropertyData(id, &nameAddr, 0, nil, &nameSize, &deviceName)
+            
+            // Get UID
+            var uidSize = UInt32(MemoryLayout<CFString>.size)
+            var deviceUID: CFString = "" as CFString
+            var uidAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyDeviceUID, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+            AudioObjectGetPropertyData(id, &uidAddr, 0, nil, &uidSize, &deviceUID)
+            
+            // Check output channels
+            var streamAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams, mScope: kAudioDevicePropertyScopeOutput, mElement: kAudioObjectPropertyElementMain)
+            var streamSize: UInt32 = 0
+            AudioObjectGetPropertyDataSize(id, &streamAddr, 0, nil, &streamSize)
+            
+            if streamSize > 0 {
+                newDevices.append(AudioDeviceInput(id: id, name: String(deviceName), uid: String(deviceUID)))
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.availableOutputDevices = newDevices
+            self.availableOutputs = newDevices.map { $0.name }
+        }
     }
     
-    func removeBus(id: Int) {
-        audioBuses.removeAll { $0.id == id }
-        stopSound(onBus: id)
+    // MARK: - Engine Helpers
+    private func getEngine(for uid: String) -> AVAudioEngine {
+        // Reuse existing engine if available
+        if let existing = engines[uid] {
+            if !existing.isRunning { try? existing.start() }
+            return existing
+        }
+        
+        let engine = AVAudioEngine()
+        
+        // Bind to Hardware Device if not default
+        // If "default", we just use standard routing of engine (system default).
+        if uid != "default" {
+            // Find ID from UID
+            if let dev = availableOutputDevices.first(where: { $0.uid == uid }) {
+                let deviceID = dev.id
+                
+                // Set Output Unit Device
+                let outputNode = engine.outputNode
+                if let audioUnit = outputNode.audioUnit {
+                    var id = deviceID
+                    let err = AudioUnitSetProperty(audioUnit,
+                                         kAudioOutputUnitProperty_CurrentDevice,
+                                         kAudioUnitScope_Global,
+                                         0,
+                                         &id,
+                                         UInt32(MemoryLayout<AudioObjectID>.size))
+                    if err != noErr {
+                        print("Error setting audio unit device for UID \(uid): \(err)")
+                    } else {
+                        print("Successfully bound engine to device UID: \(uid)")
+                    }
+                }
+            }
+        }
+        
+        do {
+            try engine.start()
+            print("Engine started successfully for UID: \(uid)")
+        } catch {
+            print("Failed to start engine for UID \(uid): \(error)")
+        }
+        
+        engines[uid] = engine
+        return engine
     }
     
     // MARK: - Playback Control
     
-    func setVolume(_ volume: Float, onBus busId: Int) {
-        // Update Bus Model
+    func setOutput(_ deviceName: String, onBus busId: Int) {
         if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
-            audioBuses[index].volume = volume
+            // Find UID from Name
+            let uid: String
+            if let dev = availableOutputDevices.first(where: { $0.name == deviceName }) {
+                uid = dev.uid
+            } else {
+                uid = "default"
+            }
             
-            // Apply to active player if not muted
-            if let player = audioPlayers[busId], !audioBuses[index].isMuted {
-                player.volume = volume
+            let oldUID = audioBuses[index].outputDeviceUID
+            if oldUID == uid { return }
+            
+            // Update model
+            audioBuses[index].outputDeviceName = deviceName
+            audioBuses[index].outputDeviceUID = uid
+            
+            // If playing, restart on new engine
+            // We need to re-route. Simple way: Stop. User restarts.
+            // Or auto-restart if we store the current file node.
+            // For now, strict restart.
+            if let player = players[busId], player.isPlaying {
+                stopSound(onBus: busId)
+                print("Output changed for Bus \(busId). Please restart playback.")
             }
         }
     }
     
+    func setVolume(_ volume: Float, onBus busId: Int) {
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].volume = volume
+            updatePlayerVolume(busId)
+        }
+    }
+    
     func setPan(_ pan: Float, onBus busId: Int) {
-        // Update Bus Model
         if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
             audioBuses[index].pan = pan
-            
-            // Apply to active player
-            if let player = audioPlayers[busId] {
-                player.pan = (pan * 2.0) - 1.0 // Convert 0...1 to -1...1
-            }
+            updatePlayerVolume(busId) 
+        }
+    }
+    
+    func setBusName(_ name: String, onBus busId: Int) {
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].name = name
         }
     }
     
     func toggleMute(onBus busId: Int) {
         if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
             audioBuses[index].isMuted.toggle()
-            let isMuted = audioBuses[index].isMuted
-            let volume = audioBuses[index].volume
-            
-            if let player = audioPlayers[busId] {
-                player.volume = isMuted ? 0 : volume
-            }
-            updateSoloState() // Re-check solo logic as mute overrides
+            updatePlayerVolume(busId)
+            updateSoloState()
         }
     }
     
@@ -260,79 +343,69 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func updateSoloState() {
-        let anySolo = audioBuses.contains { $0.isSolo }
-        
-        for index in audioBuses.indices {
-            let bus = audioBuses[index]
-            let player = audioPlayers[bus.id]
-            
-            if anySolo {
-                // Should only play if THIS bus is solod
-                if bus.isSolo {
-                    // It is solo, play at volume (unless locally muted)
-                    if let player = player {
-                        player.volume = bus.isMuted ? 0 : bus.volume
-                    }
-                } else {
-                    // Not solo, silence it
-                    if let player = player {
-                        player.volume = 0
-                    }
-                }
-            } else {
-                // No solo active, respect local mute
-                if let player = player {
-                    player.volume = bus.isMuted ? 0 : bus.volume
-                }
-            }
+        for bus in audioBuses {
+            updatePlayerVolume(bus.id)
         }
     }
     
+    private func updatePlayerVolume(_ busId: Int) {
+        guard let player = players[busId], let bus = audioBuses.first(where: { $0.id == busId }) else { return }
+        
+        let anySolo = audioBuses.contains { $0.isSolo }
+        var targetVolume = bus.volume
+        
+        if bus.isMuted {
+            targetVolume = 0
+        } else if anySolo && !bus.isSolo {
+            targetVolume = 0
+        }
+        
+        player.volume = targetVolume
+        player.pan = (bus.pan * 2.0) - 1.0
+    }
+    
     func playSound(node: FileNode, onBus busId: Int) {
-        // 1. Update Route
+        stopSound(onBus: busId)
         soundRoutes[node.name] = busId
         
-        // 2. Play
-        stopSound(onBus: busId)
+        guard let bus = audioBuses.first(where: { $0.id == busId }) else { return }
         
-        let url = node.url
+        let engine = getEngine(for: bus.outputDeviceUID)
+        let player = AVAudioPlayerNode()
+        
+        engine.attach(player)
+        
         do {
-            let player = try AVAudioPlayer(contentsOf: url)
-            player.delegate = self
+            let file = try AVAudioFile(forReading: node.url)
+            activeFiles[busId] = file
             
-            // Apply Bus Settings
-            if let bus = audioBuses.first(where: { $0.id == busId }) {
-                // Volume logic factoring in Mute and Solo
-                let anySolo = audioBuses.contains { $0.isSolo }
-                var targetVolume = bus.volume
+            // Connect with explicit format to avoid channel mismatch crashes
+            engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
+            
+            // Loop Logic: Schedule Buffer indefinitely
+            if let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) {
+                try file.read(into: buffer)
                 
-                if bus.isMuted {
-                    targetVolume = 0
-                } else if anySolo && !bus.isSolo {
-                    targetVolume = 0
+                player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+                
+                // Install Tap for Metering
+                player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buffer, time) in
+                     self?.processMeter(buffer: buffer, busId: busId)
                 }
                 
-                player.volume = targetVolume
-                player.pan = (bus.pan * 2.0) - 1.0
-            } else {
-                // Fallback default
-                player.volume = 0.75
-                player.pan = 0.0
-            }
-            
-            player.numberOfLoops = -1 // Loop indefinitely
-            player.isMeteringEnabled = true
-            if player.play() {
-                audioPlayers[busId] = player
-                activeBusIds.insert(busId)
-                print("Playing \(node.name) on Bus \(busId)")
-            } else {
-                print("Failed to play player for \(node.name)")
-            }
-            
-            // Ensure timer is running
-            if meteringTimer == nil {
-                startMetering()
+                // Apply Initial Bus Settings
+                updatePlayerVolume(busId) // Applies Vol/Pan/Mute/Solo
+                
+                if !engine.isRunning { try engine.start() }
+                player.play()
+                
+                players[busId] = player
+                
+                DispatchQueue.main.async {
+                    self.activeBusIds.insert(busId)
+                }
+                
+                print("Playing \(node.name) on Bus \(busId) via \(bus.outputDeviceName)")
             }
             
         } catch {
@@ -341,50 +414,65 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     func stopSound(onBus busId: Int) {
-        if let player = audioPlayers[busId] {
+        if let player = players[busId] {
             player.stop()
-            audioPlayers.removeValue(forKey: busId)
-            activeBusIds.remove(busId)
-            busLevels[busId] = 0 // Reset meter
-        }
-    }
-    
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        if let (busId, _) = audioPlayers.first(where: { $0.value === player }) {
-            audioPlayers.removeValue(forKey: busId)
-            activeBusIds.remove(busId)
-            busLevels[busId] = 0
-        }
-    }
-    
-    // MARK: - Metering
-    
-    private func startMetering() {
-        meteringTimer?.invalidate()
-        meteringTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            self?.updateMeters()
-        }
-    }
-    
-    private func updateMeters() {
-        guard !activeBusIds.isEmpty else { return }
-        
-        for (busId, player) in audioPlayers {
-            if player.isPlaying {
-                player.updateMeters()
-                let power = player.averagePower(forChannel: 0)
-                let level = max(0.0, (power + 60) / 60)
-                busLevels[busId] = level
-            } else {
-                busLevels[busId] = 0.0
+            player.removeTap(onBus: 0)
+            if let engine = player.engine {
+                engine.detach(player)
+            }
+            players.removeValue(forKey: busId)
+            activeFiles.removeValue(forKey: busId)
+            
+            DispatchQueue.main.async {
+                self.busLevels[busId] = 0
+                self.activeBusIds.remove(busId)
             }
         }
     }
     
-    func refreshAudioDevices() {
-        // In a real app, this would query CoreAudio. 
-        // For now, we just simulate a refresh or keep static list.
-        objectWillChange.send()
-        print("Refreshing Audio Devices...")
+    // MARK: - Metering Logic
+    private func processMeter(buffer: AVAudioPCMBuffer, busId: Int) {
+        guard let channelData = buffer.floatChannelData else { return }
+        let channelDataValue = channelData.pointee
+        let frames = buffer.frameLength
+        
+        var rms: Float = 0
+        // Sample every 4th frame to save CPU
+        let stride = 4
+        for i in strideFrom(0, to: Int(frames), by: stride) {
+            let sample = channelDataValue[i]
+            rms += sample * sample
+        }
+        rms = sqrt(rms / Float(frames / UInt32(stride)))
+        
+        // Scale and damp
+        let currentLevel = rms * 5.0 // Boost for visual
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            // Apply volume influence to visual meter?
+            // If muted, we see 0?
+            // Ideally, yes.
+            // If we access self.audioBuses here it might be racey? 
+            // We are on Main Queue, so it is safe to read @Published.
+            
+            if let bus = self.audioBuses.first(where: { $0.id == busId }) {
+                 if bus.isMuted {
+                     self.busLevels[busId] = 0
+                 } else {
+                     self.busLevels[busId] = min(currentLevel * bus.volume, 1.0)
+                 }
+            }
+        }
+    }
+    
+    private func startMetering() {
+        // Metering is handled by Tap + Main Queue dispatch.
+        // No polling timer needed.
+    }
+    
+    // Global helper for random number loop (unused but kept for swift compatibility if needed)
+    private func strideFrom(_ start: Int, to: Int, by: Int) -> StrideTo<Int> {
+        return stride(from: start, to: to, by: by)
     }
 }
