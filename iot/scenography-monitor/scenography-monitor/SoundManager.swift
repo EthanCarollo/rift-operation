@@ -417,9 +417,13 @@ class SoundManager: NSObject, ObservableObject {
         if let player = players[busId] {
             player.stop()
             player.removeTap(onBus: 0)
+            
             if let engine = player.engine {
+                // Explicitly disconnect to ensure graph state is clean before detach
+                engine.disconnectNodeOutput(player)
                 engine.detach(player)
             }
+            
             players.removeValue(forKey: busId)
             activeFiles.removeValue(forKey: busId)
             
