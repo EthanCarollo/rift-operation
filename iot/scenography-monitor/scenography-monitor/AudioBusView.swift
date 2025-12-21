@@ -17,7 +17,7 @@ struct AudioBusView: View {
             // Bus Header
             Text(busName)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.primary)
+                .foregroundColor(.black)
                 .frame(height: 30)
                 .frame(maxWidth: .infinity)
                 .background(Color(nsColor: .windowBackgroundColor))
@@ -43,24 +43,30 @@ struct AudioBusView: View {
             // Controls Area
             VStack(spacing: 8) {
                 
-                // Pan Knob (Visual)
+                // Pan Knob
                 ZStack {
                     Circle()
                         .stroke(Color.gray, lineWidth: 1)
                         .frame(width: 32, height: 32)
+                        .background(Circle().fill(Color(nsColor: .windowBackgroundColor)))
                     
+                    // Indicator
                     Rectangle()
-                        .fill(Color.gray)
+                        .fill(Color.black)
                         .frame(width: 2, height: 10)
                         .offset(y: -8)
                         .rotationEffect(.degrees((pan * 270) - 135))
-                        .gesture(DragGesture().onChanged { value in
-                            // Simple horizontal drag to rotate
-                            let sensitivity: Double = 0.01
-                            pan = max(0, min(1, pan + (value.translation.width * sensitivity)))
-                        })
                 }
                 .padding(.top, 8)
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { value in
+                            // Allow dragging up/right to increase, down/left to decrease
+                            let sensitivity: Double = 0.005
+                            let delta = value.translation.width - value.translation.height // Combine axes
+                            pan = max(0, min(1, pan + (delta * sensitivity)))
+                        }
+                )
                 
                 // Fader & Meter Section
                 HStack(alignment: .bottom, spacing: 4) {
@@ -71,46 +77,60 @@ struct AudioBusView: View {
                             .fill(Color.black.opacity(0.1))
                             .frame(width: 6, height: 160)
                         
-                        // Gradient Fill (Static 0 for now as requested)
                         LinearGradient(
                             gradient: Gradient(colors: [.green, .yellow, .red]),
                             startPoint: .bottom,
                             endPoint: .top
                         )
-                        .frame(width: 6, height: 0) // Height 0 for silence
-                        .mask(Rectangle())
+                        .frame(width: 6, height: 0)
                     }
                     
                     // Fader Track
-                    ZStack(alignment: .bottom) {
-                        Rectangle()
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                            .frame(width: 24, height: 160)
-                            .overlay(
-                                Rectangle() // Center line
-                                    .fill(Color.black.opacity(0.1))
-                                    .frame(width: 1)
-                            )
-                        
-                        // Fader Handle
-                        Rectangle()
-                            .fill(Color(nsColor: .windowBackgroundColor))
-                            .frame(width: 24, height: 32)
-                            .overlay(
-                                Rectangle()
-                                    .fill(Color.black.opacity(0.5))
-                                    .frame(height: 1)
-                            )
-                            .shadow(radius: 1, y: 1)
-                            .offset(y: -((volume) * 128)) // 160 height - 32 handle = 128 travel
-                            .gesture(DragGesture().onChanged { value in
-                                // Invert drag because SwiftUI coordinates (0 at top) vs Offset (0 at bottom in this alignment context?)
-                                // Actually simplified: just map drag to volume
-                                let range: Double = 128
-                                let sensitivity: Double = 0.005
-                                volume = max(0, min(1, volume - (value.translation.height * sensitivity)))
-                            })
+                    GeometryReader { geo in
+                        ZStack(alignment: .bottom) {
+                            // Track Background
+                            Rectangle()
+                                .fill(Color(nsColor: .controlBackgroundColor))
+                                .frame(width: 24, height: geo.size.height)
+                                .overlay(
+                                    Rectangle()
+                                        .fill(Color.black.opacity(0.1))
+                                        .frame(width: 1)
+                                )
+                            
+                            // Fader Handle
+                            Rectangle()
+                                .fill(Color(nsColor: .windowBackgroundColor))
+                                .frame(width: 24, height: 32)
+                                .overlay(
+                                    Rectangle()
+                                        .fill(Color.black.opacity(0.5))
+                                        .frame(height: 1)
+                                )
+                                .shadow(radius: 1, y: 1)
+                                .offset(y: -((volume) * (geo.size.height - 32))) // Position from bottom
+                                .gesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { value in
+                                            // Calculate volume based on touch position relative to track height
+                                            // The "startLocation" is helpful, but calculating new volume from total height is easier
+                                            // value.location.y is from TOP of the GeometryReader
+                                            
+                                            let trackHeight = geo.size.height
+                                            let handleHeight: CGFloat = 32
+                                            let usableHeight = trackHeight - handleHeight
+                                            
+                                            // Invert Y because 0 is at top
+                                            let touchYFromBottom = trackHeight - value.location.y - (handleHeight / 2)
+                                            
+                                            // Normalize
+                                            let newVol = touchYFromBottom / usableHeight
+                                            volume = max(0, min(1, newVol))
+                                        }
+                                )
+                        }
                     }
+                    .frame(width: 24, height: 160)
                     
                     // Meter R
                     ZStack(alignment: .bottom) {
@@ -180,8 +200,4 @@ struct AudioBusView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .border(Color(nsColor: .separatorColor), width: 0.5)
     }
-}
-
-#Preview {
-    AudioBusView(busName: "TEST", busId: 1)
 }

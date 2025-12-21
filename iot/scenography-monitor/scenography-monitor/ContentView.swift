@@ -16,67 +16,109 @@ struct ContentView: View {
         (id: 4, name: "SAS / OPERATOR")
     ]
     
+    @State private var isInspectorOpen: Bool = false
+    
     var body: some View {
         ZStack(alignment: .topLeading) {
             
-            // Main Content
-            VStack(spacing: 0) {
-                // Toolbar / Header
-                HStack {
-                    Spacer().frame(width: 60) // Space for DEV badge
-                    Text("SOUND MONITOR // OPERATOR")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .opacity(0.5)
-                    Spacer()
-                    
-                    // Stats
-                    HStack(spacing: 8) {
-                        Text("CPU: 12%")
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.green)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.black)
-                            .cornerRadius(2)
+            HStack(spacing: 0) {
+            
+                // Main Content
+                VStack(spacing: 0) {
+                    // Toolbar / Header
+                    HStack {
+                        Spacer().frame(width: 60) // Space for DEV badge
+                        Text("SOUND MONITOR // OPERATOR")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .opacity(0.5)
+                        Spacer()
                         
-                        Text("MEM: 480MB")
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.orange)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.black)
-                            .cornerRadius(2)
-                    }
-                }
-                .padding(.horizontal)
-                .frame(height: 40)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .border(Color(nsColor: .separatorColor), width: 1, edges: [.bottom])
-                
-                // Mixer Area
-                ScrollView(.horizontal, showsIndicators: true) {
-                    HStack(spacing: 0) {
-                        ForEach(buses, id: \.id) { bus in
-                            AudioBusView(busName: bus.name, busId: bus.id)
+                        // Stats
+                        HStack(spacing: 8) {
+                            Text("CPU: 12%")
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundColor(.green)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.black)
+                                .cornerRadius(2)
+                            
+                            Text("MEM: 480MB")
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundColor(.orange)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.black)
+                                .cornerRadius(2)
                         }
+                        
+                        Divider().frame(height: 20)
+                        
+                        // Inspector Toggle - MORE PROMINENT
+                        Button(action: {
+                            withAnimation {
+                                isInspectorOpen.toggle()
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "network")
+                                Text("NETWORK CONFIG")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(isInspectorOpen ? Color.blue.opacity(0.1) : Color.clear)
+                            .foregroundColor(isInspectorOpen ? .blue : .primary)
+                            .cornerRadius(4)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.leading, 8)
+                        
                     }
-                    .padding()
+                    .padding(.horizontal)
+                    .frame(height: 48) // Slightly taller for better touch target
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .border(Color(nsColor: .separatorColor), width: 1, edges: [.bottom])
+                    
+                    // Mixer Area
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        HStack(spacing: 0) {
+                            ForEach(buses, id: \.id) { bus in
+                                AudioBusView(busName: bus.name, busId: bus.id)
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .background(Color(nsColor: .windowBackgroundColor))
+                    
+                    // Status Footer
+                    HStack {
+                        Text("READY")
+                        Text("|")
+                        Text("44.1kHz")
+                        Spacer()
+                    }
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .frame(height: 24)
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .border(Color(nsColor: .separatorColor), width: 1, edges: [.top])
                 }
-                .background(Color(nsColor: .windowBackgroundColor))
                 
-                // Status Footer
-                HStack {
-                    Text("READY")
-                    Text("|")
-                    Text("44.1kHz")
+                // Sidebar Area
+                if isInspectorOpen {
+                    WebSocketInspectorView(isVisible: $isInspectorOpen)
+                        .frame(width: 250)
+                        .transition(.move(edge: .trailing))
+                        .zIndex(1)
                 }
-                .font(.system(size: 9, design: .monospaced))
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                .frame(height: 24)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .border(Color(nsColor: .separatorColor), width: 1, edges: [.top])
             }
             
             // DEV Badge (Overlay)
@@ -89,7 +131,8 @@ struct ContentView: View {
                 .shadow(radius: 2)
                 .padding(8)
         }
-        .frame(minWidth: 600, minHeight: 400)
+        .frame(minWidth: 900, minHeight: 500)
+        .preferredColorScheme(.light) // Enforce Light Theme
     }
 }
 
@@ -138,8 +181,4 @@ struct EdgeBorder: Shape {
         }
         return path
     }
-}
-
-#Preview {
-    ContentView()
 }
