@@ -352,6 +352,14 @@ class SoundManager: NSObject, ObservableObject {
         }
     }
     
+    func setBusColor(_ hex: String, onBuses busIds: Set<Int>) {
+        for busId in busIds {
+            if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+                audioBuses[index].colorHex = hex
+            }
+        }
+    }
+    
     func toggleMute(onBus busId: Int) {
         if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
             audioBuses[index].isMuted.toggle()

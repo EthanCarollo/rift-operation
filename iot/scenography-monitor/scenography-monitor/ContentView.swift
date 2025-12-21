@@ -12,6 +12,10 @@ struct ContentView: View {
     @State private var isInspectorOpen: Bool = false
     @State private var showOutputList: Bool = true // Default to true for user request
     
+    // Selection State
+    @State private var selectedBusIds: Set<Int> = []
+    @State private var lastSelectedBusId: Int?
+    
     var body: some View {
         VStack(spacing: 0) {
             // Top Toolbar (High tech look)
@@ -88,8 +92,14 @@ struct ContentView: View {
                     ScrollView(.horizontal, showsIndicators: true) {
                         HStack(spacing: 1) {
                             ForEach(soundManager.audioBuses) { bus in
-                                AudioBusView(busName: bus.name, busId: bus.id)
-                                    .frame(width: 90)
+                                AudioBusView(
+                                    busName: bus.name, 
+                                    busId: bus.id,
+                                    isSelected: selectedBusIds.contains(bus.id),
+                                    selectedBusIds: selectedBusIds,
+                                    onSelection: { handleBusSelection(bus.id) }
+                                )
+                                .frame(width: 90)
                             }
                         }
                         .padding(.leading, 1) // Tiny offset
@@ -164,6 +174,37 @@ struct ContentView: View {
                 }
             }
         )
+    }
+
+    private func handleBusSelection(_ busId: Int) {
+        let flags = NSEvent.modifierFlags
+        
+        if flags.contains(.command) {
+            // Toggle
+            if selectedBusIds.contains(busId) {
+                selectedBusIds.remove(busId)
+            } else {
+                selectedBusIds.insert(busId)
+                lastSelectedBusId = busId
+            }
+        } else if flags.contains(.shift) {
+            // Range
+            if let last = lastSelectedBusId {
+                let start = min(last, busId)
+                let end = max(last, busId)
+                let range = start...end
+                for id in range {
+                    selectedBusIds.insert(id)
+                }
+            } else {
+                selectedBusIds = [busId]
+                lastSelectedBusId = busId
+            }
+        } else {
+            // Single select
+            selectedBusIds = [busId]
+            lastSelectedBusId = busId
+        }
     }
 }
 

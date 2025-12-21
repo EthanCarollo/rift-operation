@@ -11,6 +11,9 @@ import AVFoundation
 struct AudioBusView: View {
     let busName: String
     let busId: Int
+    var isSelected: Bool = false
+    var selectedBusIds: Set<Int> = []
+    var onSelection: (() -> Void)? = nil
     
     @ObservedObject var soundManager = SoundManager.shared
     
@@ -258,14 +261,19 @@ struct AudioBusView: View {
         .frame(width: 90)
         .frame(maxHeight: .infinity)
         .background(Color(hex: bus?.colorHex ?? "#F0F0F0"))
-        .border(Color(nsColor: .separatorColor), width: 0.5)
+        .border(isSelected ? Color.blue : Color(nsColor: .separatorColor), width: isSelected ? 3 : 0.5)
+        .onTapGesture {
+            onSelection?()
+        }
         .contextMenu {
             Text("Bus Color")
-            Button("Reset") { soundManager.setBusColor("#F0F0F0", onBus: busId) }
+            Button("Reset") { 
+                applyColor("#F0F0F0")
+            }
             Divider()
             ForEach(PastelColor.allCases, id: \.self) { color in
                 Button(action: {
-                    soundManager.setBusColor(color.hex, onBus: busId)
+                    applyColor(color.hex)
                 }) {
                     HStack {
                         Image(systemName: "circle.fill")
@@ -274,6 +282,14 @@ struct AudioBusView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private func applyColor(_ hex: String) {
+        if isSelected && !selectedBusIds.isEmpty {
+            soundManager.setBusColor(hex, onBuses: selectedBusIds)
+        } else {
+            soundManager.setBusColor(hex, onBus: busId)
         }
     }
 }
