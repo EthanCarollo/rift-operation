@@ -380,4 +380,11 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             }
         }
     }
+    
+    func refreshAudioDevices() {
+        // In a real app, this would query CoreAudio. 
+        // For now, we just simulate a refresh or keep static list.
+        objectWillChange.send()
+        print("Refreshing Audio Devices...")
+    }
 }

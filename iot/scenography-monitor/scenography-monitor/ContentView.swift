@@ -121,12 +121,6 @@ struct ContentView: View {
                 }
                 .frame(minWidth: 300, maxWidth: .infinity)
                 
-                // Right: Output List (Fixed width or resizable)
-                if showOutputList {
-                    OutputListView()
-                        .frame(minWidth: 150, maxWidth: 250)
-                }
-                
                 // Inspector (Network) - if active
                 if isInspectorOpen {
                     WebSocketInspectorView(isVisible: $isInspectorOpen)
@@ -179,55 +173,73 @@ struct ContentView: View {
         }
         .frame(minWidth: 1000, minHeight: 600)
         .preferredColorScheme(.light)
+        .overlay(
+            Group {
+                if showOutputList {
+                    OutputListView(isVisible: $showOutputList)
+                        .frame(width: 250, height: 300)
+                        .background(Color(nsColor: .windowBackgroundColor))
+                        .cornerRadius(8)
+                        .shadow(radius: 5)
+                        .padding(.trailing, 20)
+                        .padding(.top, 50)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
+            }
+        )
     }
 }
 
 
 struct OutputListView: View {
-    // Mock devices
-    let outputs = ["MacBook Pro Speakers", "BlackHole 16ch", "External Headphones", "HDMI (LG Monitor)"]
-    @State private var selectedOutput = "MacBook Pro Speakers"
+    @Binding var isVisible: Bool
+    @ObservedObject var soundManager = SoundManager.shared
     
     var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("OUTPUT ASSIGNMENT")
+                Text("SYSTEM AUDIO DEVICES")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.secondary)
                 Spacer()
+                Button(action: { soundManager.refreshAudioDevices() }) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 4)
+                
+                Button(action: { withAnimation { isVisible = false } }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
             }
-            .padding(8)
+            .padding(10)
             .background(Color(nsColor: .controlBackgroundColor))
             
             Divider()
             
             List {
-                Section(header: Text("AVAILABLE DEVICES")) {
-                    ForEach(outputs, id: \.self) { output in
-                        HStack {
-                            Image(systemName: output == selectedOutput ? "speaker.wave.3.fill" : "speaker")
-                                .foregroundColor(output == selectedOutput ? .blue : .gray)
-                            Text(output)
-                                .font(.system(size: 11))
-                            Spacer()
-                            if output == selectedOutput {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .padding(.vertical, 2)
-                        .contentShape(Rectangle()) // Make full row clickable
-                        .onTapGesture {
-                            selectedOutput = output
-                        }
+                ForEach(soundManager.availableOutputs, id: \.self) { output in
+                    HStack {
+                        Image(systemName: "speaker.wave.2")
+                            .foregroundColor(.gray)
+                        Text(output)
+                            .font(.system(size: 11))
+                        Spacer()
                     }
+                    .padding(.vertical, 2)
                 }
             }
-            .listStyle(.sidebar)
+            .listStyle(.plain)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+        )
     }
 }
 

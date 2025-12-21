@@ -27,9 +27,6 @@ struct AudioBusView: View {
     
     @State private var selectedDevice: String = "" 
     
-    // Mock devices
-    let devices = ["Built-in Output", "Scarlett 2i2", "Virtual Cable 1", "HDMI Audio"]
-    
     var body: some View {
         // Safe unwrap of bus settings
         let currentVolume = Double(bus?.volume ?? 0.75)
@@ -193,27 +190,27 @@ struct AudioBusView: View {
                 .help("Volume Fader")
                 
                 // Mute/Solo
-                HStack(spacing: 2) {
+                HStack(spacing: 4) { // Increased spacing
                     Button(action: { soundManager.toggleMute(onBus: busId) }) {
                         Text("M")
-                            .font(.system(size: 10, weight: .bold)) // Slightly Larger Font
-                            .frame(width: 20, height: 20)
+                            .font(.system(size: 12, weight: .bold)) // Larger Font
+                            .frame(width: 28, height: 28) // Larger Button
                     }
                     .buttonStyle(.plain)
-                    .background(isMuted ? Color.orange : Color.gray.opacity(0.2)) // Changed to Orange for visibility
+                    .background(isMuted ? Color.orange : Color.gray.opacity(0.2))
                     .foregroundColor(isMuted ? .white : .primary)
-                    .cornerRadius(2)
+                    .cornerRadius(4) // More rounded
                     .help("Mute Channel")
                     
                     Button(action: { soundManager.toggleSolo(onBus: busId) }) {
                         Text("S")
-                            .font(.system(size: 10, weight: .bold)) // Slightly Larger Font
-                            .frame(width: 20, height: 20)
+                            .font(.system(size: 12, weight: .bold)) // Larger Font
+                            .frame(width: 28, height: 28) // Larger Button
                     }
                     .buttonStyle(.plain)
-                    .background(isSolo ? Color.green : Color.gray.opacity(0.2)) // Changed to Green for visibility
+                    .background(isSolo ? Color.green : Color.gray.opacity(0.2))
                     .foregroundColor(isSolo ? .white : .primary)
-                    .cornerRadius(2)
+                    .cornerRadius(4)
                     .help("Solo Channel (Mutes others)")
                 }
             }
@@ -231,7 +228,7 @@ struct AudioBusView: View {
                 
                 Picker("", selection: $selectedDevice) {
                     Text("-- Out --").tag("")
-                    ForEach(devices, id: \.self) { device in
+                    ForEach(soundManager.availableOutputs, id: \.self) { device in
                         Text(device).tag(device)
                     }
                 }
