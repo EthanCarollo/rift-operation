@@ -39,19 +39,40 @@ struct AudioBusView: View {
                 .background(Color(nsColor: .windowBackgroundColor))
                 .border(Color(nsColor: .separatorColor), width: 0.5)
             
-            // FX/Inserts Placeholder
+            // FX/Inserts / Info Area
             VStack(spacing: 1) {
-                ForEach(0..<4) { _ in
+                // Display Current Assigned Sound
+                if let soundName = soundManager.getAssignedSound(forBus: busId) {
+                    Text(soundName)
+                        .font(.system(size: 9, design: .monospaced))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(soundManager.activeBusIds.contains(busId) ? .green : .primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(2)
+                        .background(Color.black.opacity(0.05))
+                        .cornerRadius(2)
+                } else {
+                    Text("--")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity)
+                }
+                
+                Spacer().frame(height: 4)
+                
+                // Visual Placeholder lines (FX slots)
+                ForEach(0..<2) { _ in
                     Rectangle()
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .frame(height: 16)
+                        .frame(height: 12)
                         .overlay(
                             Rectangle()
                                 .stroke(Color(nsColor: .separatorColor).opacity(0.3), lineWidth: 0.5)
                         )
                 }
             }
-            .padding(1)
+            .padding(2)
             .background(Color(nsColor: .textBackgroundColor))
             
             Divider()
@@ -92,6 +113,8 @@ struct AudioBusView: View {
                             let sensitivity: Double = 0.002
                             let delta = value.translation.width - value.translation.height // Combine axes
                             pan = max(0, min(1, initialValue + (delta * sensitivity)))
+                            // Propagate
+                            soundManager.setPan(Float(pan), onBus: busId)
                         }
                         .onEnded { _ in
                             isDraggingKnob = false
@@ -106,24 +129,27 @@ struct AudioBusView: View {
                 // Fader & Meter Section
                 HStack(alignment: .bottom, spacing: 4) {
                     
-                    // Meter L
+                    // Live Meter (Left)
                     GeometryReader { geo in
                         ZStack(alignment: .bottom) {
                             Rectangle()
                                 .fill(Color.black.opacity(0.1))
                                 .frame(width: 6, height: geo.size.height)
                             
+                            // Dynamic Level Bar
+                            let level = CGFloat(soundManager.busLevels[busId] ?? 0.0)
                             LinearGradient(
                                 gradient: Gradient(colors: [.green, .yellow, .red]),
                                 startPoint: .bottom,
                                 endPoint: .top
                             )
-                            .frame(width: 6, height: 0) // Dynamic metering would use geo.size.height * level
+                            .frame(width: 6, height: min(level, 1.0) * geo.size.height)
+                            .animation(.linear(duration: 0.05), value: level)
                         }
                     }
                     .frame(width: 6)
                     
-                    // Fader Track
+                    // Fader Track (Right)
                     GeometryReader { geo in
                         ZStack(alignment: .bottom) {
                             // Track Background
@@ -132,11 +158,10 @@ struct AudioBusView: View {
                                 .frame(width: 24, height: geo.size.height)
                                 .overlay(
                                     Rectangle()
-                                        .fill(Color.black.opacity(0.1))
-                                        .frame(width: 1)
+                                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
                                 )
                             
-                            // Fader Handle
+                            // Fader Cap
                             Rectangle()
                                 .fill(Color(nsColor: .windowBackgroundColor))
                                 .frame(width: 24, height: 32)
@@ -165,6 +190,9 @@ struct AudioBusView: View {
                                             let delta = -value.translation.height
                                             
                                             volume = max(0, min(1, initialValue + (delta * sensitivity)))
+                                            
+                                            // Propagate
+                                            soundManager.setVolume(Float(volume), onBus: busId)
                                         }
                                         .onEnded { _ in
                                             isDraggingFader = false
@@ -176,26 +204,9 @@ struct AudioBusView: View {
                                 )
                         }
                     }
-                    .frame(width: 24) // Allow flexible height
-                    
-                    // Meter R
-                    GeometryReader { geo in
-                        ZStack(alignment: .bottom) {
-                            Rectangle()
-                                .fill(Color.black.opacity(0.1))
-                                .frame(width: 6, height: geo.size.height)
-                            
-                            LinearGradient(
-                                gradient: Gradient(colors: [.green, .yellow, .red]),
-                                startPoint: .bottom,
-                                endPoint: .top
-                            )
-                            .frame(width: 6, height: 0)
-                        }
-                    }
-                    .frame(width: 6)
+                    .frame(width: 24)
                 }
-                .frame(maxHeight: .infinity) // Fill available space
+                .frame(maxHeight: .infinity)
                 
                 // Mute/Solo
                 HStack(spacing: 2) {
@@ -221,7 +232,7 @@ struct AudioBusView: View {
                 }
             }
             .padding(.bottom, 8)
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // Make Controls Area fill space
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
             
             Divider()
@@ -247,7 +258,7 @@ struct AudioBusView: View {
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(width: 90)
-        .frame(maxHeight: .infinity) // AudioBusView fills vertical space
+        .frame(maxHeight: .infinity) // AudioBusView
         .background(Color(nsColor: .windowBackgroundColor))
         .border(Color(nsColor: .separatorColor), width: 0.5)
     }

@@ -10,8 +10,7 @@ import SwiftUI
 struct SoundLibraryView: View {
     @ObservedObject var soundManager = SoundManager.shared
     
-    // Default routing: 0 = Not Assigned
-    @State private var soundRoutes: [String: Int] = [:]
+    // Default routing is 0 (None), managed by soundManager.soundRoutes
     
     let buses = [
         (id: 0, name: "None"),
@@ -29,6 +28,16 @@ struct SoundLibraryView: View {
                     .font(.system(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(.secondary)
                 Spacer()
+                
+                // Folder Selection
+                Button(action: { soundManager.selectSoundDirectory() }) {
+                    Image(systemName: "folder")
+                        .font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 4)
+                
+                // Refresh
                 Button(action: { soundManager.refreshSounds() }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 10))
@@ -42,19 +51,20 @@ struct SoundLibraryView: View {
             // Usage Hint
             if soundManager.rootNodes.isEmpty {
                 VStack(spacing: 8) {
-                    Text("No sounds found")
+                    Text("No sounds found in:")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
-                    Text("Put audio files in:")
-                        .font(.system(size: 9))
+                    
+                    // Debug Path
+                    Text(soundManager.soundDirectoryURL.path)
+                        .font(.system(size: 8, design: .monospaced))
                         .foregroundColor(.secondary)
-                    Text("~/Documents/rift-operation-sounds")
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
-                        .onTapGesture {
-                            NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: soundManager.soundDirectoryURL.path)
-                        }
+                        
+                    Button("Select Folder") {
+                        soundManager.selectSoundDirectory()
+                    }
                 }
                 .frame(maxHeight: .infinity)
             } else {
@@ -68,7 +78,7 @@ struct SoundLibraryView: View {
                                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                             }
                         } else {
-                            SoundFileRow(node: node, soundManager: soundManager, buses: buses, soundRoutes: $soundRoutes)
+                            SoundFileRow(node: node, soundManager: soundManager, buses: buses)
                         }
                     }
                 }
@@ -84,14 +94,20 @@ struct SoundFileRow: View {
     let node: SoundManager.FileNode
     @ObservedObject var soundManager: SoundManager
     let buses: [(id: Int, name: String)]
-    @Binding var soundRoutes: [String: Int]
     
     var body: some View {
         HStack(spacing: 8) {
             // Bus Route
-            let busId = soundRoutes[node.name] ?? 0 // Default to 0 (None)
+            let busId = soundManager.soundRoutes[node.name] ?? 0
             let isAssigned = busId != 0
-            let isPlaying = isAssigned && soundManager.currentSoundOnBus[busId] == node.name
+            // isPlaying logic: check if this BUS is playing AND if the sound on it is THIS one.
+            // But wait, AudioBusView only knows 'busId'.
+            // SoundManager knows 'activeBusIds'.
+            // SoundManager logic confirms that if a bus is active, the sound routed to it IS playing?
+            // Actually, playSound() sets activeBusId.
+            // And playSound() updates route.
+            // So if activeBusIds contains busId, AND route matches, it's playing.
+            let isPlaying = isAssigned && soundManager.activeBusIds.contains(busId)
             
             // Play Button
             Button(action: {
@@ -125,19 +141,19 @@ struct SoundFileRow: View {
                 ForEach(buses, id: \.id) { bus in
                     Button(action: {
                         // Stop if currently playing on old bus
-                        if let oldBus = soundRoutes[node.name], oldBus != 0, soundManager.currentSoundOnBus[oldBus] == node.name {
+                        if let oldBus = soundManager.soundRoutes[node.name], oldBus != 0, soundManager.activeBusIds.contains(oldBus) {
                             soundManager.stopSound(onBus: oldBus)
                         }
-                        soundRoutes[node.name] = bus.id
+                        soundManager.soundRoutes[node.name] = bus.id
                     }) {
                         Text(bus.name)
-                        if (soundRoutes[node.name] ?? 0) == bus.id {
+                        if (soundManager.soundRoutes[node.name] ?? 0) == bus.id {
                             Image(systemName: "checkmark")
                         }
                     }
                 }
             } label: {
-                let currentBusId = soundRoutes[node.name] ?? 0
+                let currentBusId = soundManager.soundRoutes[node.name] ?? 0
                 let busName = buses.first(where: { $0.id == currentBusId })?.name ?? "None"
                 
                 HStack {
