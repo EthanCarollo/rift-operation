@@ -19,16 +19,21 @@ struct ContentView: View {
     @State private var isInspectorOpen: Bool = false
     
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .bottomTrailing) {
             
             HStack(spacing: 0) {
             
                 // Main Content
                 VStack(spacing: 0) {
                     // Toolbar / Header
-                    HStack {
-                        Spacer().frame(width: 60) // Space for DEV badge
-                        Text("SOUND MONITOR // OPERATOR")
+                    HStack(alignment: .center) {
+                        Image("RiftLogo")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 32)
+                            .padding(.leading, 8)
+                        
+                        Text("RIFT OPERATION SOUND MONITOR")
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .opacity(0.5)
                         Spacer()
@@ -85,14 +90,18 @@ struct ContentView: View {
                     .border(Color(nsColor: .separatorColor), width: 1, edges: [.bottom])
                     
                     // Mixer Area
-                    ScrollView(.horizontal, showsIndicators: true) {
-                        HStack(spacing: 0) {
-                            ForEach(buses, id: \.id) { bus in
-                                AudioBusView(busName: bus.name, busId: bus.id)
+                    // Mixer Area
+                    GeometryReader { geo in
+                        ScrollView(.horizontal, showsIndicators: true) {
+                            HStack(spacing: 0) {
+                                ForEach(buses, id: \.id) { bus in
+                                    AudioBusView(busName: bus.name, busId: bus.id)
+                                        .frame(height: geo.size.height) // Match scroll view height
+                                }
                             }
+                            .padding(.horizontal)
+                            .frame(minHeight: geo.size.height)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .background(Color(nsColor: .windowBackgroundColor))
                     

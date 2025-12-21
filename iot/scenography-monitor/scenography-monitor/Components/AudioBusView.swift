@@ -11,16 +11,21 @@ import AppKit // Required for NSCursor
 struct AudioBusView: View {
     let busName: String
     let busId: Int
+    let busId: Int
     @State private var volume: Double = 0.75
     @State private var pan: Double = 0.5
     @State private var isMuted: Bool = false
     @State private var isSolo: Bool = false
     @State private var selectedDevice: String = ""
+    @State private var selectedSound: String = "" // For file selection
+    
+    @ObservedObject var soundManager = SoundManager.shared
     
     // Drag States
     @State private var isDraggingKnob: Bool = false
     @State private var isDraggingFader: Bool = false
     @State private var initialValue: Double = 0.0
+    @State private var initialMouseLocation: CGPoint? = nil // To store cursor WARP location
     
     // Mock devices
     let devices = ["Built-in Output", "Scarlett 2i2", "Virtual Cable 1", "HDMI Audio"]
@@ -53,6 +58,62 @@ struct AudioBusView: View {
             
             Divider()
             
+            // Sound Player Controls
+            VStack(spacing: 4) {
+                // Sound Selector
+                Menu {
+                    Text("Select Sound").foregroundColor(.secondary)
+                    Divider()
+                    ForEach(soundManager.availableSounds, id: \.self) { sound in
+                        Button(action: { selectedSound = sound }) {
+                            Text(sound)
+                            if selectedSound == sound { Image(systemName: "checkmark") }
+                        }
+                    }
+                } label: {
+                    Text(selectedSound.isEmpty ? "LOAD" : selectedSound)
+                        .font(.system(size: 8, design: .monospaced))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .frame(maxWidth: .infinity)
+                }
+                .menuStyle(.borderlessButton)
+                .frame(height: 16)
+                .padding(.horizontal, 2)
+                
+                // Play Button
+                Button(action: {
+                    if soundManager.isPlaying(onBus: busId) {
+                        soundManager.stopSound(onBus: busId)
+                    } else {
+                        if !selectedSound.isEmpty {
+                            soundManager.playSound(named: selectedSound, onBus: busId, volume: Float(volume), pan: Float(pan))
+                        }
+                    }
+                    // Trigger UI update logic if needed, usually observed object handles it but isPlaying might change internally
+                    // Forcing a redraw might be needed if isPlaying is not @Published per bus in a way we observe easily here directly without polling or better structure.
+                    // For now, simple toggle logic.
+                    // Actually, since we don't observe the audioPlayer dictionary deeply, the button state might not auto-update.
+                    // We can use a trick or just rely on the user action for now.
+                    // A better way is to check the state.
+                    objectWillChange.send() // Force update
+                    
+                }) {
+                    Image(systemName: soundManager.isPlaying(onBus: busId) ? "stop.fill" : "play.fill")
+                        .font(.system(size: 10))
+                        .frame(maxWidth: .infinity, maxHeight: 18)
+                        .background(soundManager.isPlaying(onBus: busId) ? Color.green : Color(nsColor: .controlColor))
+                        .foregroundColor(soundManager.isPlaying(onBus: busId) ? .white : .primary)
+                        .cornerRadius(2)
+                }
+                .buttonStyle(.plain)
+                .disabled(selectedSound.isEmpty)
+            }
+            .padding(4)
+            .background(Color(nsColor: .windowBackgroundColor))
+            
+            Divider()
+            
             // Controls Area
             VStack(spacing: 8) {
                 
@@ -77,6 +138,10 @@ struct AudioBusView: View {
                             if !isDraggingKnob {
                                 isDraggingKnob = true
                                 initialValue = pan
+                                // Capture current mouse position for restore
+                                if let event = CGEvent(source: nil) {
+                                    initialMouseLocation = event.location
+                                }
                                 NSCursor.hide()
                             }
                             // Allow dragging up/right to increase, down/left to decrease
@@ -86,6 +151,10 @@ struct AudioBusView: View {
                         }
                         .onEnded { _ in
                             isDraggingKnob = false
+                            // Restore cursor position
+                            if let loc = initialMouseLocation {
+                                CGWarpMouseCursorPosition(loc)
+                            }
                             NSCursor.unhide()
                         }
                 )
@@ -94,18 +163,21 @@ struct AudioBusView: View {
                 HStack(alignment: .bottom, spacing: 4) {
                     
                     // Meter L
-                    ZStack(alignment: .bottom) {
-                        Rectangle()
-                            .fill(Color.black.opacity(0.1))
-                            .frame(width: 6, height: 160)
-                        
-                        LinearGradient(
-                            gradient: Gradient(colors: [.green, .yellow, .red]),
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                        .frame(width: 6, height: 0)
+                    GeometryReader { geo in
+                        ZStack(alignment: .bottom) {
+                            Rectangle()
+                                .fill(Color.black.opacity(0.1))
+                                .frame(width: 6, height: geo.size.height)
+                            
+                            LinearGradient(
+                                gradient: Gradient(colors: [.green, .yellow, .red]),
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                            .frame(width: 6, height: 0) // Dynamic metering would use geo.size.height * level
+                        }
                     }
+                    .frame(width: 6)
                     
                     // Fader Track
                     GeometryReader { geo in
@@ -137,6 +209,9 @@ struct AudioBusView: View {
                                             if !isDraggingFader {
                                                 isDraggingFader = true
                                                 initialValue = volume
+                                                if let event = CGEvent(source: nil) {
+                                                    initialMouseLocation = event.location
+                                                }
                                                 NSCursor.hide()
                                             }
                                             
@@ -149,27 +224,34 @@ struct AudioBusView: View {
                                         }
                                         .onEnded { _ in
                                             isDraggingFader = false
+                                            if let loc = initialMouseLocation {
+                                                CGWarpMouseCursorPosition(loc)
+                                            }
                                             NSCursor.unhide()
                                         }
                                 )
                         }
                     }
-                    .frame(width: 24, height: 160)
+                    .frame(width: 24) // Allow flexible height
                     
                     // Meter R
-                    ZStack(alignment: .bottom) {
-                        Rectangle()
-                            .fill(Color.black.opacity(0.1))
-                            .frame(width: 6, height: 160)
-                        
-                        LinearGradient(
-                            gradient: Gradient(colors: [.green, .yellow, .red]),
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                        .frame(width: 6, height: 0)
+                    GeometryReader { geo in
+                        ZStack(alignment: .bottom) {
+                            Rectangle()
+                                .fill(Color.black.opacity(0.1))
+                                .frame(width: 6, height: geo.size.height)
+                            
+                            LinearGradient(
+                                gradient: Gradient(colors: [.green, .yellow, .red]),
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                            .frame(width: 6, height: 0)
+                        }
                     }
+                    .frame(width: 6)
                 }
+                .frame(maxHeight: .infinity) // Fill available space
                 
                 // Mute/Solo
                 HStack(spacing: 2) {
@@ -195,7 +277,7 @@ struct AudioBusView: View {
                 }
             }
             .padding(.bottom, 8)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity) // Make Controls Area fill space
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
             
             Divider()
@@ -221,6 +303,7 @@ struct AudioBusView: View {
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(width: 90)
+        .frame(maxHeight: .infinity) // AudioBusView fills vertical space
         .background(Color(nsColor: .windowBackgroundColor))
         .border(Color(nsColor: .separatorColor), width: 0.5)
     }
