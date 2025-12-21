@@ -82,7 +82,15 @@ class SoundManager: NSObject, ObservableObject {
         
         // Initialize 36 Fixed Buses
         for i in 1...36 {
-            audioBuses.append(AudioBus(id: i, name: "BUS \(i)"))
+            var name = "BUS \(i)"
+            switch i {
+            case 1: name = "SAS"
+            case 2: name = "Nightmare"
+            case 3: name = "Dream"
+            case 4: name = "Rift"
+            default: break
+            }
+            audioBuses.append(AudioBus(id: i, name: name))
         }
         
         restoreBookmark()
