@@ -35,6 +35,34 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     // Metering state: Bus ID -> Normalized Level (0.0 - 1.0)
     @Published var busLevels: [Int: Float] = [:]
     
+    // Dynamic Buses with Persistence
+    struct AudioBus: Identifiable, Hashable {
+        let id: Int
+        var name: String
+        var volume: Float = 0.75
+        var pan: Float = 0.5
+        var isMuted: Bool = false
+        var isSolo: Bool = false
+    }
+    
+    @Published var audioBuses: [AudioBus] = [
+        AudioBus(id: 1, name: "Nightmare"),
+        AudioBus(id: 2, name: "Dream"),
+        AudioBus(id: 3, name: "Rift"),
+        AudioBus(id: 4, name: "SAS")
+    ]
+    
+    // Available Audio Devices (Mock for now, would use CoreAudio/AVFoundation in real internal impl)
+    @Published var availableOutputs: [String] = [
+        "MacBook Pro Speakers",
+        "External Headphones", 
+        "BlackHole 16ch",
+        "HDMI (LG Monitor)",
+        "Scarlett 2i2 USB"
+    ]
+    
+    private var nextBusId = 5
+    
     private var audioPlayers: [Int: AVAudioPlayer] = [:]
     private let bookmarkKey = "soundDirectoryBookmark"
     private var meteringTimer: Timer?
@@ -53,7 +81,7 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         createDirectoryIfNeeded()
         refreshSounds()
         
-        // Start metering loop (could be optimized to only run when playing)
+        // Start metering loop
         startMetering()
     }
     
@@ -97,9 +125,6 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             
             if url.startAccessingSecurityScopedResource() {
                 self.soundDirectoryURL = url
-                // Note context: security scoped resources need to be stopped when done, usually.
-                // For a long-running app watching a folder, we keep it open?
-                // Or stop/start on access? For now, we keep logic simple. Use startAccessing when enumerating?
             }
         } catch {
             print("Failed to restore bookmark: \(error)")
@@ -107,14 +132,12 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func createDirectoryIfNeeded() {
-        // Only create if it's the default container path, otherwise assume user manages it
         if soundDirectoryURL.path.contains("Containers") && !FileManager.default.fileExists(atPath: soundDirectoryURL.path) {
             try? FileManager.default.createDirectory(at: soundDirectoryURL, withIntermediateDirectories: true)
         }
     }
     
     func refreshSounds() {
-        // Ensure we have access if it's a security scoped URL
         _ = soundDirectoryURL.startAccessingSecurityScopedResource()
         defer { soundDirectoryURL.stopAccessingSecurityScopedResource() }
         
@@ -158,56 +181,179 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         return soundRoutes.first(where: { $0.value == busId })?.key
     }
     
+    // Helper to get all files flattened (for filtering)
+    func getAllFiles() -> [FileNode] {
+        return flatten(nodes: rootNodes)
+    }
+    
+    private func flatten(nodes: [FileNode]) -> [FileNode] {
+        var result: [FileNode] = []
+        for node in nodes {
+            if node.isDirectory {
+                if let children = node.children {
+                    result.append(contentsOf: flatten(nodes: children))
+                }
+            } else {
+                result.append(node)
+            }
+        }
+        return result
+    }
+    
+    // MARK: - Bus Management
+    
+    func addBus() {
+        let newBus = AudioBus(id: nextBusId, name: "BUS \(nextBusId)")
+        audioBuses.append(newBus)
+        nextBusId += 1
+    }
+    
+    func removeBus(id: Int) {
+        audioBuses.removeAll { $0.id == id }
+        stopSound(onBus: id)
+    }
+    
     // MARK: - Playback Control
     
     func setVolume(_ volume: Float, onBus busId: Int) {
-        audioPlayers[busId]?.volume = volume
+        // Update Bus Model
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].volume = volume
+            
+            // Apply to active player if not muted
+            if let player = audioPlayers[busId], !audioBuses[index].isMuted {
+                player.volume = volume
+            }
+        }
     }
     
     func setPan(_ pan: Float, onBus busId: Int) {
-        audioPlayers[busId]?.pan = pan
+        // Update Bus Model
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].pan = pan
+            
+            // Apply to active player
+            if let player = audioPlayers[busId] {
+                player.pan = (pan * 2.0) - 1.0 // Convert 0...1 to -1...1
+            }
+        }
     }
     
-    func playSound(node: FileNode, onBus busId: Int, volume: Float = 1.0, pan: Float = 0.0) {
-        stopSound(onBus: busId)
+    func toggleMute(onBus busId: Int) {
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].isMuted.toggle()
+            let isMuted = audioBuses[index].isMuted
+            let volume = audioBuses[index].volume
+            
+            if let player = audioPlayers[busId] {
+                player.volume = isMuted ? 0 : volume
+            }
+            updateSoloState() // Re-check solo logic as mute overrides
+        }
+    }
+    
+    func toggleSolo(onBus busId: Int) {
+        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
+            audioBuses[index].isSolo.toggle()
+            updateSoloState()
+        }
+    }
+    
+    private func updateSoloState() {
+        let anySolo = audioBuses.contains { $0.isSolo }
+        
+        for index in audioBuses.indices {
+            let bus = audioBuses[index]
+            let player = audioPlayers[bus.id]
+            
+            if anySolo {
+                // Should only play if THIS bus is solod
+                if bus.isSolo {
+                    // It is solo, play at volume (unless locally muted)
+                    if let player = player {
+                        player.volume = bus.isMuted ? 0 : bus.volume
+                    }
+                } else {
+                    // Not solo, silence it
+                    if let player = player {
+                        player.volume = 0
+                    }
+                }
+            } else {
+                // No solo active, respect local mute
+                if let player = player {
+                    player.volume = bus.isMuted ? 0 : bus.volume
+                }
+            }
+        }
+    }
+    
+    func playSound(node: FileNode, onBus busId: Int) {
+        // 1. Update Route
         soundRoutes[node.name] = busId
         
+        // 2. Play
+        stopSound(onBus: busId)
+        
+        let url = node.url
         do {
-            // Need access if file is in security scoped dir?
-            // Usually parent access grants child access, but let's be safe.
-            // Actually, if we hold the parent securely, we can read children.
-            // But checking...
-            let player = try AVAudioPlayer(contentsOf: node.url)
+            let player = try AVAudioPlayer(contentsOf: url)
             player.delegate = self
-            player.volume = volume
-            player.pan = pan
-            player.isMeteringEnabled = true // Enable metering
-            player.prepareToPlay()
-            player.play()
-            audioPlayers[busId] = player
-            activeBusIds.insert(busId)
+            
+            // Apply Bus Settings
+            if let bus = audioBuses.first(where: { $0.id == busId }) {
+                // Volume logic factoring in Mute and Solo
+                let anySolo = audioBuses.contains { $0.isSolo }
+                var targetVolume = bus.volume
+                
+                if bus.isMuted {
+                    targetVolume = 0
+                } else if anySolo && !bus.isSolo {
+                    targetVolume = 0
+                }
+                
+                player.volume = targetVolume
+                player.pan = (bus.pan * 2.0) - 1.0
+            } else {
+                // Fallback default
+                player.volume = 0.75
+                player.pan = 0.0
+            }
+            
+            player.numberOfLoops = -1 // Loop indefinitely
+            player.isMeteringEnabled = true
+            if player.play() {
+                audioPlayers[busId] = player
+                activeBusIds.insert(busId)
+                print("Playing \(node.name) on Bus \(busId)")
+            } else {
+                print("Failed to play player for \(node.name)")
+            }
             
             // Ensure timer is running
             if meteringTimer == nil {
                 startMetering()
             }
+            
         } catch {
-            print("Error playing sound \(node.name): \(error)")
+            print("Playback failed: \(error)")
         }
     }
     
     func stopSound(onBus busId: Int) {
-        audioPlayers[busId]?.stop()
-        audioPlayers[busId] = nil
-        activeBusIds.remove(busId)
-        busLevels[busId] = 0.0 // Reset meter
+        if let player = audioPlayers[busId] {
+            player.stop()
+            audioPlayers.removeValue(forKey: busId)
+            activeBusIds.remove(busId)
+            busLevels[busId] = 0 // Reset meter
+        }
     }
     
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         if let (busId, _) = audioPlayers.first(where: { $0.value === player }) {
-            audioPlayers[busId] = nil
+            audioPlayers.removeValue(forKey: busId)
             activeBusIds.remove(busId)
-            busLevels[busId] = 0.0 // Reset meter
+            busLevels[busId] = 0
         }
     }
     
@@ -221,18 +367,13 @@ class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func updateMeters() {
-        guard !activeBusIds.isEmpty else {
-            // Optional: stop timer if empty? keeping it simple for now.
-            return
-        }
+        guard !activeBusIds.isEmpty else { return }
         
         for (busId, player) in audioPlayers {
             if player.isPlaying {
                 player.updateMeters()
-                // Average power is usually -160 to 0 dB
-                // Normalize 0.0 to 1.0
                 let power = player.averagePower(forChannel: 0)
-                let level = max(0.0, (power + 60) / 60) // Simple normalization from -60dB
+                let level = max(0.0, (power + 60) / 60)
                 busLevels[busId] = level
             } else {
                 busLevels[busId] = 0.0

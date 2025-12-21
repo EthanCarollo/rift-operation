@@ -6,30 +6,38 @@
 //
 
 import SwiftUI
-import AppKit // Required for NSCursor
+import AVFoundation
 
 struct AudioBusView: View {
     let busName: String
     let busId: Int
-    @State private var volume: Double = 0.75
-    @State private var pan: Double = 0.5
-    @State private var isMuted: Bool = false
-    @State private var isSolo: Bool = false
-    @State private var selectedDevice: String = ""
     
     @ObservedObject var soundManager = SoundManager.shared
+    
+    // Retrieve the bus model from manager
+    private var bus: SoundManager.AudioBus? {
+        soundManager.audioBuses.first(where: { $0.id == busId })
+    }
     
     // Drag States
     @State private var isDraggingKnob: Bool = false
     @State private var isDraggingFader: Bool = false
     @State private var initialValue: Double = 0.0
-    @State private var initialMouseLocation: CGPoint? = nil // To store cursor WARP location
+    @State private var initialMouseLocation: CGPoint? = nil
+    
+    @State private var selectedDevice: String = "" 
     
     // Mock devices
     let devices = ["Built-in Output", "Scarlett 2i2", "Virtual Cable 1", "HDMI Audio"]
     
     var body: some View {
-        VStack(spacing: 0) {
+        // Safe unwrap of bus settings
+        let currentVolume = Double(bus?.volume ?? 0.75)
+        let currentPan = Double(bus?.pan ?? 0.5)
+        let isMuted = bus?.isMuted ?? false
+        let isSolo = bus?.isSolo ?? false
+        
+        return VStack(spacing: 0) {
             // Bus Header
             Text(busName)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
@@ -41,24 +49,6 @@ struct AudioBusView: View {
             
             // FX/Inserts / Info Area
             VStack(spacing: 1) {
-                // Display Current Assigned Sound
-                if let soundName = soundManager.getAssignedSound(forBus: busId) {
-                    Text(soundName)
-                        .font(.system(size: 9, design: .monospaced))
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(soundManager.activeBusIds.contains(busId) ? .green : .primary)
-                        .frame(maxWidth: .infinity)
-                        .padding(2)
-                        .background(Color.black.opacity(0.05))
-                        .cornerRadius(2)
-                } else {
-                    Text("--")
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity)
-                }
-                
                 Spacer().frame(height: 4)
                 
                 // Visual Placeholder lines (FX slots)
@@ -94,31 +84,28 @@ struct AudioBusView: View {
                         .fill(Color.black)
                         .frame(width: 2, height: 10)
                         .offset(y: -8)
-                        .rotationEffect(.degrees((pan * 270) - 135))
+                        .rotationEffect(.degrees((currentPan * 270) - 135))
                 }
                 .padding(.top, 8)
+                .help("Pan Control (Left/Right)")
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             if !isDraggingKnob {
                                 isDraggingKnob = true
-                                initialValue = pan
-                                // Capture current mouse position for restore
+                                initialValue = currentPan
                                 if let event = CGEvent(source: nil) {
                                     initialMouseLocation = event.location
                                 }
                                 NSCursor.hide()
                             }
-                            // Allow dragging up/right to increase, down/left to decrease
                             let sensitivity: Double = 0.002
                             let delta = value.translation.width - value.translation.height // Combine axes
-                            pan = max(0, min(1, initialValue + (delta * sensitivity)))
-                            // Propagate
-                            soundManager.setPan(Float(pan), onBus: busId)
+                            let newPan = max(0, min(1, initialValue + (delta * sensitivity)))
+                            soundManager.setPan(Float(newPan), onBus: busId)
                         }
                         .onEnded { _ in
                             isDraggingKnob = false
-                            // Restore cursor position
                             if let loc = initialMouseLocation {
                                 CGWarpMouseCursorPosition(loc)
                             }
@@ -171,28 +158,24 @@ struct AudioBusView: View {
                                         .frame(height: 1)
                                 )
                                 .shadow(radius: 1, y: 1)
-                                .offset(y: -((volume) * (geo.size.height - 32))) // Position from bottom
+                                .offset(y: -((currentVolume) * (geo.size.height - 32))) // Position
                                 .gesture(
                                     DragGesture(minimumDistance: 0)
                                         .onChanged { value in
                                             if !isDraggingFader {
                                                 isDraggingFader = true
-                                                initialValue = volume
+                                                initialValue = currentVolume
                                                 if let event = CGEvent(source: nil) {
                                                     initialMouseLocation = event.location
                                                 }
                                                 NSCursor.hide()
                                             }
                                             
-                                            // Relative Drag Logic
                                             let sensitivity: Double = 0.003
-                                            // Invert deltaY because dragging UP should increase volume
                                             let delta = -value.translation.height
+                                            let newVol = max(0, min(1, initialValue + (delta * sensitivity)))
                                             
-                                            volume = max(0, min(1, initialValue + (delta * sensitivity)))
-                                            
-                                            // Propagate
-                                            soundManager.setVolume(Float(volume), onBus: busId)
+                                            soundManager.setVolume(Float(newVol), onBus: busId)
                                         }
                                         .onEnded { _ in
                                             isDraggingFader = false
@@ -207,28 +190,31 @@ struct AudioBusView: View {
                     .frame(width: 24)
                 }
                 .frame(maxHeight: .infinity)
+                .help("Volume Fader")
                 
                 // Mute/Solo
                 HStack(spacing: 2) {
-                    Button(action: { isMuted.toggle() }) {
+                    Button(action: { soundManager.toggleMute(onBus: busId) }) {
                         Text("M")
-                            .font(.system(size: 8, weight: .bold))
-                            .frame(width: 16, height: 16)
+                            .font(.system(size: 10, weight: .bold)) // Slightly Larger Font
+                            .frame(width: 20, height: 20)
                     }
                     .buttonStyle(.plain)
-                    .background(isMuted ? Color.red : Color(nsColor: .controlBackgroundColor))
-                    .foregroundColor(isMuted ? .white : .secondary)
+                    .background(isMuted ? Color.orange : Color.gray.opacity(0.2)) // Changed to Orange for visibility
+                    .foregroundColor(isMuted ? .white : .primary)
                     .cornerRadius(2)
+                    .help("Mute Channel")
                     
-                    Button(action: { isSolo.toggle() }) {
+                    Button(action: { soundManager.toggleSolo(onBus: busId) }) {
                         Text("S")
-                            .font(.system(size: 8, weight: .bold))
-                            .frame(width: 16, height: 16)
+                            .font(.system(size: 10, weight: .bold)) // Slightly Larger Font
+                            .frame(width: 20, height: 20)
                     }
                     .buttonStyle(.plain)
-                    .background(isSolo ? Color.yellow : Color(nsColor: .controlBackgroundColor))
-                    .foregroundColor(isSolo ? .black : .secondary)
+                    .background(isSolo ? Color.green : Color.gray.opacity(0.2)) // Changed to Green for visibility
+                    .foregroundColor(isSolo ? .white : .primary)
                     .cornerRadius(2)
+                    .help("Solo Channel (Mutes others)")
                 }
             }
             .padding(.bottom, 8)
@@ -258,7 +244,7 @@ struct AudioBusView: View {
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(width: 90)
-        .frame(maxHeight: .infinity) // AudioBusView
+        .frame(maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
         .border(Color(nsColor: .separatorColor), width: 0.5)
     }
