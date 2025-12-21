@@ -16,7 +16,6 @@ struct AudioBusView: View {
     @State private var isMuted: Bool = false
     @State private var isSolo: Bool = false
     @State private var selectedDevice: String = ""
-    @State private var selectedSound: String = "" // For file selection
     
     @ObservedObject var soundManager = SoundManager.shared
     
@@ -56,52 +55,6 @@ struct AudioBusView: View {
             .background(Color(nsColor: .textBackgroundColor))
             
             Divider()
-            
-            // Sound Player Controls
-            VStack(spacing: 4) {
-                // Sound Selector
-                Menu {
-                    Text("Select Sound").foregroundColor(.secondary)
-                    Divider()
-                    ForEach(soundManager.availableSounds, id: \.self) { sound in
-                        Button(action: { selectedSound = sound }) {
-                            Text(sound)
-                            if selectedSound == sound { Image(systemName: "checkmark") }
-                        }
-                    }
-                } label: {
-                    Text(selectedSound.isEmpty ? "LOAD" : selectedSound)
-                        .font(.system(size: 8, design: .monospaced))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .frame(maxWidth: .infinity)
-                }
-                .menuStyle(.borderlessButton)
-                .frame(height: 16)
-                .padding(.horizontal, 2)
-                
-                // Play Button
-                Button(action: {
-                    if soundManager.activeBusIds.contains(busId) {
-                        soundManager.stopSound(onBus: busId)
-                    } else {
-                        if !selectedSound.isEmpty {
-                            soundManager.playSound(named: selectedSound, onBus: busId, volume: Float(volume), pan: Float(pan))
-                        }
-                    }
-                }) {
-                    Image(systemName: soundManager.activeBusIds.contains(busId) ? "stop.fill" : "play.fill")
-                        .font(.system(size: 10))
-                        .frame(maxWidth: .infinity, maxHeight: 18)
-                        .background(soundManager.activeBusIds.contains(busId) ? Color.green : Color(nsColor: .controlColor))
-                        .foregroundColor(soundManager.activeBusIds.contains(busId) ? .white : .primary)
-                        .cornerRadius(2)
-                }
-                .buttonStyle(.plain)
-                .disabled(selectedSound.isEmpty)
-            }
-            .padding(4)
-            .background(Color(nsColor: .windowBackgroundColor))
             
             Divider()
             

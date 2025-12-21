@@ -90,20 +90,32 @@ struct ContentView: View {
                     .border(Color(nsColor: .separatorColor), width: 1, edges: [.bottom])
                     
                     // Mixer Area
-                    // Mixer Area
-                    GeometryReader { geo in
-                        ScrollView(.horizontal, showsIndicators: true) {
-                            HStack(spacing: 0) {
-                                ForEach(buses, id: \.id) { bus in
-                                    AudioBusView(busName: bus.name, busId: bus.id)
-                                        .frame(height: geo.size.height) // Match scroll view height
+                    .border(Color(nsColor: .separatorColor), width: 1, edges: [.bottom])
+                    
+                    HSplitView {
+                        // Sound Library (Left Panel)
+                        SoundLibraryView()
+                            .frame(minWidth: 150, maxWidth: 400)
+                            .frame(maxHeight: .infinity)
+                        
+                        // Mixer Area (Right Panel)
+                        GeometryReader { geo in
+                            ScrollView(.horizontal, showsIndicators: true) {
+                                HStack(spacing: 0) {
+                                    ForEach(buses, id: \.id) { bus in
+                                        AudioBusView(busName: bus.name, busId: bus.id)
+                                            .frame(height: geo.size.height) // Match scroll view height
+                                    }
                                 }
+                                .padding(.horizontal)
+                                .frame(minHeight: geo.size.height)
                             }
-                            .padding(.horizontal)
-                            .frame(minHeight: geo.size.height)
                         }
+                        .background(Color(nsColor: .windowBackgroundColor))
                     }
-                    .background(Color(nsColor: .windowBackgroundColor))
+                    .frame(maxHeight: .infinity)
+                    
+                    // Status Footer
                     
                     // Status Footer
                     HStack {
