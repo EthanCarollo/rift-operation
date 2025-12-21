@@ -1,4 +1,12 @@
+//
+//  AudioBusView.swift
+//  scenography-monitor
+//
+//  Created by eth on 21/12/2025.
+//
+
 import SwiftUI
+import AppKit // Required for NSCursor
 
 struct AudioBusView: View {
     let busName: String
@@ -61,10 +69,14 @@ struct AudioBusView: View {
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
+                            NSCursor.hide() // Hide cursor for effect
                             // Allow dragging up/right to increase, down/left to decrease
                             let sensitivity: Double = 0.005
                             let delta = value.translation.width - value.translation.height // Combine axes
                             pan = max(0, min(1, pan + (delta * sensitivity)))
+                        }
+                        .onEnded { _ in
+                            NSCursor.unhide() // Restore cursor
                         }
                 )
                 
@@ -112,10 +124,8 @@ struct AudioBusView: View {
                                 .gesture(
                                     DragGesture(minimumDistance: 0)
                                         .onChanged { value in
+                                            NSCursor.hide()
                                             // Calculate volume based on touch position relative to track height
-                                            // The "startLocation" is helpful, but calculating new volume from total height is easier
-                                            // value.location.y is from TOP of the GeometryReader
-                                            
                                             let trackHeight = geo.size.height
                                             let handleHeight: CGFloat = 32
                                             let usableHeight = trackHeight - handleHeight
@@ -126,6 +136,9 @@ struct AudioBusView: View {
                                             // Normalize
                                             let newVol = touchYFromBottom / usableHeight
                                             volume = max(0, min(1, newVol))
+                                        }
+                                        .onEnded { _ in
+                                            NSCursor.unhide()
                                         }
                                 )
                         }
