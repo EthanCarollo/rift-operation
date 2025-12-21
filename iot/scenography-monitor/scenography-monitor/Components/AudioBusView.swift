@@ -11,7 +11,6 @@ import AppKit // Required for NSCursor
 struct AudioBusView: View {
     let busName: String
     let busId: Int
-    let busId: Int
     @State private var volume: Double = 0.75
     @State private var pan: Double = 0.5
     @State private var isMuted: Bool = false
@@ -83,27 +82,19 @@ struct AudioBusView: View {
                 
                 // Play Button
                 Button(action: {
-                    if soundManager.isPlaying(onBus: busId) {
+                    if soundManager.activeBusIds.contains(busId) {
                         soundManager.stopSound(onBus: busId)
                     } else {
                         if !selectedSound.isEmpty {
                             soundManager.playSound(named: selectedSound, onBus: busId, volume: Float(volume), pan: Float(pan))
                         }
                     }
-                    // Trigger UI update logic if needed, usually observed object handles it but isPlaying might change internally
-                    // Forcing a redraw might be needed if isPlaying is not @Published per bus in a way we observe easily here directly without polling or better structure.
-                    // For now, simple toggle logic.
-                    // Actually, since we don't observe the audioPlayer dictionary deeply, the button state might not auto-update.
-                    // We can use a trick or just rely on the user action for now.
-                    // A better way is to check the state.
-                    objectWillChange.send() // Force update
-                    
                 }) {
-                    Image(systemName: soundManager.isPlaying(onBus: busId) ? "stop.fill" : "play.fill")
+                    Image(systemName: soundManager.activeBusIds.contains(busId) ? "stop.fill" : "play.fill")
                         .font(.system(size: 10))
                         .frame(maxWidth: .infinity, maxHeight: 18)
-                        .background(soundManager.isPlaying(onBus: busId) ? Color.green : Color(nsColor: .controlColor))
-                        .foregroundColor(soundManager.isPlaying(onBus: busId) ? .white : .primary)
+                        .background(soundManager.activeBusIds.contains(busId) ? Color.green : Color(nsColor: .controlColor))
+                        .foregroundColor(soundManager.activeBusIds.contains(busId) ? .white : .primary)
                         .cornerRadius(2)
                 }
                 .buttonStyle(.plain)

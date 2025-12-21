@@ -7,20 +7,22 @@
 
 import Foundation
 import AVFoundation
+import SwiftUI
+import Combine
 
-class SoundManager: ObservableObject {
+class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     static let shared = SoundManager()
     
     // For development, we point directly to the user's path.
-    // In production, these should be in the Bundle.
-    // Making this configurable or relative would be better, but for this specific task:
     let soundDirectoryPath = "/Users/ethew/Documents/Github/iotm1/iot/scenography-monitor/scenography-monitor/Sounds"
     
     @Published var availableSounds: [String] = []
+    @Published var activeBusIds: Set<Int> = []
     
     private var audioPlayers: [Int: AVAudioPlayer] = [:] // Map busId to player
     
-    init() {
+    override init() {
+        super.init()
         refreshSounds()
     }
     
@@ -39,11 +41,13 @@ class SoundManager: ObservableObject {
         
         do {
             let player = try AVAudioPlayer(contentsOf: url)
+            player.delegate = self
             player.volume = volume
             player.pan = pan
             player.prepareToPlay()
             player.play()
             audioPlayers[busId] = player
+            activeBusIds.insert(busId)
         } catch {
             print("Error playing sound \(filename): \(error)")
         }
@@ -52,9 +56,14 @@ class SoundManager: ObservableObject {
     func stopSound(onBus busId: Int) {
         audioPlayers[busId]?.stop()
         audioPlayers[busId] = nil
+        activeBusIds.remove(busId)
     }
     
-    func isPlaying(onBus busId: Int) -> Bool {
-        return audioPlayers[busId]?.isPlaying ?? false
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        // Find which bus this player belongs to
+        if let (busId, _) = audioPlayers.first(where: { $0.value === player }) {
+            audioPlayers[busId] = nil
+            activeBusIds.remove(busId)
+        }
     }
 }
