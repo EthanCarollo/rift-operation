@@ -1,7 +1,10 @@
 """
 RiftWorkshop - Business logic for the RIFT workshop
 """
-import ujson as json
+try:
+    import ujson as json
+except ImportError:
+    import json
 from src.Core.Rift.RiftState import RiftState
 
 class RiftWorkshop:
