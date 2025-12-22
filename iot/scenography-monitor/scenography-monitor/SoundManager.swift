@@ -454,6 +454,15 @@ class SoundManager: NSObject, ObservableObject {
         player.volume = targetVolume
     }
     
+    // Updates pan directly on the player without triggering a full UI/Persistence update via @Published
+    func previewPan(_ pan: Float, onBus busId: Int) {
+        guard let player = players[busId] else { return }
+        
+        // Pan range is -1.0 to 1.0 in AVAudioPlayerNode
+        // Model pan is 0.0 (Left) to 1.0 (Right)
+        player.pan = (pan * 2.0) - 1.0
+    }
+    
     func playSound(node: FileNode, onBus busId: Int) {
         // Stop previous sound immediately on Main Thread to prevent overlap
         stopSound(onBus: busId)

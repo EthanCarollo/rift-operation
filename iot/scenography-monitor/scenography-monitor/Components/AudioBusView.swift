@@ -30,12 +30,13 @@ struct AudioBusView: View {
     
     @State private var selectedDevice: String = ""
     @State private var localVolume: Double? = nil // For smooth dragging
+    @State private var localPan: Double? = nil // For smooth panning
     
     var body: some View {
         // Safe unwrap of bus settings
         // Use local volume while dragging, otherwise model volume
         let currentVolume = localVolume ?? Double(bus?.volume ?? 0.75)
-        let currentPan = Double(bus?.pan ?? 0.5)
+        let currentPan = localPan ?? Double(bus?.pan ?? 0.5)
         let isMuted = bus?.isMuted ?? false
         let isSolo = bus?.isSolo ?? false
         
@@ -100,7 +101,7 @@ struct AudioBusView: View {
                         .onChanged { value in
                             if !isDraggingKnob {
                                 isDraggingKnob = true
-                                initialValue = currentPan
+                                initialValue = localPan ?? Double(bus?.pan ?? 0.5)
                                 if let event = CGEvent(source: nil) {
                                     initialMouseLocation = event.location
                                 }
@@ -109,7 +110,12 @@ struct AudioBusView: View {
                             let sensitivity: Double = 0.002
                             let delta = value.translation.width - value.translation.height // Combine axes
                             let newPan = max(0, min(1, initialValue + (delta * sensitivity)))
-                            soundManager.setPan(Float(newPan), onBus: busId)
+                            
+                            // Update LOCAL UI
+                            localPan = newPan
+                            
+                            // Preview
+                            soundManager.previewPan(Float(newPan), onBus: busId)
                         }
                         .onEnded { _ in
                             isDraggingKnob = false
@@ -117,6 +123,12 @@ struct AudioBusView: View {
                                 CGWarpMouseCursorPosition(loc)
                             }
                             NSCursor.unhide()
+                            
+                            // Commit
+                            if let finalPan = localPan {
+                                soundManager.setPan(Float(finalPan), onBus: busId)
+                            }
+                            localPan = nil
                         }
                 )
             
