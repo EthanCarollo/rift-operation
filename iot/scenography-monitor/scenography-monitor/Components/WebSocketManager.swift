@@ -74,20 +74,29 @@ class WebSocketManager: ObservableObject {
     }
     
     private func handleMessage(_ text: String) {
-        // Log generic
-        // check if it's the big JSON
-        DispatchQueue.main.async {
-            self.addLog("RX: \(text.prefix(200))...")
+        // Offload parsing to background thread to clear Main Thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             
-            // Try parse
+            var parsedJson: [String: Any]? = nil
+            var parseError = false
+            
             if let data = text.data(using: .utf8) {
                 do {
-                    if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                        self.latestData = json
-                        // Notify triggers? handled by Combine subscription to latestData
-                    }
+                    parsedJson = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                 } catch {
-                     self.addLog("JSON Parse Error")
+                    parseError = true
+                }
+            }
+            
+            // Update UI/State on Main Thread
+            DispatchQueue.main.async {
+                self.addLog("RX: \(text.prefix(200))...")
+                
+                if let json = parsedJson {
+                    self.latestData = json
+                } else if parseError {
+                    self.addLog("JSON Parse Error")
                 }
             }
         }

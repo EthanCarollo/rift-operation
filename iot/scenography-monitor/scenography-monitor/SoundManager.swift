@@ -75,7 +75,16 @@ class SoundManager: NSObject, ObservableObject {
     
     private let bookmarkKey = "soundDirectoryBookmark"
     private var meteringTimer: Timer?
-    private var lastUIUpdate: TimeInterval = 0
+    // Polling Model: Raw data buffer accessed by Main Thread Timer
+    private var rawBusLevels: [Int: Float] = [:] // Thread-safe access required (or using isolated concurrent queue)
+    private let meterQueue = DispatchQueue(label: "com.rift.meterQueue", attributes: .concurrent) 
+    
+    // UI Update Timer
+    private var uiUpdateTimer: Timer?
+
+    
+    // Serial queue for all Audio Engine graph mutations to prevent Main Thread blocking
+    private let audioGraphQueue = DispatchQueue(label: "com.rift.audioGraph", qos: .userInitiated)
     
     override init() {
         let defaultURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -84,8 +93,8 @@ class SoundManager: NSObject, ObservableObject {
         
         super.init()
         
-        // Initialize 36 Fixed Buses
-        for i in 1...36 {
+        // Initialize 12 Fixed Buses
+        for i in 1...12 {
             var name = "BUS \(i)"
             var color = "#F0F0F0" // Default
             
@@ -426,28 +435,52 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     private func updatePlayerVolume(_ busId: Int) {
-        guard let player = players[busId], let bus = audioBuses.first(where: { $0.id == busId }) else { return }
-        
-        let anySolo = audioBuses.contains { $0.isSolo }
-        var targetVolume = bus.volume
-        
-        if bus.isMuted {
-            targetVolume = 0
-        } else if anySolo && !bus.isSolo {
-            targetVolume = 0
+        audioGraphQueue.async { [weak self] in
+            guard let self = self, let player = self.players[busId] else { return }
+            
+            // Access bus config on Main Thread (snapshotting)
+            // Wait, we are on background queue. We can't access self.audioBuses unsafely if it's main-thread isolated.
+            // Correct pattern: Capture values on caller side (Main Thread) pass to background closure.
+            // However, updatePlayerVolume is called from seemingly anywhere.
+            // Let's rely on atomic/safe dispatch back to main to read properties? No, that's circular.
+            // BETTER: Pass volume/pan as arguments to this function, or Assume self.audioBuses is thread safe?
+            // self.audioBuses is @Published.
+            
+            // RE-FACTOR: We need to get the config on Main, then dispatch.
+            // Since this method logic is complex (solo/mute), let's grab state on main then dispatch.
+            
+            DispatchQueue.main.async {
+                guard let bus = self.audioBuses.first(where: { $0.id == busId }) else { return }
+                let anySolo = self.audioBuses.contains { $0.isSolo }
+                
+                var targetVolume = bus.volume
+                if bus.isMuted {
+                    targetVolume = 0
+                } else if anySolo && !bus.isSolo {
+                    targetVolume = 0
+                }
+                let targetPan = (bus.pan * 2.0) - 1.0
+                
+                self.audioGraphQueue.async {
+                    // Check if player still exists
+                    if let player = self.players[busId] {
+                        player.volume = targetVolume
+                        player.pan = targetPan
+                    }
+                }
+            }
         }
-        
-        player.volume = targetVolume
-        player.pan = (bus.pan * 2.0) - 1.0
     }
     
     // Updates volume directly on the player without triggering a full UI/Persistence update via @Published
     func previewVolume(_ volume: Float, onBus busId: Int) {
-        guard let player = players[busId], let bus = audioBuses.first(where: { $0.id == busId }) else { return }
-        
-        // Calculate target volume using the PREVIEW volume, but respecting Mute/Solo logic
+        // Fast path for dragging
+        // Capture logic state on Main (assuming this is called from UI)
         let anySolo = audioBuses.contains { $0.isSolo }
         var targetVolume = volume
+        
+        // We need 'bus' state.
+        guard let bus = audioBuses.first(where: { $0.id == busId }) else { return }
         
         if bus.isMuted {
             targetVolume = 0
@@ -455,16 +488,21 @@ class SoundManager: NSObject, ObservableObject {
             targetVolume = 0
         }
         
-        player.volume = targetVolume
+        audioGraphQueue.async { [weak self] in
+            if let player = self?.players[busId] {
+                player.volume = targetVolume
+            }
+        }
     }
     
     // Updates pan directly on the player without triggering a full UI/Persistence update via @Published
     func previewPan(_ pan: Float, onBus busId: Int) {
-        guard let player = players[busId] else { return }
-        
-        // Pan range is -1.0 to 1.0 in AVAudioPlayerNode
-        // Model pan is 0.0 (Left) to 1.0 (Right)
-        player.pan = (pan * 2.0) - 1.0
+        let targetPan = (pan * 2.0) - 1.0
+        audioGraphQueue.async { [weak self] in
+            if let player = self?.players[busId] {
+                player.pan = targetPan
+            }
+        }
     }
     
     func playSound(node: FileNode, onBus busId: Int) {
@@ -491,14 +529,27 @@ class SoundManager: NSObject, ObservableObject {
                 
                 try file.read(into: buffer)
                 
-                // Dispatch back to Main Thread for Engine Operations
-                DispatchQueue.main.async {
+                // Dispatch back to Graph Queue for Engine Operations
+                // We use weak self to avoid retain cycles, but we need to ensure self exists to dispatch
+                self.audioGraphQueue.async { [weak self] in
+                    guard let self = self else { return }
+                    
                     // Re-check if bus is still valid and not stopped/replaced while loading
-                    // We check if the route is still assigned to this bus for this file
-                    if self.soundRoutes[node.name] == busId {
-                        self.finalizePlayback(buffer: buffer, file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
-                    } else {
-                        print("Playback cancelled for \(node.name) - Route changed during load")
+                    // Thread-safe check of routing? soundRoutes is @Published (Main Thread).
+                    // We need to capture the route state safely.
+                    // Actually, let's dispatch main to check route, then dispatch graph?
+                    // Or better: Checking route on background is "okay" if we accept slight race.
+                    // STRICT SAFETY: Check route on Main, then dispatch Graph.
+                    
+                    DispatchQueue.main.async {
+                        if self.soundRoutes[node.name] == busId {
+                            // Route confirmed. Now execute Graph mutation on Graph Queue
+                            self.audioGraphQueue.async {
+                                self.finalizePlayback(buffer: buffer, file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
+                            }
+                        } else {
+                            print("Playback cancelled for \(node.name) - Route changed during load")
+                        }
                     }
                 }
                 
@@ -521,9 +572,22 @@ class SoundManager: NSObject, ObservableObject {
         // Connect with explicit format
         engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
         
-        // Loop Logic
         // Loop Logic - Disabled as per user request (Single play)
-        player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
+        // Add completion handler to reset UI state when finished
+        player.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                
+                // Only remove if we haven't already stopped (to avoid race with manual stop UI flicker?)
+                // Actually, if it finishes naturally, we just remove it.
+                // Reset Level visually too.
+                if self.activeBusIds.contains(busId) {
+                     self.activeBusIds.remove(busId)
+                     self.busLevels[busId] = 0
+                     print("Playback finished naturally on Bus \(busId)")
+                }
+            }
+        }
         
         // Install Tap for Metering
         player.installTap(onBus: 0, bufferSize: 1024, format: buffer.format) { [weak self] (buf, time) in
@@ -539,7 +603,9 @@ class SoundManager: NSObject, ObservableObject {
             
             players[busId] = player
             
-            self.activeBusIds.insert(busId)
+            DispatchQueue.main.async {
+                self.activeBusIds.insert(busId)
+            }
             
             print("Playing \(nodeName) on Bus \(busId) via \(outputName)")
         } catch {
@@ -548,22 +614,25 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     func stopSound(onBus busId: Int) {
-        if let player = players[busId] {
-            player.stop()
-            player.removeTap(onBus: 0)
+        audioGraphQueue.async { [weak self] in
+            guard let self = self else { return }
             
-            if let engine = player.engine {
-                // Explicitly disconnect to ensure graph state is clean before detach
-                engine.disconnectNodeOutput(player)
-                engine.detach(player)
-            }
-            
-            players.removeValue(forKey: busId)
-            activeFiles.removeValue(forKey: busId)
-            
-            DispatchQueue.main.async {
-                self.busLevels[busId] = 0
-                self.activeBusIds.remove(busId)
+            if let player = self.players[busId] {
+                player.stop()
+                player.removeTap(onBus: 0)
+                
+                if let engine = player.engine {
+                    engine.disconnectNodeOutput(player)
+                    engine.detach(player)
+                }
+                
+                self.players.removeValue(forKey: busId)
+                self.activeFiles.removeValue(forKey: busId)
+                
+                DispatchQueue.main.async {
+                    self.busLevels[busId] = 0
+                    self.activeBusIds.remove(busId)
+                }
             }
         }
     }
@@ -590,36 +659,47 @@ class SoundManager: NSObject, ObservableObject {
         // Pre-calculation check to filter noise (Audio thread safe? No, let's keep it simple)
         // Optimization: Don't dispatch if result is negligible and we are already at 0
         
-        let currentLevel = rms * 5.0 // Boost for visual
+        // Write to thread-safe storage (No Main Dispatch)
+        let currentLevel = rms * 5.0
         
-        // Dispatch with strict throttling
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            // Global UI Throttle (prevents flooding Main Thread with 36 bus updates per frame)
-            let now = Date().timeIntervalSince1970
-            if now - self.lastUIUpdate < 0.05 { return } // 20 FPS cap
-            self.lastUIUpdate = now
-            
-            if let bus = self.audioBuses.first(where: { $0.id == busId }) {
-                 let newLevel: Float
-                 if bus.isMuted {
-                     newLevel = 0
-                 } else {
-                     newLevel = min(currentLevel * bus.volume, 1.0)
-                 }
-                 // Only publish if changed significantly to save view updates
-                 if abs((self.busLevels[busId] ?? 0) - newLevel) > 0.01 {
-                     self.busLevels[busId] = newLevel
-                 }
-            }
+        meterQueue.async(flags: .barrier) { [weak self] in
+            self?.rawBusLevels[busId] = currentLevel
         }
     }
     
     private func startMetering() {
-        // Metering is handled by Tap + Main Queue dispatch.
-        // No polling timer needed.
+        // Main Thread Timer - 30 FPS Refresh of all buses
+        uiUpdateTimer = Timer.scheduledTimer(withTimeInterval: 0.032, repeats: true) { [weak self] _ in
+            self?.updateBusLevels()
+        }
     }
+    
+    private func updateBusLevels() {
+        // Snapshot raw levels
+        var snapshot: [Int: Float] = [:]
+        meterQueue.sync {
+            snapshot = self.rawBusLevels
+        }
+        
+        // Batch update UI
+        for (busId, rawLevel) in snapshot {
+            guard let bus = audioBuses.first(where: { $0.id == busId }) else { continue }
+            
+            let finalLevel: Float
+            if bus.isMuted {
+                finalLevel = 0
+            } else {
+                finalLevel = min(rawLevel * bus.volume, 1.0)
+            }
+            
+            // Only update if changed significantly
+            if abs((busLevels[busId] ?? 0) - finalLevel) > 0.01 {
+                busLevels[busId] = finalLevel
+            }
+        }
+    }
+    
+
     
     // Global helper for random number loop (unused but kept for swift compatibility if needed)
     private func strideFrom(_ start: Int, to: Int, by: Int) -> StrideTo<Int> {

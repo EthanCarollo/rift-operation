@@ -150,7 +150,7 @@ struct AudioBusView: View {
                                 endPoint: .top
                             )
                             .frame(width: 6, height: min(level, 1.0) * geo.size.height)
-                            .animation(.linear(duration: 0.05), value: level)
+                            .animation(.linear(duration: 0.1), value: level)
                         }
                     }
                     .frame(width: 6)
