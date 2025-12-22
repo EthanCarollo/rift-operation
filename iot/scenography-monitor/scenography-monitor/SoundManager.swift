@@ -584,28 +584,33 @@ class SoundManager: NSObject, ObservableObject {
         rms = sqrt(rms / Float(frames / UInt32(stride)))
         
         // Scale and damp
-        let currentLevel = rms * 5.0 // Boost for visual
         
         // Throttling: Only update UI if significant change or timed interval?
         // Basic time throttle:
+        // Pre-calculation check to filter noise (Audio thread safe? No, let's keep it simple)
+        // Optimization: Don't dispatch if result is negligible and we are already at 0
+        
+        let currentLevel = rms * 5.0 // Boost for visual
+        
+        // Dispatch with strict throttling
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
+            // Global UI Throttle (prevents flooding Main Thread with 36 bus updates per frame)
             let now = Date().timeIntervalSince1970
-            if now - self.lastUIUpdate < 0.03 { return } // Limit to ~30fps
+            if now - self.lastUIUpdate < 0.05 { return } // 20 FPS cap
             self.lastUIUpdate = now
-
-            // Apply volume influence to visual meter?
-            // If muted, we see 0?
-            // Ideally, yes.
-            // If we access self.audioBuses here it might be racey? 
-            // We are on Main Queue, so it is safe to read @Published.
             
             if let bus = self.audioBuses.first(where: { $0.id == busId }) {
+                 let newLevel: Float
                  if bus.isMuted {
-                     self.busLevels[busId] = 0
+                     newLevel = 0
                  } else {
-                     self.busLevels[busId] = min(currentLevel * bus.volume, 1.0)
+                     newLevel = min(currentLevel * bus.volume, 1.0)
+                 }
+                 // Only publish if changed significantly to save view updates
+                 if abs((self.busLevels[busId] ?? 0) - newLevel) > 0.01 {
+                     self.busLevels[busId] = newLevel
                  }
             }
         }

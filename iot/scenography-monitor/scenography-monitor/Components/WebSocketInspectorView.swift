@@ -65,7 +65,7 @@ struct WebSocketInspectorView: View {
                         
                         ScrollView {
                             VStack(alignment: .leading, spacing: 2) {
-                                ForEach(wsManager.messages.reversed(), id: \.self) { msg in
+                                ForEach(wsManager.messages.suffix(20).reversed(), id: \.self) { msg in
                                     Text(msg)
                                         .font(.system(size: 9, design: .monospaced))
                                         .foregroundColor(.secondary)
