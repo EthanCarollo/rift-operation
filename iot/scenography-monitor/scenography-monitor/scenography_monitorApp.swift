@@ -12,6 +12,11 @@ struct scenography_monitorApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    // Ensure managers are alive
+                    _ = WebSocketManager.shared
+                    _ = SoundTrigger.shared
+                }
         }
     }
 }

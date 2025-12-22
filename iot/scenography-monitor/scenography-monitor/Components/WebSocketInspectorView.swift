@@ -2,8 +2,9 @@ import SwiftUI
 
 struct WebSocketInspectorView: View {
     @Binding var isVisible: Bool
-    @State private var wsUrl: String = Config.websocketUrl
-    @State private var isConnected: Bool = false
+    
+    @ObservedObject var wsManager = WebSocketManager.shared
+    @ObservedObject var soundTrigger = SoundTrigger.shared
     
     var body: some View {
         if isVisible {
@@ -25,35 +26,34 @@ struct WebSocketInspectorView: View {
                         .buttonStyle(.plain)
                     }
                     
-                    // URL Config
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("WebSocket URL")
-                            .font(.system(size: 10))
-                        TextField("ws://...", text: $wsUrl)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(size: 11))
-                    }
-                    
                     // Connection Status
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Circle()
-                                .fill(isConnected ? Color.green : Color.red)
+                                .fill(wsManager.isConnected ? Color.green : Color.red)
                                 .frame(width: 8, height: 8)
-                            Text(isConnected ? "CONNECTED" : "DISCONNECTED")
+                            Text(wsManager.isConnected ? "CONNECTED" : "DISCONNECTED")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(isConnected ? .green : .red)
+                                .foregroundColor(wsManager.isConnected ? .green : .red)
                         }
                         
-                        Button(action: { isConnected.toggle() }) {
-                            Text(isConnected ? "DISCONNECT" : "CONNECT")
+                        Button(action: {
+                            if wsManager.isConnected {
+                                wsManager.disconnect()
+                            } else {
+                                wsManager.connect()
+                            }
+                        }) {
+                            Text(wsManager.isConnected ? "DISCONNECT" : "CONNECT")
                                 .font(.system(size: 10, weight: .bold))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 4)
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(isConnected ? .red : .blue)
+                        .tint(wsManager.isConnected ? .red : .blue)
                     }
+                    
+                    Divider()
                     
                     Divider()
                     
@@ -65,15 +65,17 @@ struct WebSocketInspectorView: View {
                         
                         ScrollView {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("[12:00:01] System Init")
-                                Text("[12:00:02] Audio Engine Ready")
-                                Text("[12:00:05] Waiting for connection...")
+                                ForEach(wsManager.messages.reversed(), id: \.self) { msg in
+                                    Text(msg)
+                                        .font(.system(size: 9, design: .monospaced))
+                                        .foregroundColor(.secondary)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .frame(height: 100)
+                        .frame(maxHeight: .infinity)
                         .background(Color(nsColor: .controlBackgroundColor))
                         .cornerRadius(4)
                     }
@@ -81,7 +83,7 @@ struct WebSocketInspectorView: View {
                     Spacer()
                 }
                 .padding()
-                .frame(width: 250)
+                .frame(width: 300)
                 .background(Color(nsColor: .windowBackgroundColor))
             }
             .transition(.move(edge: .trailing))

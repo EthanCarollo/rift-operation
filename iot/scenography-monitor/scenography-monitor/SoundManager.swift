@@ -75,6 +75,7 @@ class SoundManager: NSObject, ObservableObject {
     
     private let bookmarkKey = "soundDirectoryBookmark"
     private var meteringTimer: Timer?
+    private var lastUIUpdate: TimeInterval = 0
     
     override init() {
         let defaultURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -325,6 +326,9 @@ class SoundManager: NSObject, ObservableObject {
             }
         }
         
+        // Ensure the graph has a valid mixer-to-output connection by accessing mainMixerNode
+        _ = engine.mainMixerNode
+        
         do {
             try engine.start()
             print("Engine started successfully for UID: \(uid)")
@@ -518,7 +522,8 @@ class SoundManager: NSObject, ObservableObject {
         engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
         
         // Loop Logic
-        player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+        // Loop Logic - Disabled as per user request (Single play)
+        player.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
         
         // Install Tap for Metering
         player.installTap(onBus: 0, bufferSize: 1024, format: buffer.format) { [weak self] (buf, time) in
@@ -581,8 +586,15 @@ class SoundManager: NSObject, ObservableObject {
         // Scale and damp
         let currentLevel = rms * 5.0 // Boost for visual
         
+        // Throttling: Only update UI if significant change or timed interval?
+        // Basic time throttle:
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            
+            let now = Date().timeIntervalSince1970
+            if now - self.lastUIUpdate < 0.03 { return } // Limit to ~30fps
+            self.lastUIUpdate = now
+
             // Apply volume influence to visual meter?
             // If muted, we see 0?
             // Ideally, yes.
