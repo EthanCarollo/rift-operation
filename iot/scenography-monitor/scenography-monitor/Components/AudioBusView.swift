@@ -28,11 +28,13 @@ struct AudioBusView: View {
     @State private var initialValue: Double = 0.0
     @State private var initialMouseLocation: CGPoint? = nil
     
-    @State private var selectedDevice: String = "" 
+    @State private var selectedDevice: String = ""
+    @State private var localVolume: Double? = nil // For smooth dragging
     
     var body: some View {
         // Safe unwrap of bus settings
-        let currentVolume = Double(bus?.volume ?? 0.75)
+        // Use local volume while dragging, otherwise model volume
+        let currentVolume = localVolume ?? Double(bus?.volume ?? 0.75)
         let currentPan = Double(bus?.pan ?? 0.5)
         let isMuted = bus?.isMuted ?? false
         let isSolo = bus?.isSolo ?? false
@@ -49,12 +51,6 @@ struct AudioBusView: View {
                 get: { bus?.name ?? "BUS \(busId)" },
                 set: { soundManager.setBusName($0, onBus: busId) }
             ))
-            .font(.system(size: 10, weight: .bold, design: .monospaced))
-            .multilineTextAlignment(.center)
-            .textFieldStyle(.plain)
-            .foregroundColor(.black)
-            .frame(height: 16)
-            .frame(maxWidth: .infinity)
             .background(Color(nsColor: .windowBackgroundColor))
             .border(Color(nsColor: .separatorColor), width: 0.5)
             
@@ -123,7 +119,7 @@ struct AudioBusView: View {
                             NSCursor.unhide()
                         }
                 )
-                
+            
                 // Fader & Meter Section
                 HStack(alignment: .bottom, spacing: 4) {
                     
@@ -175,7 +171,8 @@ struct AudioBusView: View {
                                         .onChanged { value in
                                             if !isDraggingFader {
                                                 isDraggingFader = true
-                                                initialValue = currentVolume
+                                                // Start from current model value if not yet local
+                                                initialValue = localVolume ?? Double(bus?.volume ?? 0.75)
                                                 if let event = CGEvent(source: nil) {
                                                     initialMouseLocation = event.location
                                                 }
@@ -186,7 +183,11 @@ struct AudioBusView: View {
                                             let delta = -value.translation.height
                                             let newVol = max(0, min(1, initialValue + (delta * sensitivity)))
                                             
-                                            soundManager.setVolume(Float(newVol), onBus: busId)
+                                            // Update LOCAL UI state immediately (smooth)
+                                            localVolume = newVol
+                                            
+                                            // Send PREVIEW to audio engine (fast, no @Published)
+                                            soundManager.previewVolume(Float(newVol), onBus: busId)
                                         }
                                         .onEnded { _ in
                                             isDraggingFader = false
@@ -194,6 +195,14 @@ struct AudioBusView: View {
                                                 CGWarpMouseCursorPosition(loc)
                                             }
                                             NSCursor.unhide()
+                                            
+                                            // Commit final value to Model (triggers persistence/UI sync)
+                                            if let finalVol = localVolume {
+                                                soundManager.setVolume(Float(finalVol), onBus: busId)
+                                            }
+                                            
+                                            // Clear local state to revert to model source of truth
+                                            localVolume = nil
                                         }
                                 )
                         }

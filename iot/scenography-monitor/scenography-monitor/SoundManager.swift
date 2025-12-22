@@ -11,6 +11,8 @@ import SwiftUI
 import Combine
 import CoreAudio
 
+import UniformTypeIdentifiers
+
 // Helper for Audio Devices
 struct AudioDeviceInput: Hashable {
     let id: AudioObjectID
@@ -110,7 +112,7 @@ class SoundManager: NSObject, ObservableObject {
         refreshAudioDevices()
         startMetering()
     }
-    
+
     // MARK: - Directory Management
     func selectSoundDirectory() {
         let panel = NSOpenPanel()
@@ -124,6 +126,44 @@ class SoundManager: NSObject, ObservableObject {
                 self?.saveBookmark(for: url)
                 self?.soundDirectoryURL = url
                 self?.refreshSounds()
+            }
+        }
+    }
+    
+    func importSounds() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = true
+        panel.prompt = "Import Sounds"
+        panel.message = "Choose audio files to add to your library"
+        panel.allowedContentTypes = [.audio]
+        
+        panel.begin { [weak self] result in
+            guard let self = self, result == .OK else { return }
+            
+            // Security Scope for Target
+            let startAccess = self.soundDirectoryURL.startAccessingSecurityScopedResource()
+            defer { if startAccess { self.soundDirectoryURL.stopAccessingSecurityScopedResource() } }
+            
+            for srcURL in panel.urls {
+                let destURL = self.soundDirectoryURL.appendingPathComponent(srcURL.lastPathComponent)
+                do {
+                    if FileManager.default.fileExists(atPath: destURL.path) {
+                        print("File already exists: \(destURL.lastPathComponent)")
+                        // Optional: Could implement overwrite logic or rename here
+                    } else {
+                        try FileManager.default.copyItem(at: srcURL, to: destURL)
+                        print("Imported: \(srcURL.lastPathComponent)")
+                    }
+                } catch {
+                    print("Failed to import \(srcURL.lastPathComponent): \(error)")
+                }
+            }
+            
+            // Refresh list on Main Thread
+            DispatchQueue.main.async {
+                self.refreshSounds()
             }
         }
     }
@@ -397,52 +437,99 @@ class SoundManager: NSObject, ObservableObject {
         player.pan = (bus.pan * 2.0) - 1.0
     }
     
+    // Updates volume directly on the player without triggering a full UI/Persistence update via @Published
+    func previewVolume(_ volume: Float, onBus busId: Int) {
+        guard let player = players[busId], let bus = audioBuses.first(where: { $0.id == busId }) else { return }
+        
+        // Calculate target volume using the PREVIEW volume, but respecting Mute/Solo logic
+        let anySolo = audioBuses.contains { $0.isSolo }
+        var targetVolume = volume
+        
+        if bus.isMuted {
+            targetVolume = 0
+        } else if anySolo && !bus.isSolo {
+            targetVolume = 0
+        }
+        
+        player.volume = targetVolume
+    }
+    
     func playSound(node: FileNode, onBus busId: Int) {
+        // Stop previous sound immediately on Main Thread to prevent overlap
         stopSound(onBus: busId)
         soundRoutes[node.name] = busId
         
         guard let bus = audioBuses.first(where: { $0.id == busId }) else { return }
+        let outputDeviceUID = bus.outputDeviceUID
+        let outputDeviceName = bus.outputDeviceName
         
-        let engine = getEngine(for: bus.outputDeviceUID)
+        // Dispatch heavy I/O to background
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            do {
+                let file = try AVAudioFile(forReading: node.url)
+                
+                // Read entire file into buffer (Heavy Operation)
+                guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) else {
+                    print("Failed to create buffer for \(node.name)")
+                    return
+                }
+                
+                try file.read(into: buffer)
+                
+                // Dispatch back to Main Thread for Engine Operations
+                DispatchQueue.main.async {
+                    // Re-check if bus is still valid and not stopped/replaced while loading
+                    // We check if the route is still assigned to this bus for this file
+                    if self.soundRoutes[node.name] == busId {
+                        self.finalizePlayback(buffer: buffer, file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
+                    } else {
+                        print("Playback cancelled for \(node.name) - Route changed during load")
+                    }
+                }
+                
+            } catch {
+                print("Async Load failed for \(node.name): \(error)")
+            }
+        }
+    }
+    
+    // Internal helper running on Main Thread
+    private func finalizePlayback(buffer: AVAudioPCMBuffer, file: AVAudioFile, busId: Int, outputUID: String, outputName: String, nodeName: String) {
+        let engine = getEngine(for: outputUID)
         let player = AVAudioPlayerNode()
         
         engine.attach(player)
         
+        // Track the file for potential looping logic
+        activeFiles[busId] = file
+        
+        // Connect with explicit format
+        engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
+        
+        // Loop Logic
+        player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+        
+        // Install Tap for Metering
+        player.installTap(onBus: 0, bufferSize: 1024, format: buffer.format) { [weak self] (buf, time) in
+             self?.processMeter(buffer: buf, busId: busId)
+        }
+        
+        // Apply Initial Bus Settings (Volume, Pan, etc.)
+        updatePlayerVolume(busId)
+        
         do {
-            let file = try AVAudioFile(forReading: node.url)
-            activeFiles[busId] = file
+            if !engine.isRunning { try engine.start() }
+            player.play()
             
-            // Connect with explicit format to avoid channel mismatch crashes
-            engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
+            players[busId] = player
             
-            // Loop Logic: Schedule Buffer indefinitely
-            if let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) {
-                try file.read(into: buffer)
-                
-                player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
-                
-                // Install Tap for Metering
-                player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buffer, time) in
-                     self?.processMeter(buffer: buffer, busId: busId)
-                }
-                
-                // Apply Initial Bus Settings
-                updatePlayerVolume(busId) // Applies Vol/Pan/Mute/Solo
-                
-                if !engine.isRunning { try engine.start() }
-                player.play()
-                
-                players[busId] = player
-                
-                DispatchQueue.main.async {
-                    self.activeBusIds.insert(busId)
-                }
-                
-                print("Playing \(node.name) on Bus \(busId) via \(bus.outputDeviceName)")
-            }
+            self.activeBusIds.insert(busId)
             
+            print("Playing \(nodeName) on Bus \(busId) via \(outputName)")
         } catch {
-            print("Playback failed: \(error)")
+             print("Engine/Play failed for \(nodeName): \(error)")
         }
     }
     

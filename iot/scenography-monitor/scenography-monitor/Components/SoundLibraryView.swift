@@ -37,6 +37,15 @@ struct SoundLibraryView: View {
                 .controlSize(.mini)
                 .frame(width: 90)
                 
+                // Import
+                Button(action: { soundManager.importSounds() }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .buttonStyle(.plain)
+                .help("Add Sounds")
+                .padding(.horizontal, 4)
+                
                 // Folder Selection
                 Button(action: { soundManager.selectSoundDirectory() }) {
                     Image(systemName: "folder")
