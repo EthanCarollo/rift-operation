@@ -39,14 +39,8 @@ class SoundManager: NSObject, ObservableObject {
     
     @Published var rootNodes: [FileNode] = []
     
-    // Routing state: Sound Filename -> Bus ID
-    @Published var soundRoutes: [String: Int] = [:]
-    
-    // Playback state
-    // Playback state
-    @Published var activeBusIds: Set<Int> = []
-    @Published var activeNodeNames: [Int: String] = [:] // BusID -> SoundName
-    @Published var loadingBusIds: Set<Int> = [] // Buses currently loading a file
+    // Playback state (Legacy properties removed)
+
     
     // Metering state: Bus ID -> Normalized Level (0.0 - 1.0)
     @Published var busLevels: [Int: Float] = [:]
@@ -66,6 +60,46 @@ class SoundManager: NSObject, ObservableObject {
     
     @Published var audioBuses: [AudioBus] = []
     
+    // Instance Data Model
+    struct SoundInstance: Identifiable, Codable, Hashable {
+        let id: UUID
+        let filename: String
+        
+        init(id: UUID = UUID(), filename: String) {
+            self.id = id
+            self.filename = filename
+        }
+    }
+    
+    // Bus ID -> List of Instances
+    @Published var busSamples: [Int: [SoundInstance]] = [:] 
+    
+    // Management Methods
+    func addInstance(filename: String, toBus busId: Int) {
+        let instance = SoundInstance(filename: filename)
+        if var list = busSamples[busId] {
+            list.append(instance)
+            busSamples[busId] = list
+        } else {
+            busSamples[busId] = [instance]
+        }
+    }
+    
+    func removeInstance(_ instanceId: UUID, fromBus busId: Int) {
+        stopSound(instanceID: instanceId)
+        if var list = busSamples[busId] {
+            list.removeAll { $0.id == instanceId }
+            busSamples[busId] = list
+        }
+        // Notify Trigger System/Cleanup Bindings
+        SoundTrigger.shared.removeBindings(forInstance: instanceId)
+    }
+    
+    @Published var soundRoutes: [String: Int] = [:] // Backwards compatibility mock if needed, but better to remove usage.
+
+    @Published var activeInstanceIds: Set<UUID> = []
+    @Published var loadingInstanceIds: Set<UUID> = []
+    
     // Available Audio Devices
     @Published var availableOutputs: [String] = [] // Names for UI
     private var availableOutputDevices: [AudioDeviceInput] = [] // Internal Full Objects
@@ -73,10 +107,10 @@ class SoundManager: NSObject, ObservableObject {
     // Engine & Player Storage
     // One Engine per Output Device UID
     private var engines: [String: AVAudioEngine] = [:]
-    // One PlayerNode per Bus ID
-    private var players: [Int: AVAudioPlayerNode] = [:]
+    // One PlayerNode per Instance ID
+    private var players: [UUID: AVAudioPlayerNode] = [:]
     // Files for looping logic
-    private var activeFiles: [Int: AVAudioFile] = [:]
+    private var activeFiles: [UUID: AVAudioFile] = [:]
     
     private let bookmarkKey = "soundDirectoryBookmark"
     private var meteringTimer: Timer?
@@ -375,12 +409,13 @@ class SoundManager: NSObject, ObservableObject {
             audioBuses[index].outputDeviceUID = uid
             
             // If playing, restart on new engine
-            // We need to re-route. Simple way: Stop. User restarts.
-            // Or auto-restart if we store the current file node.
-            // For now, strict restart.
-            if let player = players[busId], player.isPlaying {
-                stopSound(onBus: busId)
-                print("Output changed for Bus \(busId). Please restart playback.")
+            // Stop all playing instances on this bus
+            let instances = busSamples[busId] ?? []
+            for instance in instances {
+                if let player = players[instance.id], player.isPlaying {
+                    stopSound(instanceID: instance.id)
+                    print("Output changed for Bus \(busId). Stopped \(instance.filename).")
+                }
             }
         }
     }
@@ -441,41 +476,29 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     func updatePlayerVolume(_ busId: Int) {
-        audioGraphQueue.async { [weak self] in
-            guard let self = self, let player = self.players[busId] else { return }
+        // Snapshot Bus State on Main Thread
+        DispatchQueue.main.async {
+            guard let bus = self.audioBuses.first(where: { $0.id == busId }) else { return }
+            let anySolo = self.audioBuses.contains { $0.isSolo }
+            let instances = self.busSamples[busId] ?? []
             
-            // Access bus config on Main Thread (snapshotting)
-            // Wait, we are on background queue. We can't access self.audioBuses unsafely if it's main-thread isolated.
-            // Correct pattern: Capture values on caller side (Main Thread) pass to background closure.
-            // However, updatePlayerVolume is called from seemingly anywhere.
-            // Let's rely on atomic/safe dispatch back to main to read properties? No, that's circular.
-            // BETTER: Pass volume/pan as arguments to this function, or Assume self.audioBuses is thread safe?
-            // self.audioBuses is @Published.
+            var targetVolume = bus.volume
+            if bus.isMuted {
+                targetVolume = 0
+            } else if anySolo && !bus.isSolo {
+                targetVolume = 0
+            }
+            let targetPan = (bus.pan * 2.0) - 1.0
             
-            // RE-FACTOR: We need to get the config on Main, then dispatch.
-            // Since this method logic is complex (solo/mute), let's grab state on main then dispatch.
-            
-            DispatchQueue.main.async {
-                guard let bus = self.audioBuses.first(where: { $0.id == busId }) else { return }
-                let anySolo = self.audioBuses.contains { $0.isSolo }
-                
-                var targetVolume = bus.volume
-                if bus.isMuted {
-                    targetVolume = 0
-                } else if anySolo && !bus.isSolo {
-                    targetVolume = 0
-                }
-                let targetPan = (bus.pan * 2.0) - 1.0
-                
-                self.audioGraphQueue.async {
-                    // Check if player still exists
-                    if let player = self.players[busId] {
+            self.audioGraphQueue.async {
+                // Update all players belonging to this bus
+                for instance in instances {
+                    if let player = self.players[instance.id] {
                         player.volume = targetVolume
                         player.pan = targetPan
                     }
                 }
             }
-
         }
     }
     
@@ -485,12 +508,10 @@ class SoundManager: NSObject, ObservableObject {
     
     // Updates volume directly on the player without triggering a full UI/Persistence update via @Published
     func previewVolume(_ volume: Float, onBus busId: Int) {
-        // Fast path for dragging
         // Capture logic state on Main (assuming this is called from UI)
         let anySolo = audioBuses.contains { $0.isSolo }
         var targetVolume = volume
         
-        // We need 'bus' state.
         guard let bus = audioBuses.first(where: { $0.id == busId }) else { return }
         
         if bus.isMuted {
@@ -499,9 +520,14 @@ class SoundManager: NSObject, ObservableObject {
             targetVolume = 0
         }
         
+        let instances = busSamples[busId] ?? [] // Snapshot
+        
         audioGraphQueue.async { [weak self] in
-            if let player = self?.players[busId] {
-                player.volume = targetVolume
+            guard let self = self else { return }
+            for instance in instances {
+                if let player = self.players[instance.id] {
+                    player.volume = targetVolume
+                }
             }
         }
     }
@@ -509,149 +535,120 @@ class SoundManager: NSObject, ObservableObject {
     // Updates pan directly on the player without triggering a full UI/Persistence update via @Published
     func previewPan(_ pan: Float, onBus busId: Int) {
         let targetPan = (pan * 2.0) - 1.0
+        let instances = busSamples[busId] ?? [] // Snapshot
+        
         audioGraphQueue.async { [weak self] in
-            if let player = self?.players[busId] {
-                player.pan = targetPan
+            guard let self = self else { return }
+            for instance in instances {
+                if let player = self.players[instance.id] {
+                    player.pan = targetPan
+                }
             }
         }
     }
     
-    func playSound(node: FileNode, onBus busId: Int) {
-        // Stop previous sound immediately on Main Thread to prevent overlap
-        stopSound(onBus: busId)
-        
-        // Mark as loading immediately
-        DispatchQueue.main.async {
-            self.loadingBusIds.insert(busId)
+    func playSound(instance: SoundInstance, onBus busId: Int) {
+        // Get File Node from Filename
+        guard let node = getAllFiles().first(where: { $0.name == instance.filename }) else {
+            print("File not found: \(instance.filename)")
+            return
         }
+    
+        // Stop previous playback for THIS instance if any (re-trigger)
+        stopSound(instanceID: instance.id)
         
-        soundRoutes[node.name] = busId
+        // Mark as loading
+        DispatchQueue.main.async {
+            self.loadingInstanceIds.insert(instance.id)
+        }
         
         guard let bus = audioBuses.first(where: { $0.id == busId }) else { return }
         let outputDeviceUID = bus.outputDeviceUID
         let outputDeviceName = bus.outputDeviceName
         
-        // Dispatch heavy I/O to background
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
             do {
                 let file = try AVAudioFile(forReading: node.url)
                 
-                // Dispatch back to Graph Queue for Engine Operations
-                // Streaming Mode: No heavy buffer read here.
-                
-                self.audioGraphQueue.async { [weak self] in
-                    guard let self = self else { return }
-                    
-                    DispatchQueue.main.async {
-                        if self.soundRoutes[node.name] == busId {
-                            // Route confirmed. Now execute Graph mutation on Graph Queue
-                            self.audioGraphQueue.async {
-                                self.finalizePlayback(file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
-                            }
-                            print("Playback cancelled for \(node.name) - Route changed during load")
-                            self.loadingBusIds.remove(busId)
-                        }
-                    }
+                self.audioGraphQueue.async {
+                    self.finalizePlayback(file: file, busId: busId, instance: instance, outputUID: outputDeviceUID, outputName: outputDeviceName)
                 }
-                
             } catch {
                 print("Async Load failed for \(node.name): \(error)")
                 DispatchQueue.main.async {
-                    self.loadingBusIds.remove(busId)
+                    self.loadingInstanceIds.remove(instance.id)
                 }
             }
         }
     }
     
-    // Internal helper running on Main Thread
-    private func finalizePlayback(file: AVAudioFile, busId: Int, outputUID: String, outputName: String, nodeName: String) {
+    // Internal helper running on Graph Queue
+    private func finalizePlayback(file: AVAudioFile, busId: Int, instance: SoundInstance, outputUID: String, outputName: String) {
         let engine = getEngine(for: outputUID)
-        
-        // SAFETY CHECK: Ensure no player is already running on this bus (Race condition protection)
-        if let existingPlayer = players[busId] {
-            print("WARNING: Player collision on Bus \(busId). Stopping existing player.")
-            if existingPlayer.isPlaying { existingPlayer.stop() }
-             if let engine = existingPlayer.engine {
-                engine.disconnectNodeOutput(existingPlayer)
-                engine.detach(existingPlayer)
-            }
-        }
-        
         let player = AVAudioPlayerNode()
         
         engine.attach(player)
         
-        // Track the file for potential looping logic
-        activeFiles[busId] = file
+        // Track file
+        activeFiles[instance.id] = file
         
-        // Connect with explicit format
         engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
         
-        // Loop Logic - Disabled as per user request (Single play)
-        // Add completion handler to reset UI state when finished
         player.scheduleFile(file, at: nil) { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
-                
-                // Only remove if we haven't already stopped (to avoid race with manual stop UI flicker?)
-                // Actually, if it finishes naturally, we just remove it.
-                // Reset Level visually too.
-                if self.activeBusIds.contains(busId) {
-                     self.activeBusIds.remove(busId)
-                     self.activeNodeNames.removeValue(forKey: busId)
-                     self.busLevels[busId] = 0
-                     print("Playback finished naturally on Bus \(busId)")
+                if self.activeInstanceIds.contains(instance.id) {
+                     self.activeInstanceIds.remove(instance.id)
+                     // self.busLevels[busId] = 0 // Don't reset bus level, others might be playing
+                     print("Playback finished naturally for \(instance.filename)")
                 }
             }
         }
         
-        // Install Tap for Metering
         player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buf, time) in
              self?.processMeter(buffer: buf, busId: busId)
         }
         
-        // Apply Initial Bus Settings (Volume, Pan, etc.)
-        updatePlayerVolume(busId)
+        // Initial Volume/Pan
+        // We need to fetch it safely. Since we are in Graph Queue, we can't access Main Actor 'audioBuses'.
+        // But we can just trigger an update or default to 1.0 then update.
+        // Or wait, we are about to play. Let's play then update.
         
         do {
             if !engine.isRunning { try engine.start() }
             player.play()
             
-            players[busId] = player
+            players[instance.id] = player
             
             DispatchQueue.main.async {
-                self.activeBusIds.insert(busId)
-                self.activeNodeNames[busId] = nodeName
-                self.loadingBusIds.remove(busId)
+                self.activeInstanceIds.insert(instance.id)
+                self.loadingInstanceIds.remove(instance.id)
+                // Trigger volume update now that player exists
+                self.updatePlayerVolume(busId)
             }
             
-            print("Playing \(nodeName) on Bus \(busId) via \(outputName)")
+            print("Playing \(instance.id) (\(instance.filename)) on Bus \(busId)")
         } catch {
-             print("Engine/Play failed for \(nodeName): \(error)")
+             print("Engine/Play failed: \(error)")
              DispatchQueue.main.async {
-                self.loadingBusIds.remove(busId)
+                self.loadingInstanceIds.remove(instance.id)
              }
         }
     }
     
-    func stopSound(onBus busId: Int) {
-        // Stop locally immediately
+    func stopSound(instanceID: UUID) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.activeBusIds.remove(busId)
-            self.activeNodeNames.removeValue(forKey: busId)
-            self.busLevels[busId] = 0
+            self.activeInstanceIds.remove(instanceID)
         }
         
         audioGraphQueue.async { [weak self] in
             guard let self = self else { return }
             
-            if let player = self.players[busId] {
-                if player.isPlaying {
-                    player.stop()
-                }
+            if let player = self.players[instanceID] {
+                if player.isPlaying { player.stop() }
                 player.removeTap(onBus: 0)
                 
                 if let engine = player.engine {
@@ -659,8 +656,8 @@ class SoundManager: NSObject, ObservableObject {
                     engine.detach(player)
                 }
                 
-                self.players.removeValue(forKey: busId)
-                self.activeFiles.removeValue(forKey: busId)
+                self.players.removeValue(forKey: instanceID)
+                self.activeFiles.removeValue(forKey: instanceID)
             }
         }
     }

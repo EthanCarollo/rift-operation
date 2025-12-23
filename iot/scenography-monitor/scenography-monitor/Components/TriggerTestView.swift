@@ -38,7 +38,8 @@ struct TriggerTestView: View {
         let testSound = "test_sound"
         
         // 1. Setup Binding
-        trigger.addBinding(key: testKey, sound: testSound, value: "true")
+        // 1. Setup Binding
+        trigger.addBinding(key: testKey, sound: testSound, instanceId: UUID(), value: "true")
         log("Binding added: \(testKey) -> \(testSound) (Target: true)")
         
         // 2. Simulate First Event

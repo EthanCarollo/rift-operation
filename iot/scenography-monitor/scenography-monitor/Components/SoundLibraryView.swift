@@ -27,17 +27,8 @@ struct SoundLibraryView: View {
                 Spacer()
                 
                 // Filter Picker
-                Picker("Filter", selection: $filterId) {
-                    Text("ALL").tag(-1)
-                    Divider()
-                    Text("Unassigned").tag(0)
-                    ForEach(soundManager.audioBuses, id: \.id) { bus in
-                        Text(bus.name.uppercased()).tag(bus.id)
-                    }
-                }
-                .labelsHidden()
-                .controlSize(.mini)
-                .frame(width: 90)
+                // Filter Picker Removed (Incompatible with Instance Model)
+
                 
                 // Import
                 Button(action: { soundManager.importSounds() }) {
@@ -67,9 +58,6 @@ struct SoundLibraryView: View {
             .background(Color(nsColor: .controlBackgroundColor))
             .border(Color(nsColor: .separatorColor), width: 1, edges: [.bottom])
             
-            // Dynamic Bus List for Rows
-            let allBuses = [(id: 0, name: "None")] + soundManager.audioBuses.map { (id: $0.id, name: $0.name) }
-            
             // Usage Hint
             if soundManager.rootNodes.isEmpty {
                 VStack(spacing: 8) {
@@ -91,37 +79,17 @@ struct SoundLibraryView: View {
                 .frame(maxHeight: .infinity)
             } else {
                 List {
-                    if filterId == -1 {
-                        // Hierarchical View (Default)
-                        OutlineGroup(soundManager.rootNodes, children: \.children) { node in
-                            if node.isDirectory {
-                                HStack {
-                                    Image(systemName: "folder")
-                                        .foregroundColor(.secondary)
-                                    Text(node.name)
-                                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                }
-                            } else {
-                                SoundRow(node: node, soundManager: soundManager, buses: allBuses)
+                    // Hierarchical View (Default)
+                    OutlineGroup(soundManager.rootNodes, children: \.children) { node in
+                        if node.isDirectory {
+                            HStack {
+                                Image(systemName: "folder")
+                                    .foregroundColor(.secondary)
+                                Text(node.name)
+                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
                             }
-                        }
-                    } else {
-                        // Filtered Flat View
-                        let filteredNodes = soundManager.getAllFiles().filter { node in
-                            if node.isDirectory { return false }
-                            let assignedBus = soundManager.soundRoutes[node.name] ?? 0
-                            return assignedBus == filterId
-                        }
-                        
-                        if filteredNodes.isEmpty {
-                            Text("No sounds found for filter.")
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
-                                .padding()
                         } else {
-                            ForEach(filteredNodes) { node in
-                                SoundRow(node: node, soundManager: soundManager, buses: allBuses)
-                            }
+                            SoundRow(node: node)
                         }
                     }
                 }

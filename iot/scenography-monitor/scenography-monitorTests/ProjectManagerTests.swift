@@ -5,10 +5,13 @@ import XCTest
 class ProjectManagerTests: XCTestCase {
 
     func testProjectDataSerialization() throws {
-        // Mock Data
-        let mockRoutes = ["sound1.wav": 1, "sound2.wav": 2]
+        // Mock Instances
+        let instance = SoundManager.SoundInstance(filename: "sound1.wav")
+        let busSamples = [1: [instance]]
+        
         // Bindings
-        let mockBinding = SoundTrigger.BindingConfig(jsonKey: "test", soundName: "sound1.wav", targetValue: "true")
+        // Note: New bindings require instanceId for full functionality, but targetValue/jsonKey are core.
+        let mockBinding = SoundTrigger.BindingConfig(jsonKey: "test", soundName: "sound1.wav", instanceId: instance.id, targetValue: "true")
         
         // Buses
         var mockBus = SoundManager.AudioBus(id: 1, name: "TestBus")
@@ -16,9 +19,10 @@ class ProjectManagerTests: XCTestCase {
         
         // Create Data Object
         let projectData = ProjectManager.ProjectData(
-            version: "1.0",
+            version: "2.0",
             timestamp: Date(),
-            soundRoutes: mockRoutes,
+            soundRoutes: nil,
+            busSamples: busSamples,
             bindings: [mockBinding],
             audioBuses: [mockBus]
         )
@@ -33,10 +37,18 @@ class ProjectManagerTests: XCTestCase {
         let decodedData = try decoder.decode(ProjectManager.ProjectData.self, from: data)
         
         // Assertions
-        XCTAssertEqual(decodedData.version, "1.0")
-        XCTAssertEqual(decodedData.soundRoutes["sound1.wav"], 1)
+        XCTAssertEqual(decodedData.version, "2.0")
+        
+        // Verify Instance Data
+        XCTAssertNotNil(decodedData.busSamples)
+        XCTAssertEqual(decodedData.busSamples?[1]?.first?.filename, "sound1.wav")
+        
+        // Verify Binding
         XCTAssertEqual(decodedData.bindings.count, 1)
         XCTAssertEqual(decodedData.bindings.first?.jsonKey, "test")
+        XCTAssertEqual(decodedData.bindings.first?.instanceId, instance.id)
+        
+        // Verify Bus
         XCTAssertEqual(decodedData.audioBuses.first?.name, "TestBus")
         XCTAssertEqual(decodedData.audioBuses.first?.volume, 0.5)
     }

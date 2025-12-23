@@ -67,18 +67,15 @@ struct BusTrackView: View {
                 // Content: Horizontal Stack of Slots
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        // Filter sounds assigned to this bus
-                        let assignedSounds = soundManager.soundRoutes
-                            .filter { $0.value == bus.id }
-                            .map { $0.key }
-                            .sorted()
+                        // Get Instances for this Bus
+                        let instances = soundManager.busSamples[bus.id] ?? []
                         
-                        ForEach(assignedSounds, id: \.self) { soundName in
-                            SampleSlotView(soundName: soundName, busId: bus.id, soundManager: soundManager)
+                        ForEach(instances) { instance in
+                            SampleSlotView(instance: instance, busId: bus.id, soundManager: soundManager)
                         }
                         
                         // Empty Slot hint if empty
-                        if assignedSounds.isEmpty {
+                        if instances.isEmpty {
                             Text("Drop Sounds Here")
                                 .font(.system(size: 10, design: .monospaced))
                                 .foregroundColor(.gray.opacity(0.4))
@@ -92,10 +89,12 @@ struct BusTrackView: View {
                 providers.first?.loadObject(ofClass: String.self) { (str, error) in
                     guard let soundName = str else { return }
                     DispatchQueue.main.async {
-                        // Assign logic
-                        // Remove from old bus (implicitly handled by map replacement)
-                        soundManager.soundRoutes[soundName] = bus.id
-                        print("Dropped \(soundName) on Bus \(bus.id)")
+                        // Add Instance Logic
+                        // Decoupled Drag: Dropping here creates a new instance on this bus.
+                        // It does NOT remove it from elsewhere (unless we implemented moving).
+                        // Since drag source is 'Library', it's a Copy/Create operation.
+                        soundManager.addInstance(filename: soundName, toBus: bus.id)
+                        print("Added instance of \(soundName) to Bus \(bus.id)")
                     }
                 }
                 return true
@@ -106,5 +105,3 @@ struct BusTrackView: View {
         .border(Color.gray.opacity(0.2), width: 1, edges: [.bottom])
     }
 }
-
-

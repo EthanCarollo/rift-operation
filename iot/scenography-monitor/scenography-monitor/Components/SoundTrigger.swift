@@ -9,14 +9,15 @@ class SoundTrigger: ObservableObject {
     struct BindingConfig: Identifiable, Hashable, Codable {
         let id: UUID
         let jsonKey: String
-        let soundName: String
-        // Bus ID is now resolved dynamically from SoundManager
-        let targetValue: String? // Helper: treats all incoming values as string for comparison
+        let soundName: String // Keep for display/fallback
+        var instanceId: UUID? // Optional for migration, but enforced for new bindings
+        let targetValue: String? 
         
-        init(id: UUID = UUID(), jsonKey: String, soundName: String, targetValue: String?) {
+        init(id: UUID = UUID(), jsonKey: String, soundName: String, instanceId: UUID? = nil, targetValue: String?) {
             self.id = id
             self.jsonKey = jsonKey
             self.soundName = soundName
+            self.instanceId = instanceId
             self.targetValue = targetValue
         }
     }
@@ -130,36 +131,43 @@ class SoundTrigger: ObservableObject {
     
     private func triggerSound(_ binding: BindingConfig) {
         DispatchQueue.main.async {
-            // Resolve Bus Dynamically on Main Thread
-            guard let busId = SoundManager.shared.soundRoutes[binding.soundName], busId > 0 else {
-                // print("SoundTrigger: Sound '\(binding.soundName)' is not assigned to any active bus. Skipping.")
-                return
-            }
-
-            // Find File Node
-            let allFiles = SoundManager.shared.getAllFiles()
-            if let node = allFiles.first(where: { $0.name == binding.soundName }) {
-                SoundManager.shared.playSound(node: node, onBus: busId)
+            // New Instance Logic
+            if let instanceId = binding.instanceId {
+                // Find instance in buses
+                for (busId, instances) in SoundManager.shared.busSamples {
+                    if let instance = instances.first(where: { $0.id == instanceId }) {
+                        SoundManager.shared.playSound(instance: instance, onBus: busId)
+                        return
+                    }
+                }
+                print("SoundTrigger: Instance \(instanceId) not found in any bus.")
             } else {
-                print("SoundTrigger: File not found '\(binding.soundName)'")
+                // FALLBACK: Old SoundName logic (Temporary)
+                // We should eventually remove this.
+                print("SoundTrigger: Binding has no instance ID (Old Format).")
             }
         }
     }
 
     // Public API to manage bindings
-    func addBinding(key: String, sound: String, value: String? = nil) {
+    func addBinding(key: String, sound: String, instanceId: UUID, value: String? = nil) {
         // Allow multiple bindings for same key IF they have different values
         // But remove exact duplicates
-        bindings.removeAll { $0.jsonKey == key && $0.targetValue == value && $0.soundName == sound }
+        bindings.removeAll { $0.jsonKey == key && $0.targetValue == value && $0.instanceId == instanceId }
         
-        let binding = BindingConfig(jsonKey: key, soundName: sound, targetValue: value)
+        let binding = BindingConfig(jsonKey: key, soundName: sound, instanceId: instanceId, targetValue: value)
         bindings.append(binding)
-        print("Bound '\(key)' (Val: \(value ?? "Any")) to sound '\(sound)'")
+        print("Bound '\(key)' (Val: \(value ?? "Any")) to instance '\(instanceId)'")
     }
     
+    func removeBindings(forInstance instanceId: UUID) {
+        bindings.removeAll { $0.instanceId == instanceId }
+        print("Removed all bindings for instance '\(instanceId)'")
+    }
+    
+    // Deprecated sound-name based removal
     func removeBindings(forSound soundName: String) {
         bindings.removeAll { $0.soundName == soundName }
-        print("Removed all bindings for sound '\(soundName)'")
     }
     
     func removeBinding(key: String) {

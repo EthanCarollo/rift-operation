@@ -65,7 +65,7 @@ struct BindingEditorSheet: View {
                         guard !finalKey.isEmpty else { return }
                         let finalValue = targetValue.isEmpty ? nil : targetValue
                         
-                        SoundTrigger.shared.addBinding(key: finalKey, sound: soundName, value: finalValue)
+                        SoundTrigger.shared.addBinding(key: finalKey, sound: soundName, instanceId: UUID(), value: finalValue)
                         
                         // Reset
                         if isCustomKey { customKey = "" }

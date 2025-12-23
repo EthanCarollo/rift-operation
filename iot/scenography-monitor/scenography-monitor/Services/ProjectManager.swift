@@ -12,16 +12,17 @@ class ProjectManager: ObservableObject {
     struct ProjectData: Codable {
         let version: String
         let timestamp: Date
-        let soundRoutes: [String: Int]
+        let soundRoutes: [String: Int]? // Legacy (Optional for back-compat)
+        let busSamples: [Int: [SoundManager.SoundInstance]]? // New Instance Data
         let bindings: [SoundTrigger.BindingConfig]
         let audioBuses: [SoundManager.AudioBus]
-        // Could expand to include window layout preferences etc.
         
         static var current: ProjectData {
             return ProjectData(
-                version: "1.0",
+                version: "2.0",
                 timestamp: Date(),
-                soundRoutes: SoundManager.shared.soundRoutes,
+                soundRoutes: nil, // We don't save legacy routes anymore
+                busSamples: SoundManager.shared.busSamples,
                 bindings: SoundTrigger.shared.bindings,
                 audioBuses: SoundManager.shared.audioBuses
             )
@@ -50,14 +51,30 @@ class ProjectManager: ObservableObject {
         DispatchQueue.main.async {
             // Restore Buses (Volume, Pan, Color)
             SoundManager.shared.audioBuses = projectData.audioBuses
-            // Force Update Engines if needed? Actually bus settings are just data, engine logic reads them.
-            // We might need to re-apply volumes to players if they are playing, but usually this is for "Loading a setup", so playback stops?
-            // For now, just update data models.
             
-            // Restore Routes
-            SoundManager.shared.soundRoutes = projectData.soundRoutes
+            // Restore Samples (Instances)
+            if let samples = projectData.busSamples {
+                // New Format
+                SoundManager.shared.busSamples = samples
+            } else if let routes = projectData.soundRoutes {
+                // Formatting Migration: Legacy Routes -> Instances
+                var newSamples: [Int: [SoundManager.SoundInstance]] = [:]
+                for (soundName, busId) in routes {
+                     let instance = SoundManager.SoundInstance(filename: soundName)
+                     newSamples[busId, default: []].append(instance)
+                }
+                SoundManager.shared.busSamples = newSamples
+                print("Migrated legacy project to Instance format.")
+            }
             
             // Restore Bindings
+            // Note: Bindings might need migration if they rely on soundName but we generated new UUIDs above.
+            // If we migrated legacy routes, we generated NEW instances with NEW UUIDs.
+            // Old bindings have 'soundName'. New bindings have 'instanceId'.
+            // SoundTrigger.addBinding logic was: (key, sound).
+            // Users will need to re-bind if they load an old project that uses old binding format?
+            // Or we try to resolve?
+            // For now, load raw bindings. SoundTrigger handles legacy "soundName" lookup as fallback.
             SoundTrigger.shared.bindings = projectData.bindings
             
             // Refresh logic to ensure UI and Audio Engine reflect changes

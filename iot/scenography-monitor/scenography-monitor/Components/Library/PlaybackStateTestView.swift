@@ -8,7 +8,7 @@ struct PlaybackStateTestView: View {
     
     var body: some View {
         VStack {
-            Text("Playback State E2E Test")
+            Text("Instance playback E2E Test")
                 .font(.headline)
             
             ScrollView {
@@ -32,69 +32,64 @@ struct PlaybackStateTestView: View {
         testRunning = true
         log = "Starting Test...\n"
         
-        // Setup: Mock 2 sounds on Bus 1
-        let soundA = "TestSoundA"
-        let soundB = "TestSoundB"
+        // Setup: Create Instances on Bus 1
         let busId = 1
+        let instanceA = SoundManager.SoundInstance(filename: "TestSoundA")
+        let instanceB = SoundManager.SoundInstance(filename: "TestSoundB")
         
-        // Mock State directly for test environment (Simulating logic response)
-        // Ideally we would mock the file system but we can test the State Logic.
-        
-        appendLog("Step 1: Reset State")
-        soundManager.activeBusIds.removeAll()
-        soundManager.activeNodeNames.removeAll()
-        soundManager.soundRoutes[soundA] = busId
-        soundManager.soundRoutes[soundB] = busId
+        appendLog("Step 1: Reset State & Add Instances")
+        // Manually inject generic instances
+        soundManager.busSamples[busId] = [instanceA, instanceB]
+        soundManager.activeInstanceIds.removeAll()
         
         // Test Logic Check:
         // Play Sound A
-        appendLog("Step 2: Simulate Playing Sound A")
-        simulatePlay(sound: soundA, bus: busId)
+        appendLog("Step 2: Simulate Playing Instance A")
+        simulatePlay(instance: instanceA)
         
         // Assert A is playing, B is NOT
-        assertPlaying(sound: soundA, bus: busId, expected: true)
-        assertPlaying(sound: soundB, bus: busId, expected: false)
+        assertPlaying(instance: instanceA, expected: true)
+        assertPlaying(instance: instanceB, expected: false)
         
-        // Play Sound B (Should stop A)
-        appendLog("Step 3: Simulate Playing Sound B (Override)")
-        simulatePlay(sound: soundB, bus: busId)
+        // Play Sound B (Should NOT automatically stop A unless logic enforces monophony, but current logic allows POLYPHONY per bus unless specified otherwise)
+        // Wait, SoundManager.playSound(instance...) stops *that specific instance* if it was playing.
+        // It does NOT stop other instances on the same bus (Polyphonic by design now).
+        // So both can play.
         
-        assertPlaying(sound: soundB, bus: busId, expected: true)
-        assertPlaying(sound: soundA, bus: busId, expected: false)
+        appendLog("Step 3: Simulate Playing Instance B (Polyphony Check)")
+        simulatePlay(instance: instanceB)
         
-        // Stop Bus
-        appendLog("Step 4: Stop Bus 1")
-        simulateStop(bus: busId)
+        assertPlaying(instance: instanceB, expected: true)
+        assertPlaying(instance: instanceA, expected: true) // Should still be playing
         
-        assertPlaying(sound: soundA, bus: busId, expected: false)
-        assertPlaying(sound: soundB, bus: busId, expected: false)
+        // Stop A
+        appendLog("Step 4: Stop Instance A")
+        simulateStop(instance: instanceA)
+        
+        assertPlaying(instance: instanceA, expected: false)
+        assertPlaying(instance: instanceB, expected: true)
         
         testRunning = false
         appendLog("Test Complete.")
     }
     
-    func simulatePlay(sound: String, bus: Int) {
-        // We simulate what soundManager.playSound -> finalizePlayback does to state
-        soundManager.activeBusIds.insert(bus)
-        soundManager.activeNodeNames[bus] = sound
-        appendLog(" -> Set Bus \(bus) active with \(sound)")
+    func simulatePlay(instance: SoundManager.SoundInstance) {
+        soundManager.activeInstanceIds.insert(instance.id)
+        appendLog(" -> Set Instance \(instance.filename) active")
     }
     
-    func simulateStop(bus: Int) {
-        soundManager.activeBusIds.remove(bus)
-        soundManager.activeNodeNames.removeValue(forKey: bus)
-        appendLog(" -> Set Bus \(bus) inactive")
+    func simulateStop(instance: SoundManager.SoundInstance) {
+        soundManager.activeInstanceIds.remove(instance.id)
+        appendLog(" -> Set Instance \(instance.filename) inactive")
     }
     
-    func assertPlaying(sound: String, bus: Int, expected: Bool) {
-        let busId = soundManager.soundRoutes[sound] ?? 0
-        let isAssigned = busId != 0
-        let isPlaying = isAssigned && soundManager.activeBusIds.contains(busId) && soundManager.activeNodeNames[busId] == sound
+    func assertPlaying(instance: SoundManager.SoundInstance, expected: Bool) {
+        let isPlaying = soundManager.activeInstanceIds.contains(instance.id)
         
         if isPlaying == expected {
-            appendLog(" [PASS] \(sound) playing state: \(isPlaying)")
+            appendLog(" [PASS] \(instance.filename) playing state: \(isPlaying)")
         } else {
-            appendLog(" [FAIL] \(sound) playing state: \(isPlaying) (Expected: \(expected))")
+            appendLog(" [FAIL] \(instance.filename) playing state: \(isPlaying) (Expected: \(expected))")
         }
     }
     
