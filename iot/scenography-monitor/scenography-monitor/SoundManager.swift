@@ -46,6 +46,7 @@ class SoundManager: NSObject, ObservableObject {
     // Playback state
     @Published var activeBusIds: Set<Int> = []
     @Published var activeNodeNames: [Int: String] = [:] // BusID -> SoundName
+    @Published var loadingBusIds: Set<Int> = [] // Buses currently loading a file
     
     // Metering state: Bus ID -> Normalized Level (0.0 - 1.0)
     @Published var busLevels: [Int: Float] = [:]
@@ -513,6 +514,12 @@ class SoundManager: NSObject, ObservableObject {
     func playSound(node: FileNode, onBus busId: Int) {
         // Stop previous sound immediately on Main Thread to prevent overlap
         stopSound(onBus: busId)
+        
+        // Mark as loading immediately
+        DispatchQueue.main.async {
+            self.loadingBusIds.insert(busId)
+        }
+        
         soundRoutes[node.name] = busId
         
         guard let bus = audioBuses.first(where: { $0.id == busId }) else { return }
@@ -538,14 +545,17 @@ class SoundManager: NSObject, ObservableObject {
                             self.audioGraphQueue.async {
                                 self.finalizePlayback(file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
                             }
-                        } else {
                             print("Playback cancelled for \(node.name) - Route changed during load")
+                            self.loadingBusIds.remove(busId)
                         }
                     }
                 }
                 
             } catch {
                 print("Async Load failed for \(node.name): \(error)")
+                DispatchQueue.main.async {
+                    self.loadingBusIds.remove(busId)
+                }
             }
         }
     }
@@ -553,6 +563,17 @@ class SoundManager: NSObject, ObservableObject {
     // Internal helper running on Main Thread
     private func finalizePlayback(file: AVAudioFile, busId: Int, outputUID: String, outputName: String, nodeName: String) {
         let engine = getEngine(for: outputUID)
+        
+        // SAFETY CHECK: Ensure no player is already running on this bus (Race condition protection)
+        if let existingPlayer = players[busId] {
+            print("WARNING: Player collision on Bus \(busId). Stopping existing player.")
+            if existingPlayer.isPlaying { existingPlayer.stop() }
+             if let engine = existingPlayer.engine {
+                engine.disconnectNodeOutput(existingPlayer)
+                engine.detach(existingPlayer)
+            }
+        }
+        
         let player = AVAudioPlayerNode()
         
         engine.attach(player)
@@ -598,11 +619,15 @@ class SoundManager: NSObject, ObservableObject {
             DispatchQueue.main.async {
                 self.activeBusIds.insert(busId)
                 self.activeNodeNames[busId] = nodeName
+                self.loadingBusIds.remove(busId)
             }
             
             print("Playing \(nodeName) on Bus \(busId) via \(outputName)")
         } catch {
              print("Engine/Play failed for \(nodeName): \(error)")
+             DispatchQueue.main.async {
+                self.loadingBusIds.remove(busId)
+             }
         }
     }
     

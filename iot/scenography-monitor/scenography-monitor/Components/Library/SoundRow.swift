@@ -33,6 +33,7 @@ struct SoundRow: View {
                 let busId = soundManager.soundRoutes[node.name] ?? 0
                 let isAssigned = busId != 0
                 let isPlaying = isAssigned && soundManager.activeBusIds.contains(busId) && soundManager.activeNodeNames[busId] == node.name
+                let isLoading = isAssigned && soundManager.loadingBusIds.contains(busId)
                 
                 // Play Button
                 Button(action: {
@@ -44,15 +45,21 @@ struct SoundRow: View {
                         }
                     }
                 }) {
-                    Image(systemName: isPlaying ? "stop.fill" : "play.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(isPlaying ? .red : (isAssigned ? .green : .gray))
-                        .frame(width: 16, height: 16)
-                        .background(Color.black.opacity(0.05))
-                        .cornerRadius(4)
+                    if isLoading {
+                         ProgressView()
+                             .scaleEffect(0.5)
+                             .frame(width: 16, height: 16)
+                    } else {
+                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(isPlaying ? .red : (isAssigned ? .green : .gray))
+                            .frame(width: 16, height: 16)
+                            .background(Color.black.opacity(0.05))
+                            .cornerRadius(4)
+                    }
                 }
                 .buttonStyle(.plain)
-                .disabled(!isAssigned)
+                .disabled(!isAssigned || isLoading)
                 
                 Text(node.name)
                     .font(.system(size: 11, design: .monospaced))
