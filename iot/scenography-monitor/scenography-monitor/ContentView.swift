@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var soundManager = SoundManager.shared
+    @StateObject private var wsManager = WebSocketManager.shared // Ensure initialization
     @State private var isInspectorOpen: Bool = false
     @State private var showOutputList: Bool = false // Default to false
     
@@ -57,6 +58,34 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 8)
+                // Config Management
+                HStack(spacing: 8) {
+                    Button(action: {
+                        ProjectManager.shared.openLoadPanel()
+                    }) {
+                        Label("LOAD", systemImage: "square.and.arrow.down")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(4)
+                    
+                    Button(action: {
+                        ProjectManager.shared.openSavePanel()
+                    }) {
+                        Label("SAVE", systemImage: "square.and.arrow.up")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(4)
+                }
+                
+                Spacer()
                 
                 // Audio Devices Toggle
                 Button(action: {
@@ -87,33 +116,9 @@ struct ContentView: View {
 
             // Main Content Area (HSplitView)
             HSplitView {
-                // Left: Sound Library
-                SoundLibraryView()
-                    .frame(minWidth: 200, maxWidth: 400)
-                
-                // Center: Mixer
-                ZStack {
-                    Color(nsColor: .lightGray).opacity(0.1) // Subtle background check
-                        .ignoresSafeArea()
-                    
-                    ScrollView(.horizontal, showsIndicators: true) {
-                        HStack(spacing: 1) {
-                            ForEach(soundManager.audioBuses) { bus in
-                                AudioBusView(
-                                    busName: bus.name, 
-                                    busId: bus.id,
-                                    isSelected: selectedBusIds.contains(bus.id),
-                                    selectedBusIds: selectedBusIds,
-                                    onSelection: { handleBusSelection(bus.id) }
-                                )
-                                .frame(width: 90)
-                            }
-                        }
-                        .padding(.leading, 1) // Tiny offset
-                        .frame(maxHeight: .infinity)
-                    }
-                }
-                .frame(minWidth: 300, maxWidth: .infinity)
+                // Integrated Sampler View (Library + Rack)
+                SamplerView()
+                    .frame(minWidth: 600, maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Inspector (Network) - if active
                 if isInspectorOpen {
@@ -121,6 +126,7 @@ struct ContentView: View {
                         .frame(width: 300)
                 }
             }
+
             
             // Bottom Status Bar
             HStack {

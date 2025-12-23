@@ -112,7 +112,7 @@ class WebSocketManager: ObservableObject {
         }
     }
     
-    private func addLog(_ msg: String) {
+    func addLog(_ msg: String) {
         let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
         let entry = "[\(timestamp)] \(msg)"
         if messages.count > 50 { messages.removeFirst() }

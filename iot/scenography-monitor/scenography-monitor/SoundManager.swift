@@ -52,7 +52,7 @@ class SoundManager: NSObject, ObservableObject {
     @Published var busLevels: [Int: Float] = [:]
     
     // Buses
-    struct AudioBus: Identifiable, Hashable {
+    struct AudioBus: Identifiable, Hashable, Codable {
         let id: Int
         var name: String
         var volume: Float = 0.75
@@ -440,7 +440,7 @@ class SoundManager: NSObject, ObservableObject {
         }
     }
     
-    private func updatePlayerVolume(_ busId: Int) {
+    func updatePlayerVolume(_ busId: Int) {
         audioGraphQueue.async { [weak self] in
             guard let self = self, let player = self.players[busId] else { return }
             
@@ -475,7 +475,12 @@ class SoundManager: NSObject, ObservableObject {
                     }
                 }
             }
+
         }
+    }
+    
+    func updatePlayerPan(_ busId: Int) {
+         updatePlayerVolume(busId)
     }
     
     // Updates volume directly on the player without triggering a full UI/Persistence update via @Published

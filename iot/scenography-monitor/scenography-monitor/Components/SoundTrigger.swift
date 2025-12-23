@@ -6,12 +6,19 @@ class SoundTrigger: ObservableObject {
     static let shared = SoundTrigger()
     
     // Configuration Binding
-    struct BindingConfig: Identifiable, Hashable {
-        let id = UUID()
+    struct BindingConfig: Identifiable, Hashable, Codable {
+        let id: UUID
         let jsonKey: String
         let soundName: String
         // Bus ID is now resolved dynamically from SoundManager
         let targetValue: String? // Helper: treats all incoming values as string for comparison
+        
+        init(id: UUID = UUID(), jsonKey: String, soundName: String, targetValue: String?) {
+            self.id = id
+            self.jsonKey = jsonKey
+            self.soundName = soundName
+            self.targetValue = targetValue
+        }
     }
     
     @Published var bindings: [BindingConfig] = []

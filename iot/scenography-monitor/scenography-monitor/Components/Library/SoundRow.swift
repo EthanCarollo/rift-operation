@@ -65,6 +65,9 @@ struct SoundRow: View {
                     .font(.system(size: 11, design: .monospaced))
                     .lineLimit(1)
                     .truncationMode(.middle)
+                    .onDrag {
+                        return NSItemProvider(object: node.name as NSString)
+                    }
                 
                 Spacer()
                 
