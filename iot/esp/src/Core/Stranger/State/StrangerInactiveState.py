@@ -1,10 +1,13 @@
 from src.Core.Stranger.State.StrangerControllerState import StrangerControllerState
 import asyncio
 
+from src.Framework.Json.RiftOperationJsonData import RiftOperationJsonData
+
+
 class StrangerInactiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
-
+        self.send_state("inactive")
         self.controller.led_controller.play_from_json("data/stranger/led_anim_inactive.json")
 
     def process_json_message(self, json):

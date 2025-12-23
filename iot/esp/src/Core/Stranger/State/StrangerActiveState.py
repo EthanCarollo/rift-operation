@@ -12,6 +12,8 @@ class StrangerActiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
 
+        self.send_state("active")
+
         spi = SPI(
             1,
             baudrate=1_000_000,

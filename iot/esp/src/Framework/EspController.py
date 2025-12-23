@@ -9,10 +9,10 @@ from src.Framework.Json.RiftOperationJsonData import RiftOperationJsonData
 
 class EspController:
     def __init__(self, config: Config):
-        self.config = config
+        self.config: Config = config
         self.logger = Logger("EspController", Logger.LOG_LEVEL_INFO, esp32_mode=True, max_log_size=500)
         self.wifi_manager = WifiManager(config.wifi.ssid, config.wifi.password, self.logger)
-        self.websocket_client = WebSocketClient(config.websocket, self.logger)
+        self.websocket_client: WebSocketClient = WebSocketClient(config.websocket, self.logger)
 
         if config.debug_mode:
             self.logger.set_level(Logger.LOG_LEVEL_DEBUG)
