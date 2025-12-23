@@ -118,15 +118,24 @@ struct ContentView: View {
             HSplitView {
                 // Integrated Sampler View (Library + Rack)
                 // Integrated Sampler View (Library + Rack)
-                VSplitView {
+                // Integrated Sampler View (Library + Rack)
+                ZStack(alignment: .bottom) {
                     SamplerView()
                         .frame(minWidth: 600, maxWidth: .infinity, maxHeight: .infinity)
                     
-                    // Sampler Inspector (Data Model / Bindings)
+                    // Sampler Inspector (Overlay)
                     if soundManager.selectedInstanceId != nil {
+                        // Click outside to dismiss
+                        Color.black.opacity(0.001)
+                            .onTapGesture {
+                                withAnimation {
+                                    soundManager.selectedInstanceId = nil
+                                }
+                            }
+                        
                         SamplerInspectorView()
-                            .frame(height: 200)
                             .transition(.move(edge: .bottom))
+                            .padding() // Float slightly
                     }
                 }
                 

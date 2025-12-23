@@ -167,8 +167,12 @@ struct SamplerInspectorView: View {
                 .background(Color(nsColor: .windowBackgroundColor))
             }
         }
-        .frame(height: 200) // Fixed height for Inspector Panel
-        .border(Color.gray.opacity(0.2), width: 1, edges: [.top])
+        .frame(minHeight: 200, maxHeight: 400) // Flexible height
+        .background(Color(nsColor: .windowBackgroundColor))
+        .cornerRadius(12)
+        .shadow(radius: 10)
+        .padding(.horizontal)
+        .padding(.bottom)
     }
     
     private func findInstance(by id: UUID) -> SoundManager.SoundInstance? {
