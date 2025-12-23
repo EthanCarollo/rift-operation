@@ -98,7 +98,9 @@ class SoundManager: NSObject, ObservableObject {
     @Published var soundRoutes: [String: Int] = [:] // Backwards compatibility mock if needed, but better to remove usage.
 
     @Published var activeInstanceIds: Set<UUID> = []
+
     @Published var loadingInstanceIds: Set<UUID> = []
+    @Published var selectedInstanceId: UUID? = nil // For Inspector
     
     // Available Audio Devices
     @Published var availableOutputs: [String] = [] // Names for UI
@@ -141,17 +143,26 @@ class SoundManager: NSObject, ObservableObject {
             switch i {
             case 1: 
                 name = "SAS"
-                color = "#FFD1A4" // Pastel Orange
+                color = "#E0B084" // Darker Pastel Orange
             case 2: 
                 name = "Nightmare"
-                color = "#FFD1A4"
+                color = "#9CAFB7" // Darker Pastel Blue/Grey
             case 3: 
                 name = "Dream"
-                color = "#FFD1A4"
+                color = "#A8CDB4" // Darker Pastel Green
             case 4: 
                 name = "Rift"
-                color = "#FFD1A4"
-            default: break
+                color = "#DBA9A9" // Darker Pastel Red
+            default: 
+                // Generate varied darker pastels for others
+                let hue = Double(i) * 0.15
+                let sat = 0.4
+                let bri = 0.7
+                // NSColor check not needed if we just mock hex strings or use helper.
+                // Simplified: alternating greys if not specific?
+                // Or rotation:
+                let colors = ["#B0C4DE", "#F4A460", "#ADD8E6", "#DDA0DD", "#8FBC8F"]
+                color = colors[i % colors.count]
             }
             audioBuses.append(AudioBus(id: i, name: name, colorHex: color))
         }
@@ -717,5 +728,23 @@ class SoundManager: NSObject, ObservableObject {
     // Global helper for random number loop (unused but kept for swift compatibility if needed)
     private func strideFrom(_ start: Int, to: Int, by: Int) -> StrideTo<Int> {
         return stride(from: start, to: to, by: by)
+    }
+    
+    // MARK: - Routing
+    func setOutputDevice(uid: String, name: String, onBus busId: Int) {
+        guard let index = audioBuses.firstIndex(where: { $0.id == busId }) else { return }
+        
+        // Update Bus Data on Main
+        DispatchQueue.main.async {
+            self.audioBuses[index].outputDeviceUID = uid
+            self.audioBuses[index].outputDeviceName = name
+        }
+    }
+    
+    func selectOutput(name: String, forBus busId: Int) {
+        // Find device by name
+        if let device = availableOutputDevices.first(where: { $0.name == name }) {
+            setOutputDevice(uid: device.uid, name: device.name, onBus: busId)
+        }
     }
 }

@@ -117,8 +117,18 @@ struct ContentView: View {
             // Main Content Area (HSplitView)
             HSplitView {
                 // Integrated Sampler View (Library + Rack)
-                SamplerView()
-                    .frame(minWidth: 600, maxWidth: .infinity, maxHeight: .infinity)
+                // Integrated Sampler View (Library + Rack)
+                VSplitView {
+                    SamplerView()
+                        .frame(minWidth: 600, maxWidth: .infinity, maxHeight: .infinity)
+                    
+                    // Sampler Inspector (Data Model / Bindings)
+                    if soundManager.selectedInstanceId != nil {
+                        SamplerInspectorView()
+                            .frame(height: 200)
+                            .transition(.move(edge: .bottom))
+                    }
+                }
                 
                 // Inspector (Network) - if active
                 if isInspectorOpen {

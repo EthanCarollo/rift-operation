@@ -40,6 +40,34 @@ struct BusTrackView: View {
                                 .foregroundColor(.white)
                                 .cornerRadius(2)
                         }.buttonStyle(.plain)
+
+                        
+                        // Output Route Picker
+                        Menu {
+                            ForEach(soundManager.availableOutputs, id: \.self) { outputName in
+                                Button(outputName) {
+                                    // Map Name to UID? SoundManager needs a helper or we check `availableOutputDevices`
+                                    // Currently `availableOutputs` is just strings. 
+                                    // Ideally SoundManager exposes struct or we just pass name if it's unique enough (it is usually).
+                                    // Actually SoundManager has `setOutputDevice(uid:name:...)`.
+                                    // I need UID. `SoundManager` keeps `availableOutputDevices` private.
+                                    // I should just pass name and let manager resolve, or ask manager to expose UIDs.
+                                    // For now, let's assume `outputName` serves as key or update SoundManager to handle name lookup.
+                                    // Wait, I can't access `availableOutputDevices` from here.
+                                    // I will update SoundManager to correct this in a sec if needed, 
+                                    // but `availableOutputs` (Strings) is what I have.
+                                    // I'll call a new helper `setOutputDevice(name: ...)` or similar.
+                                    // Let's assume `setOutputDevice(name: ...)` exists or I add it.
+                                    soundManager.selectOutput(name: outputName, forBus: bus.id)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.system(size: 8))
+                                .foregroundColor(.secondary)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .frame(width: 16)
                     }
                     
                     // Volume Slider (Mini)
