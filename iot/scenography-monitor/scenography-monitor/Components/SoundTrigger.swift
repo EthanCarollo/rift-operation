@@ -18,6 +18,7 @@ class SoundTrigger: ObservableObject {
     
     private var lastValues: [String: Any] = [:]
     private var cancellables = Set<AnyCancellable>()
+    private var lastTriggerTimes: [String: Date] = [:]
     
     // Hardcoded keys from json_reference.json
     let knownKeys: [String] = [
@@ -38,6 +39,7 @@ class SoundTrigger: ObservableObject {
     
     private func setupListener() {
         WebSocketManager.shared.$latestData
+            .dropFirst() // Ignore initial empty state?
             .sink { [weak self] json in
                 self?.process(json)
             }
@@ -52,28 +54,36 @@ class SoundTrigger: ObservableObject {
                 if let targetStr = binding.targetValue {
                     // Value-based matching
                     let currentStr = normalize(rawValue)
-                    let targetIsBool = (targetStr == "true" || targetStr == "false")
+                    let matchesTarget = (currentStr == targetStr)
                     
-                    // Specific check: If target is "true"/"false", normalize currentStr to "true"/"false" if it looks like a bool
-                    // This handles cases where JSON sends 1/0 for booleans or actual booleans.
+                    // Logic: Trigger if matches target AND:
+                    // 1. Value CHANGED from last time
+                    // 2. OR Value is SAME but enough time passed (Replay)
                     
-                    // Check if value CHANGED to the target
                     let lastRaw = lastValues[binding.jsonKey]
                     let lastStr = lastRaw != nil ? normalize(lastRaw!) : nil
+                    let changed = (currentStr != lastStr)
                     
-                    if currentStr == targetStr && (lastStr != targetStr) {
+                    let now = Date()
+                    let timeSinceLast = now.timeIntervalSince(lastTriggerTimes[binding.jsonKey] ?? .distantPast)
+                    let isReplay = matchesTarget && !changed && timeSinceLast > 0.3 // 300ms debounce for replay
+                    
+                    if matchesTarget && (changed || isReplay) {
                          shouldTrigger = true
-                         print("SoundTrigger: MATCH! Key=\(binding.jsonKey) Val=\(currentStr) Target=\(targetStr)")
-                    } else if currentStr != targetStr {
-                        // Debugging mismatch if key matches but value doesn't
-                        // print("SoundTrigger: Mismatch Key=\(binding.jsonKey) Val=\(currentStr) Target=\(targetStr)")
+                         // print("SoundTrigger: MATCH! Key=\(binding.jsonKey) Val=\(currentStr) (Replay: \(isReplay))")
                     }
                 } else {
-                    // Boolean/Existence matching (Old behavior)
+                    // Boolean/Existence matching (Old behavior - preserved but improved)
                     let isTrigger = isTruthy(rawValue)
                     let lastValue = lastValues[binding.jsonKey]
                     let wasTrigger = isTruthy(lastValue)
-                    if isTrigger && !wasTrigger {
+                    
+                    // Also allow replay for boolean triggers?
+                    let now = Date()
+                    let timeSinceLast = now.timeIntervalSince(lastTriggerTimes[binding.jsonKey] ?? .distantPast)
+                    let isReplay = isTrigger && (isTrigger == wasTrigger) && timeSinceLast > 0.3
+                    
+                    if isTrigger && (!wasTrigger || isReplay) {
                         shouldTrigger = true
                     }
                 }
@@ -81,6 +91,7 @@ class SoundTrigger: ObservableObject {
                 if shouldTrigger {
                     print("Triggering Sound for \(binding.jsonKey) [Val: \(rawValue)]")
                     triggerSound(binding)
+                    lastTriggerTimes[binding.jsonKey] = Date()
                 }
                 
                 // Update Cache

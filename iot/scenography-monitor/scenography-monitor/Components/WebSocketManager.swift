@@ -73,7 +73,7 @@ class WebSocketManager: ObservableObject {
         }
     }
     
-    private func handleMessage(_ text: String) {
+    func handleMessage(_ text: String) {
         // Offload parsing to background thread to clear Main Thread
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }

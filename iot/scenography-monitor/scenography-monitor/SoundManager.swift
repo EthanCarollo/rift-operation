@@ -9,7 +9,9 @@ import Foundation
 import AVFoundation
 import SwiftUI
 import Combine
+import Combine
 import CoreAudio
+import Accelerate
 
 import UniformTypeIdentifiers
 
@@ -76,8 +78,9 @@ class SoundManager: NSObject, ObservableObject {
     private let bookmarkKey = "soundDirectoryBookmark"
     private var meteringTimer: Timer?
     // Polling Model: Raw data buffer accessed by Main Thread Timer
-    private var rawBusLevels: [Int: Float] = [:] // Thread-safe access required (or using isolated concurrent queue)
-    private let meterQueue = DispatchQueue(label: "com.rift.meterQueue", attributes: .concurrent) 
+
+    private var rawBusLevels: [Int: Float] = [:] 
+    private let meterLock = NSLock() 
     
     // UI Update Timer
     private var uiUpdateTimer: Timer?
@@ -521,31 +524,17 @@ class SoundManager: NSObject, ObservableObject {
             do {
                 let file = try AVAudioFile(forReading: node.url)
                 
-                // Read entire file into buffer (Heavy Operation)
-                guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) else {
-                    print("Failed to create buffer for \(node.name)")
-                    return
-                }
-                
-                try file.read(into: buffer)
-                
                 // Dispatch back to Graph Queue for Engine Operations
-                // We use weak self to avoid retain cycles, but we need to ensure self exists to dispatch
+                // Streaming Mode: No heavy buffer read here.
+                
                 self.audioGraphQueue.async { [weak self] in
                     guard let self = self else { return }
-                    
-                    // Re-check if bus is still valid and not stopped/replaced while loading
-                    // Thread-safe check of routing? soundRoutes is @Published (Main Thread).
-                    // We need to capture the route state safely.
-                    // Actually, let's dispatch main to check route, then dispatch graph?
-                    // Or better: Checking route on background is "okay" if we accept slight race.
-                    // STRICT SAFETY: Check route on Main, then dispatch Graph.
                     
                     DispatchQueue.main.async {
                         if self.soundRoutes[node.name] == busId {
                             // Route confirmed. Now execute Graph mutation on Graph Queue
                             self.audioGraphQueue.async {
-                                self.finalizePlayback(buffer: buffer, file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
+                                self.finalizePlayback(file: file, busId: busId, outputUID: outputDeviceUID, outputName: outputDeviceName, nodeName: node.name)
                             }
                         } else {
                             print("Playback cancelled for \(node.name) - Route changed during load")
@@ -560,7 +549,7 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     // Internal helper running on Main Thread
-    private func finalizePlayback(buffer: AVAudioPCMBuffer, file: AVAudioFile, busId: Int, outputUID: String, outputName: String, nodeName: String) {
+    private func finalizePlayback(file: AVAudioFile, busId: Int, outputUID: String, outputName: String, nodeName: String) {
         let engine = getEngine(for: outputUID)
         let player = AVAudioPlayerNode()
         
@@ -570,11 +559,11 @@ class SoundManager: NSObject, ObservableObject {
         activeFiles[busId] = file
         
         // Connect with explicit format
-        engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
+        engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
         
         // Loop Logic - Disabled as per user request (Single play)
         // Add completion handler to reset UI state when finished
-        player.scheduleBuffer(buffer, at: nil, options: []) { [weak self] in
+        player.scheduleFile(file, at: nil) { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 
@@ -590,7 +579,7 @@ class SoundManager: NSObject, ObservableObject {
         }
         
         // Install Tap for Metering
-        player.installTap(onBus: 0, bufferSize: 1024, format: buffer.format) { [weak self] (buf, time) in
+        player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buf, time) in
              self?.processMeter(buffer: buf, busId: busId)
         }
         
@@ -641,30 +630,18 @@ class SoundManager: NSObject, ObservableObject {
     private func processMeter(buffer: AVAudioPCMBuffer, busId: Int) {
         guard let channelData = buffer.floatChannelData else { return }
         let channelDataValue = channelData.pointee
-        let frames = buffer.frameLength
+        let frames = vDSP_Length(buffer.frameLength)
         
         var rms: Float = 0
-        // Sample every 4th frame to save CPU
-        let stride = 4
-        for i in strideFrom(0, to: Int(frames), by: stride) {
-            let sample = channelDataValue[i]
-            rms += sample * sample
-        }
-        rms = sqrt(rms / Float(frames / UInt32(stride)))
+        vDSP_rmsqv(channelDataValue, 1, &rms, frames)
         
-        // Scale and damp
-        
-        // Throttling: Only update UI if significant change or timed interval?
-        // Basic time throttle:
-        // Pre-calculation check to filter noise (Audio thread safe? No, let's keep it simple)
-        // Optimization: Don't dispatch if result is negligible and we are already at 0
-        
-        // Write to thread-safe storage (No Main Dispatch)
+        // Boost for visual
         let currentLevel = rms * 5.0
         
-        meterQueue.async(flags: .barrier) { [weak self] in
-            self?.rawBusLevels[busId] = currentLevel
-        }
+        // Lock-protected write (Low Overhead)
+        meterLock.lock()
+        rawBusLevels[busId] = currentLevel
+        meterLock.unlock()
     }
     
     private func startMetering() {
@@ -677,9 +654,9 @@ class SoundManager: NSObject, ObservableObject {
     private func updateBusLevels() {
         // Snapshot raw levels
         var snapshot: [Int: Float] = [:]
-        meterQueue.sync {
-            snapshot = self.rawBusLevels
-        }
+        meterLock.lock()
+        snapshot = self.rawBusLevels
+        meterLock.unlock()
         
         // Batch update UI
         for (busId, rawLevel) in snapshot {
