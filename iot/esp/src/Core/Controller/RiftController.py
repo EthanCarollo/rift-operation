@@ -1,16 +1,19 @@
 """
-RiftController - ESP32 Controller for the RIFT workshop
-
-Handles 3 Dream RFID readers (3 Nightmare later).
-Uses RiftWorkshop for state-based logic.
+RiftController - Universal Controller for the RIFT workshop (ESP32 & Raspberry Pi)
 """
+import sys
 
-from src.Framework.EspController import EspController
+# --- PLATFORM SELECTION ---
+# Uncomment the section corresponding to your hardware
+
+# from src.Framework.EspController import EspController as BaseController
+# from src.Core.Rift.RiftHardware import RiftHardware as Hardware
+from src.Framework.PiController import PiController as BaseController
+from src.Core.Rift.RiftHardwarePi import RiftHardwarePi as HardwareRaspberry
+
 from src.Core.Rift.RiftWorkshop import RiftWorkshop
-# from src.Core.Rift.RiftHardware import RiftHardware
-from src.Core.Rift.RiftHardwareRaspberry import RiftHardwareRaspberry
 
-class RiftController(EspController):
+class RiftController(BaseController):
     """RIFT workshop controller"""
 
     def __init__(self, config):
@@ -20,8 +23,9 @@ class RiftController(EspController):
         # Workshop handles state machine
         self.workshop = RiftWorkshop(self)
         # Hardware handles RFID readers
-        # self.hardware = RiftHardware(self)
-        self.hardware = RiftHardwareRaspberry(self)
+        # self.hardware = Hardware(self)
+        self.hardware = HardwareRaspberry(self)
+        
         # Link them together
         self.hardware.attach_workshop(self.workshop)
         self.workshop.attach_hardware(self.hardware)
@@ -30,7 +34,7 @@ class RiftController(EspController):
         self.workshop.init_state()
         self.logger.info("RiftController initialized")
 
-    def update(self):
+    async def update(self):
         """Main loop callback - poll RFID readers"""
         self.hardware.update()
 

@@ -1,8 +1,15 @@
 """
 RiftState - Unified state machine for RIFT workshop
 """
-import uasyncio as asyncio
-import ujson as json
+try:
+    import uasyncio as asyncio
+except ImportError:
+    import asyncio
+    asyncio.sleep_ms = lambda ms: asyncio.sleep(ms/1000)
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 from src.Core.Rift.RiftConstants import RiftSteps, RiftTags
 
