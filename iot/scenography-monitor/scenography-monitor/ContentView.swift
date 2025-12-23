@@ -10,7 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var soundManager = SoundManager.shared
     @State private var isInspectorOpen: Bool = false
-    @State private var showOutputList: Bool = true // Default to true for user request
+    @State private var showOutputList: Bool = false // Default to false
     
     // Selection State
     @State private var selectedBusIds: Set<Int> = []
@@ -58,18 +58,25 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .padding(.trailing, 8)
                 
-                // Output List Toggle
+                // Audio Devices Toggle
                 Button(action: {
                     withAnimation {
                         showOutputList.toggle()
                     }
                 }) {
-                    Image(systemName: "sidebar.right")
-                        .font(.system(size: 12))
-                        .foregroundColor(showOutputList ? .blue : .secondary)
-                        .padding(6)
-                        .background(Color(nsColor: .controlBackgroundColor))
-                        .cornerRadius(4)
+                    HStack(spacing: 6) {
+                        Image(systemName: "speaker.wave.2")
+                        Text("AUDIO DEVICES")
+                    }
+                    .font(.system(size: 10, weight: .semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(showOutputList ? Color.blue.opacity(0.2) : Color.clear)
+                    .foregroundColor(showOutputList ? .blue : .primary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 12)

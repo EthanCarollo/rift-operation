@@ -43,7 +43,9 @@ class SoundManager: NSObject, ObservableObject {
     @Published var soundRoutes: [String: Int] = [:]
     
     // Playback state
+    // Playback state
     @Published var activeBusIds: Set<Int> = []
+    @Published var activeNodeNames: [Int: String] = [:] // BusID -> SoundName
     
     // Metering state: Bus ID -> Normalized Level (0.0 - 1.0)
     @Published var busLevels: [Int: Float] = [:]
@@ -572,6 +574,7 @@ class SoundManager: NSObject, ObservableObject {
                 // Reset Level visually too.
                 if self.activeBusIds.contains(busId) {
                      self.activeBusIds.remove(busId)
+                     self.activeNodeNames.removeValue(forKey: busId)
                      self.busLevels[busId] = 0
                      print("Playback finished naturally on Bus \(busId)")
                 }
@@ -594,6 +597,7 @@ class SoundManager: NSObject, ObservableObject {
             
             DispatchQueue.main.async {
                 self.activeBusIds.insert(busId)
+                self.activeNodeNames[busId] = nodeName
             }
             
             print("Playing \(nodeName) on Bus \(busId) via \(outputName)")
@@ -603,11 +607,21 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     func stopSound(onBus busId: Int) {
+        // Stop locally immediately
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.activeBusIds.remove(busId)
+            self.activeNodeNames.removeValue(forKey: busId)
+            self.busLevels[busId] = 0
+        }
+        
         audioGraphQueue.async { [weak self] in
             guard let self = self else { return }
             
             if let player = self.players[busId] {
-                player.stop()
+                if player.isPlaying {
+                    player.stop()
+                }
                 player.removeTap(onBus: 0)
                 
                 if let engine = player.engine {
@@ -617,11 +631,6 @@ class SoundManager: NSObject, ObservableObject {
                 
                 self.players.removeValue(forKey: busId)
                 self.activeFiles.removeValue(forKey: busId)
-                
-                DispatchQueue.main.async {
-                    self.busLevels[busId] = 0
-                    self.activeBusIds.remove(busId)
-                }
             }
         }
     }
