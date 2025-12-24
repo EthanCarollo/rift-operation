@@ -7,62 +7,62 @@
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
-		19E3C1742EF80AF100657BAE /* PBXContainerItemProxy */ = {
+		195CABCE2EFC361200927017 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 19E3C15E2EF80AED00657BAE /* Project object */;
+			containerPortal = 195CABB82EFC361000927017 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 19E3C1652EF80AED00657BAE;
-			remoteInfo = "scenography-monitor";
+			remoteGlobalIDString = 195CABBF2EFC361000927017;
+			remoteInfo = "lost-knn";
 		};
-		19E3C17E2EF80AF100657BAE /* PBXContainerItemProxy */ = {
+		195CABD82EFC361200927017 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 19E3C15E2EF80AED00657BAE /* Project object */;
+			containerPortal = 195CABB82EFC361000927017 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 19E3C1652EF80AED00657BAE;
-			remoteInfo = "scenography-monitor";
+			remoteGlobalIDString = 195CABBF2EFC361000927017;
+			remoteInfo = "lost-knn";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		19E3C1662EF80AED00657BAE /* scenography-monitor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "scenography-monitor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		19E3C1732EF80AF100657BAE /* scenography-monitorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "scenography-monitorTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		19E3C17D2EF80AF100657BAE /* scenography-monitorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "scenography-monitorUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		195CABC02EFC361000927017 /* lost-knn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "lost-knn.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		195CABCD2EFC361200927017 /* lost-knnTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "lost-knnTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		195CABD72EFC361200927017 /* lost-knnUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "lost-knnUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		19E3C1682EF80AED00657BAE /* scenography-monitor */ = {
+		195CABC22EFC361000927017 /* lost-knn */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "scenography-monitor";
+			path = "lost-knn";
 			sourceTree = "<group>";
 		};
-		19E3C1762EF80AF100657BAE /* scenography-monitorTests */ = {
+		195CABD02EFC361200927017 /* lost-knnTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "scenography-monitorTests";
+			path = "lost-knnTests";
 			sourceTree = "<group>";
 		};
-		19E3C1802EF80AF100657BAE /* scenography-monitorUITests */ = {
+		195CABDA2EFC361200927017 /* lost-knnUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "scenography-monitorUITests";
+			path = "lost-knnUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		19E3C1632EF80AED00657BAE /* Frameworks */ = {
+		195CABBD2EFC361000927017 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		19E3C1702EF80AF100657BAE /* Frameworks */ = {
+		195CABCA2EFC361200927017 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		19E3C17A2EF80AF100657BAE /* Frameworks */ = {
+		195CABD42EFC361200927017 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -72,22 +72,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		19E3C15D2EF80AED00657BAE = {
+		195CABB72EFC361000927017 = {
 			isa = PBXGroup;
 			children = (
-				19E3C1682EF80AED00657BAE /* scenography-monitor */,
-				19E3C1762EF80AF100657BAE /* scenography-monitorTests */,
-				19E3C1802EF80AF100657BAE /* scenography-monitorUITests */,
-				19E3C1672EF80AED00657BAE /* Products */,
+				195CABC22EFC361000927017 /* lost-knn */,
+				195CABD02EFC361200927017 /* lost-knnTests */,
+				195CABDA2EFC361200927017 /* lost-knnUITests */,
+				195CABC12EFC361000927017 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		19E3C1672EF80AED00657BAE /* Products */ = {
+		195CABC12EFC361000927017 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				19E3C1662EF80AED00657BAE /* scenography-monitor.app */,
-				19E3C1732EF80AF100657BAE /* scenography-monitorTests.xctest */,
-				19E3C17D2EF80AF100657BAE /* scenography-monitorUITests.xctest */,
+				195CABC02EFC361000927017 /* lost-knn.app */,
+				195CABCD2EFC361200927017 /* lost-knnTests.xctest */,
+				195CABD72EFC361200927017 /* lost-knnUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,134 +95,134 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		19E3C1652EF80AED00657BAE /* scenography-monitor */ = {
+		195CABBF2EFC361000927017 /* lost-knn */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 19E3C1872EF80AF100657BAE /* Build configuration list for PBXNativeTarget "scenography-monitor" */;
+			buildConfigurationList = 195CABE12EFC361200927017 /* Build configuration list for PBXNativeTarget "lost-knn" */;
 			buildPhases = (
-				19E3C1622EF80AED00657BAE /* Sources */,
-				19E3C1632EF80AED00657BAE /* Frameworks */,
-				19E3C1642EF80AED00657BAE /* Resources */,
+				195CABBC2EFC361000927017 /* Sources */,
+				195CABBD2EFC361000927017 /* Frameworks */,
+				195CABBE2EFC361000927017 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				19E3C1682EF80AED00657BAE /* scenography-monitor */,
+				195CABC22EFC361000927017 /* lost-knn */,
 			);
-			name = "scenography-monitor";
+			name = "lost-knn";
 			packageProductDependencies = (
 			);
-			productName = "scenography-monitor";
-			productReference = 19E3C1662EF80AED00657BAE /* scenography-monitor.app */;
+			productName = "lost-knn";
+			productReference = 195CABC02EFC361000927017 /* lost-knn.app */;
 			productType = "com.apple.product-type.application";
 		};
-		19E3C1722EF80AF100657BAE /* scenography-monitorTests */ = {
+		195CABCC2EFC361200927017 /* lost-knnTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 19E3C18A2EF80AF100657BAE /* Build configuration list for PBXNativeTarget "scenography-monitorTests" */;
+			buildConfigurationList = 195CABE42EFC361200927017 /* Build configuration list for PBXNativeTarget "lost-knnTests" */;
 			buildPhases = (
-				19E3C16F2EF80AF100657BAE /* Sources */,
-				19E3C1702EF80AF100657BAE /* Frameworks */,
-				19E3C1712EF80AF100657BAE /* Resources */,
+				195CABC92EFC361200927017 /* Sources */,
+				195CABCA2EFC361200927017 /* Frameworks */,
+				195CABCB2EFC361200927017 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				19E3C1752EF80AF100657BAE /* PBXTargetDependency */,
+				195CABCF2EFC361200927017 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				19E3C1762EF80AF100657BAE /* scenography-monitorTests */,
+				195CABD02EFC361200927017 /* lost-knnTests */,
 			);
-			name = "scenography-monitorTests";
+			name = "lost-knnTests";
 			packageProductDependencies = (
 			);
-			productName = "scenography-monitorTests";
-			productReference = 19E3C1732EF80AF100657BAE /* scenography-monitorTests.xctest */;
+			productName = "lost-knnTests";
+			productReference = 195CABCD2EFC361200927017 /* lost-knnTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		19E3C17C2EF80AF100657BAE /* scenography-monitorUITests */ = {
+		195CABD62EFC361200927017 /* lost-knnUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 19E3C18D2EF80AF100657BAE /* Build configuration list for PBXNativeTarget "scenography-monitorUITests" */;
+			buildConfigurationList = 195CABE72EFC361200927017 /* Build configuration list for PBXNativeTarget "lost-knnUITests" */;
 			buildPhases = (
-				19E3C1792EF80AF100657BAE /* Sources */,
-				19E3C17A2EF80AF100657BAE /* Frameworks */,
-				19E3C17B2EF80AF100657BAE /* Resources */,
+				195CABD32EFC361200927017 /* Sources */,
+				195CABD42EFC361200927017 /* Frameworks */,
+				195CABD52EFC361200927017 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				19E3C17F2EF80AF100657BAE /* PBXTargetDependency */,
+				195CABD92EFC361200927017 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				19E3C1802EF80AF100657BAE /* scenography-monitorUITests */,
+				195CABDA2EFC361200927017 /* lost-knnUITests */,
 			);
-			name = "scenography-monitorUITests";
+			name = "lost-knnUITests";
 			packageProductDependencies = (
 			);
-			productName = "scenography-monitorUITests";
-			productReference = 19E3C17D2EF80AF100657BAE /* scenography-monitorUITests.xctest */;
+			productName = "lost-knnUITests";
+			productReference = 195CABD72EFC361200927017 /* lost-knnUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		19E3C15E2EF80AED00657BAE /* Project object */ = {
+		195CABB82EFC361000927017 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					19E3C1652EF80AED00657BAE = {
+					195CABBF2EFC361000927017 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
-					19E3C1722EF80AF100657BAE = {
+					195CABCC2EFC361200927017 = {
 						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = 19E3C1652EF80AED00657BAE;
+						TestTargetID = 195CABBF2EFC361000927017;
 					};
-					19E3C17C2EF80AF100657BAE = {
+					195CABD62EFC361200927017 = {
 						CreatedOnToolsVersion = 26.0.1;
-						TestTargetID = 19E3C1652EF80AED00657BAE;
+						TestTargetID = 195CABBF2EFC361000927017;
 					};
 				};
 			};
-			buildConfigurationList = 19E3C1612EF80AED00657BAE /* Build configuration list for PBXProject "scenography-monitor" */;
+			buildConfigurationList = 195CABBB2EFC361000927017 /* Build configuration list for PBXProject "lost-knn" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 19E3C15D2EF80AED00657BAE;
+			mainGroup = 195CABB72EFC361000927017;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 19E3C1672EF80AED00657BAE /* Products */;
+			productRefGroup = 195CABC12EFC361000927017 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				19E3C1652EF80AED00657BAE /* scenography-monitor */,
-				19E3C1722EF80AF100657BAE /* scenography-monitorTests */,
-				19E3C17C2EF80AF100657BAE /* scenography-monitorUITests */,
+				195CABBF2EFC361000927017 /* lost-knn */,
+				195CABCC2EFC361200927017 /* lost-knnTests */,
+				195CABD62EFC361200927017 /* lost-knnUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		19E3C1642EF80AED00657BAE /* Resources */ = {
+		195CABBE2EFC361000927017 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		19E3C1712EF80AF100657BAE /* Resources */ = {
+		195CABCB2EFC361200927017 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		19E3C17B2EF80AF100657BAE /* Resources */ = {
+		195CABD52EFC361200927017 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -232,21 +232,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		19E3C1622EF80AED00657BAE /* Sources */ = {
+		195CABBC2EFC361000927017 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		19E3C16F2EF80AF100657BAE /* Sources */ = {
+		195CABC92EFC361200927017 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		19E3C1792EF80AF100657BAE /* Sources */ = {
+		195CABD32EFC361200927017 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -256,20 +256,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		19E3C1752EF80AF100657BAE /* PBXTargetDependency */ = {
+		195CABCF2EFC361200927017 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 19E3C1652EF80AED00657BAE /* scenography-monitor */;
-			targetProxy = 19E3C1742EF80AF100657BAE /* PBXContainerItemProxy */;
+			target = 195CABBF2EFC361000927017 /* lost-knn */;
+			targetProxy = 195CABCE2EFC361200927017 /* PBXContainerItemProxy */;
 		};
-		19E3C17F2EF80AF100657BAE /* PBXTargetDependency */ = {
+		195CABD92EFC361200927017 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 19E3C1652EF80AED00657BAE /* scenography-monitor */;
-			targetProxy = 19E3C17E2EF80AF100657BAE /* PBXContainerItemProxy */;
+			target = 195CABBF2EFC361000927017 /* lost-knn */;
+			targetProxy = 195CABD82EFC361200927017 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		19E3C1852EF80AF100657BAE /* Debug */ = {
+		195CABDF2EFC361200927017 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -322,18 +322,18 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		19E3C1862EF80AF100657BAE /* Release */ = {
+		195CABE02EFC361200927017 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -380,112 +380,85 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = macosx;
+				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		19E3C1882EF80AF100657BAE /* Debug */ = {
+		195CABE22EFC361200927017 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 38BX39NM89;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_MOVIES_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_MUSIC_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_PICTURE_FOLDER = readwrite;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
-				ENABLE_RESOURCE_ACCESS_USB = YES;
-				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "scenography-monitor/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Rift Scenography";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "Rift Lost :(";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/../Frameworks",
+					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.scenography-monitor";
+				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.lost-knn";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		19E3C1892EF80AF100657BAE /* Release */ = {
+		195CABE32EFC361200927017 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 38BX39NM89;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_MOVIES_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_MUSIC_FOLDER = readwrite;
-				ENABLE_FILE_ACCESS_PICTURE_FOLDER = readwrite;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
-				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
-				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
-				ENABLE_RESOURCE_ACCESS_PRINTING = YES;
-				ENABLE_RESOURCE_ACCESS_USB = YES;
-				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "scenography-monitor/Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Rift Scenography";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_CFBundleDisplayName = "Rift Lost :(";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
-					"@executable_path/../Frameworks",
+					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.scenography-monitor";
+				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.lost-knn";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
-		19E3C18B2EF80AF100657BAE /* Debug */ = {
+		195CABE52EFC361200927017 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -493,20 +466,21 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 38BX39NM89;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.scenography-monitorTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.lost-knnTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/scenography-monitor.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/scenography-monitor";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/lost-knn.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/lost-knn";
 			};
 			name = Debug;
 		};
-		19E3C18C2EF80AF100657BAE /* Release */ = {
+		195CABE62EFC361200927017 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -514,20 +488,21 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 38BX39NM89;
 				GENERATE_INFOPLIST_FILE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.scenography-monitorTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.lost-knnTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/scenography-monitor.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/scenography-monitor";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/lost-knn.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/lost-knn";
 			};
 			name = Release;
 		};
-		19E3C18E2EF80AF100657BAE /* Debug */ = {
+		195CABE82EFC361200927017 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -535,18 +510,19 @@
 				DEVELOPMENT_TEAM = 38BX39NM89;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.scenography-monitorUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.lost-knnUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "scenography-monitor";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "lost-knn";
 			};
 			name = Debug;
 		};
-		19E3C18F2EF80AF100657BAE /* Release */ = {
+		195CABE92EFC361200927017 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -554,57 +530,58 @@
 				DEVELOPMENT_TEAM = 38BX39NM89;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.scenography-monitorUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "riftoperation.lost-knnUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = "scenography-monitor";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "lost-knn";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		19E3C1612EF80AED00657BAE /* Build configuration list for PBXProject "scenography-monitor" */ = {
+		195CABBB2EFC361000927017 /* Build configuration list for PBXProject "lost-knn" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				19E3C1852EF80AF100657BAE /* Debug */,
-				19E3C1862EF80AF100657BAE /* Release */,
+				195CABDF2EFC361200927017 /* Debug */,
+				195CABE02EFC361200927017 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		19E3C1872EF80AF100657BAE /* Build configuration list for PBXNativeTarget "scenography-monitor" */ = {
+		195CABE12EFC361200927017 /* Build configuration list for PBXNativeTarget "lost-knn" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				19E3C1882EF80AF100657BAE /* Debug */,
-				19E3C1892EF80AF100657BAE /* Release */,
+				195CABE22EFC361200927017 /* Debug */,
+				195CABE32EFC361200927017 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		19E3C18A2EF80AF100657BAE /* Build configuration list for PBXNativeTarget "scenography-monitorTests" */ = {
+		195CABE42EFC361200927017 /* Build configuration list for PBXNativeTarget "lost-knnTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				19E3C18B2EF80AF100657BAE /* Debug */,
-				19E3C18C2EF80AF100657BAE /* Release */,
+				195CABE52EFC361200927017 /* Debug */,
+				195CABE62EFC361200927017 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		19E3C18D2EF80AF100657BAE /* Build configuration list for PBXNativeTarget "scenography-monitorUITests" */ = {
+		195CABE72EFC361200927017 /* Build configuration list for PBXNativeTarget "lost-knnUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				19E3C18E2EF80AF100657BAE /* Debug */,
-				19E3C18F2EF80AF100657BAE /* Release */,
+				195CABE82EFC361200927017 /* Debug */,
+				195CABE92EFC361200927017 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 19E3C15E2EF80AED00657BAE /* Project object */;
+	rootObject = 195CABB82EFC361000927017 /* Project object */;
 }

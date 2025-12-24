@@ -1,59 +1,61 @@
 {
   "images" : [
     {
+      "filename" : "scenography-icon (6).png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "16x16"
     },
     {
+      "filename" : "scenography-icon (5) 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "16x16"
     },
     {
-      "filename" : "riftoperation_sound 5.png",
+      "filename" : "scenography-icon (5) 2.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "32x32"
     },
     {
-      "filename" : "riftoperation_sound 4.png",
+      "filename" : "scenography-icon (4).png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "32x32"
     },
     {
-      "filename" : "riftoperation_sound 2.png",
+      "filename" : "scenography-icon (3).png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "128x128"
     },
     {
-      "filename" : "riftoperation_sound 3.png",
+      "filename" : "scenography-icon (2) 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "128x128"
     },
     {
-      "filename" : "riftoperation_sound 1.png",
+      "filename" : "scenography-icon (2).png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "256x256"
     },
     {
-      "filename" : "riftoperation_sound.png",
+      "filename" : "scenography-icon (1) 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "256x256"
     },
     {
-      "filename" : "riftoperation_sound 7.png",
+      "filename" : "scenography-icon (1).png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "512x512"
     },
     {
-      "filename" : "riftoperation_sound 6.png",
+      "filename" : "scenography-icon.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"

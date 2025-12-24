@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "rift-pinguin-icon.png",
+      "filename" : "icon-rift-lost.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "rift-pinguin-icon 1.png",
+      "filename" : "icon-rift-lost 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "rift-pinguin-icon 2.png",
+      "filename" : "icon-rift-lost 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
