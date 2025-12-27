@@ -31,8 +31,8 @@ from spherov2.types import Color
 
 # ================= CONFIG =================
 # List of target Sphero names to connect to. 
-TARGET_SPHERO_NAMES = ["SB-08C9", "SB-1219"] 
-# TARGET_SPHERO_NAMES = ["SB-08C9", "SB-1219", "SB-2020"] 
+# TARGET_SPHERO_NAMES = ["SB-08C9", "SB-1219"] 
+TARGET_SPHERO_NAMES = ["SB-08C9", "SB-1219", "SB-2020"] 
 SHAKE_THRESHOLD = 2.0
 SHAKE_COOLDOWN = 1.0  # seconds
 SCAN_TIMEOUT = 5.0    # seconds

@@ -20,9 +20,25 @@ class DepthConfigFactory:
             'partitions': {
                 # Map steps to sequences of Sphero Names
                 # Example sequences. Adjust based on real game logic.
-                1: ["SB-08C9", "SB-1219"], 
-                2: ["SB-1219", "SB-08C9"],
-                3: ["SB-08C9", "SB-08C9", "SB-1219"]
+                # 1 : SB-08C9, 2 : SB-1219, 3 : SB-2020
+                1: [
+                    "SB-08C9", "SB-1219", "SB-2020", "SB-08C9",
+                    "SB-08C9", "SB-1219", "SB-2020", "SB-08C9",
+                ],
+                2: [
+                    "SB-08C9", "SB-08C9", "SB-2020", "SB-2020",
+                    "SB-1219", "SB-2020", "SB-1219", "SB-08C9",
+                    "SB-08C9", "SB-2020", "SB-2020", "SB-1219",
+                    "SB-2020"
+                ],
+                3: [
+                    "SB-08C9", "SB-08C9", "SB-08C9", "SB-1219",
+                    "SB-2020", "SB-1219", "SB-08C9", "SB-2020",
+                    "SB-1219", "SB-1219", "SB-08C9", "SB-08C9",
+                    "SB-08C9", "SB-08C9", "SB-1219", "SB-2020",
+                    "SB-1219", "SB-08C9", "SB-2020", "SB-1219",
+                    "SB-1219", "SB-08C9"
+                ]
             },
             'button_pins': {}, 
             'led_pins': {}     
@@ -110,7 +126,7 @@ class DepthController:
     def depth_started(self):
         children_count = self.state.get("dream_rift_part_count", 0)
         parent_count = self.state.get("nightmare_rift_part_count", 0)
-        started = children_count >= 1 and parent_count >= 1
+        started = children_count == 1 and parent_count == 1
         
         # Periodic logging for debugging wait state
         now = time.time()

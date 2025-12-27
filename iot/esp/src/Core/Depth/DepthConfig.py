@@ -8,10 +8,11 @@ class DepthConfig:
         self.role = role
         self.button_pins = button_pins or {1: 14, 2: 19, 3: 23}
         self.led_pins = led_pins or {1: 25, 2: 32, 3: 33}
+        # Bleu : 1, Rouge : 2, Vert : 3
         self.partitions = partitions or {
-            1: [1, 2, 1, 3],
-            2: [3, 3, 1],
-            3: [2, 1, 2, 3]
+            1: [1, 2, 1, 3, 1, 2, 1, 3],
+            2: [1, 1, 3, 3, 2, 3, 2, 1, 1, 3, 3, 2, 3],
+            3: [1, 1, 1, 2, 3, 2, 1, 3, 2, 2, 1, 1, 1, 1, 2, 3, 2, 1, 3, 2, 2, 1]
         }
 
 class Config:
