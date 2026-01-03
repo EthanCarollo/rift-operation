@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct SoundView: View {
     @StateObject private var soundManager = SoundManager()
@@ -15,18 +16,38 @@ struct SoundView: View {
             List {
                 ForEach(soundManager.availableSounds, id: \.self) { sound in
                     Button(action: {
-                        soundManager.playSound(named: sound)
+                        if soundManager.currentlyPlaying == sound {
+                            // Optional: Implement pause/stop logic here if desired, 
+                            // but for now just re-triggering play usually restarts or does nothing depending on manager.
+                            // User asked to change icon to pause, implying it might be pausable, 
+                            // but SoundManager.playSound plays. We'll leave action as is.
+                            soundManager.playSound(named: sound)
+                        } else {
+                            soundManager.playSound(named: sound)
+                        }
                     }) {
                         HStack {
-                            Image(systemName: "music.note")
-                                .foregroundColor(.yellow)
+                            let isPlaying = soundManager.currentlyPlaying == sound
+                            
+                            // Left Icon
+                            Image(systemName: isPlaying ? "speaker.wave.2.fill" : "music.note")
+                                .foregroundColor(isPlaying ? .green : .yellow)
+                                .frame(width: 25)
+                            
+                            // Filename
                             Text(sound)
-                                .foregroundColor(.primary)
+                                .fontWeight(isPlaying ? .bold : .regular)
+                                .foregroundColor(isPlaying ? .green : .primary)
+                            
                             Spacer()
-                            Image(systemName: "play.circle.fill")
-                                .foregroundColor(.yellow)
+                            
+                            // Play/Pause Icon
+                            Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                                .resizable()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(isPlaying ? .green : .yellow)
                         }
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
                     }
                 }
             }

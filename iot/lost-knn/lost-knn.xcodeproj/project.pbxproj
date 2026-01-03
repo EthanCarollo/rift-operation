@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		339D970E2F097CA3005166D2 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 339D970D2F097CA3005166D2 /* Starscream */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		195CABCE2EFC361200927017 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				339D970E2F097CA3005166D2 /* Starscream in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = "lost-knn";
 			packageProductDependencies = (
+				339D970D2F097CA3005166D2 /* Starscream */,
 			);
 			productName = "lost-knn";
 			productReference = 195CABC02EFC361000927017 /* lost-knn.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 195CABB72EFC361000927017;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				339D970C2F097CA2005166D2 /* XCRemoteSwiftPackageReference "Starscream" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 195CABC12EFC361000927017 /* Products */;
 			projectDirPath = "";
@@ -586,6 +595,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		339D970C2F097CA2005166D2 /* XCRemoteSwiftPackageReference "Starscream" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/daltoniam/Starscream.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.8;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		339D970D2F097CA3005166D2 /* Starscream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 339D970C2F097CA2005166D2 /* XCRemoteSwiftPackageReference "Starscream" */;
+			productName = Starscream;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 195CABB82EFC361000927017 /* Project object */;
 }

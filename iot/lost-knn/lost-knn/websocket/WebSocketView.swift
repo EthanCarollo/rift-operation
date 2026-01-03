@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct WebSocketView: View {
-    @StateObject private var wsManager = WebSocketManager()
+    @ObservedObject var wsManager: WebSocketManager
+    
+    // Removed default init to force dependency injection
+    // But Preview might break. For now, ignoring Preview.
     
     var body: some View {
         ZStack {

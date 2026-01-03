@@ -10,6 +10,8 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var cameraManager = CameraManager()
     @StateObject private var KNNService = KNNServiceClass()
+    @StateObject private var wsManager = WebSocketManager()
+    
     @State private var selectedTab = 0
     
     init() {
@@ -22,26 +24,29 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Tab 1: Scanner (Default)
-            ScannerView(cameraManager: cameraManager, knnService: KNNService)
+            // Tab 1: Fleur (Scanner)
+            ScannerView(cameraManager: cameraManager, knnService: KNNService, wsManager: wsManager)
                 .tabItem {
-                    Label("Scanner", systemImage: "eye.circle.fill")
+                    Label("Flower", systemImage: "leaf.fill")
                 }
                 .tag(0)
+            
             // Tab 2: Training
             TrainingView(cameraManager: cameraManager, knnService: KNNService)
                 .tabItem {
                     Label("Training", systemImage: "brain.head.profile")
                 }
                 .tag(1)
+            
             // Tab 3: Sounds
             SoundView()
                 .tabItem {
                     Label("Sounds", systemImage: "music.note.list")
                 }
                 .tag(2)
-            // Tab 4: WebSocket
-            WebSocketView()
+            
+            // Tab 4: Network
+            WebSocketView(wsManager: wsManager)
                 .tabItem {
                     Label("Network", systemImage: "network")
                 }

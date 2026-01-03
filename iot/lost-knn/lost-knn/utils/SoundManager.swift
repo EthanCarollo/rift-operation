@@ -7,13 +7,29 @@
 
 import SwiftUI
 import AVFoundation
+import Combine
 
-class SoundManager: ObservableObject {
+class SoundManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var availableSounds: [String] = []
+    @Published var currentlyPlaying: String?
     private var audioPlayer: AVAudioPlayer?
     
-    init() {
+    override init() {
+        super.init()
         listSounds()
+        setupObservers()
+    }
+    
+    private func setupObservers() {
+        NotificationCenter.default.addObserver(forName: Notification.Name("PlaySoundNotification"), object: nil, queue: .main) { [weak self] notification in
+            if let filename = notification.userInfo?["filename"] as? String {
+                self?.playSound(named: filename)
+            }
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func listSounds() {
@@ -62,10 +78,23 @@ class SoundManager: ObservableObject {
             try AVAudioSession.sharedInstance().setActive(true)
             
             audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.delegate = self
             audioPlayer?.play()
+            
+            DispatchQueue.main.async {
+                self.currentlyPlaying = filename
+            }
+            
             print("Playing: \(filename)")
         } catch {
             print("Playback failed: \(error)")
+        }
+    }
+    
+    // MARK: - AVAudioPlayerDelegate
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        DispatchQueue.main.async {
+            self.currentlyPlaying = nil
         }
     }
 }
