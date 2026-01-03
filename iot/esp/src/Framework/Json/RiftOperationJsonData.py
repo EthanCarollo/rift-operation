@@ -28,6 +28,8 @@ class RiftOperationJsonData:
                 lost_torch_scanned=None, 
                 lost_cage_is_on_monster=None, 
                 lost_light_is_triggered=None,
+                lost_drawing_recognized=None,
+                lost_mp3_play=None,
 
                 end_system=None,
                 reset_system=None):
@@ -61,6 +63,8 @@ class RiftOperationJsonData:
         self.lost_torch_scanned = lost_torch_scanned
         self.lost_cage_is_on_monster = lost_cage_is_on_monster
         self.lost_light_is_triggered = lost_light_is_triggered
+        self.lost_drawing_recognized = lost_drawing_recognized
+        self.lost_mp3_play = lost_mp3_play
         
         self.end_system = end_system
         self.reset_system = reset_system

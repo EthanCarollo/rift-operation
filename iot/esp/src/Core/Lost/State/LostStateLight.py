@@ -30,10 +30,14 @@ class LostStateLight(LostState):
             self.light_triggered = True
             self.workshop.logger.info("Button pressed -> Light triggered")
             self.workshop.logger.info("Futur implementation : Changement Mapping Video")
-            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Maintenant qu'on voit le monstre qui bully le parent, identifiez le et capturez le avec la bonne cage!\"")
+            self.workshop.logger.info("Audio: Identify Monster")
             # Send signal to sync with Dream
             device_id = self.workshop.controller.config.device_id
-            await self.workshop.controller.websocket_client.send(json.dumps({"signal": "light_sensor_triggered", "device_id": device_id}))
+            await self.workshop.controller.websocket_client.send(json.dumps({
+                "signal": "light_sensor_triggered", 
+                "device_id": device_id,
+                "lost_mp3_play": "identify_monster.mp3"
+            }))
             # Also self-trigger signal handling to transition
             await self.handle_signal("light_sensor_triggered")
 

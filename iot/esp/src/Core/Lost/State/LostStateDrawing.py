@@ -11,25 +11,23 @@ class LostStateDrawing(LostState):
         self.step_id = LC.LostSteps.DRAWING
 
     async def enter(self):
-        self.drawing_triggered = False
-        self.workshop.logger.info("State: DRAWING -> Waiting for button press (Simulating Drawing recognition)")
+        self.workshop.logger.info("State: DRAWING -> Waiting for App Recognition")
 
-    async def handle_button(self):
-        if not self.drawing_triggered:
-            self.drawing_triggered = True
-            self.workshop.logger.info("Button pressed -> Drawing recognized")
-            self.workshop.logger.info("Futur implementation : Camera voit Dessin")
-            self.workshop.logger.info("Futur implementation : Envoie Dessin (photo ou live) au llm")
-            self.workshop.logger.info("Futur implementation : LLM reconnait pas dessin")
-            self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
-            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Je n'ai pas compris ce que tu as dessiné, il faut quelque chose pour éclairer\"")
-            self.workshop.logger.info("Futur implementation : LLM reconnait dessin")
-            self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Bravo je crois on va pouvoir aider le parent avec ça\"")
+    async def exit(self):
+        pass
 
-        self.workshop.logger.info("State: DRAWING -> Sending json with value : \"torch_scanned=True\"")
-        await self.workshop.send_rift_json(torch=True)
-        # Auto transition to Light
-        await self.next_step()
+    async def handle_message(self, payload):
+        recognized = payload.get("lost_drawing_recognized")
+        
+        if recognized is True:
+            self.workshop.logger.info("Audio: Drawing Success")
+            await self.workshop.send_rift_json(torch=True, lost_mp3_play="drawing_success.mp3")
+            await self.next_step()
+            
+        elif recognized is False:
+            # Play Error Sound
+            self.workshop.logger.info("Audio: Drawing Error")
+            await self.workshop.send_rift_json(lost_mp3_play="drawing_error.mp3")
 
     async def next_step(self):
         from src.Core.Lost.State.LostStateLight import LostStateLight

@@ -14,6 +14,10 @@ class LostState:
         """Called when entering the state"""
         pass
 
+    async def exit(self):
+        """Called when exiting the state"""
+        pass
+
     async def handle_message(self, payload):
         """Handle WebSocket message payload"""
         pass

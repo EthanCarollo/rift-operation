@@ -41,6 +41,10 @@ class LostWorkshop:
     async def swap_state(self, new_state):
         try:
             old_step = self.state.step_id if self.state else -1
+            
+            if self.state:
+                await self.state.exit()
+                
             self.state = new_state
             
             if old_step != self.state.step_id and old_step != -1:
@@ -84,27 +88,33 @@ class LostWorkshop:
         if self.state:
             await self.state.handle_message(payload)
 
-    async def send_rift_json(self, torch=None, cage=None):
+    async def send_rift_json(self, torch=None, cage=None, drawing=None, lost_mp3_play=None):
         if not self._last_payload:
             self.controller.logger.error("Cannot send: no payload received")
             return
 
         if torch is not None: self._state_data["torch"] = torch
         if cage is not None: self._state_data["cage"] = cage
+        if drawing is not None: self._state_data["drawing"] = drawing
 
         payload = dict(self._last_payload)
         payload["device_id"] = self.controller.config.device_id
         
-        for key, val in [("torch_scanned", self._state_data["torch"]),
-                         ("cage_is_on_monster", self._state_data["cage"])]:
+        # Add transient sound command if present
+        if lost_mp3_play:
+            payload["lost_mp3_play"] = lost_mp3_play
+        
+        for key, val in [("lost_torch_scanned", self._state_data["torch"]),
+                         ("lost_cage_is_on_monster", self._state_data["cage"]),
+                         ("lost_drawing_recognized", self._state_data.get("drawing"))]:
             if val is not None:
                 payload[key] = val
         
         self._last_payload = payload
 
         try:
-            self.logger.log_ws("torch={}, cage={}".format(
-                self._state_data["torch"], self._state_data["cage"]
+            self.logger.log_ws("torch={}, cage={}, drawing={}, mp3={}".format(
+                self._state_data["torch"], self._state_data["cage"], self._state_data.get("drawing"), lost_mp3_play
             ))
             await self.controller.websocket_client.send(json.dumps(payload))
         except Exception as e:

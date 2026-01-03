@@ -18,8 +18,8 @@ class LostStateDistance(LostState):
              self.distance_triggered = True
              self.workshop.logger.info("Capteur de Distance triggered")
              self.workshop.logger.info("Futur implementation : Allumage Led Yeux Animaux")
-             self.workshop.logger.info("Futur implementation : Lancement Haut-parleur Animaux")
-             self.workshop.logger.info("Futur implementation : Lancement MP3 Animaux -> \"Welcome + Explication\"")
+             self.workshop.logger.info("Audio: Welcome")
+             await self.workshop.send_rift_json(lost_mp3_play="welcome_intro.mp3")
              # Auto transition to Drawing
              from src.Core.Lost.State.LostStateDrawing import LostStateDrawing
              await self.workshop.swap_state(LostStateDrawing(self.workshop))
