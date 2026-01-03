@@ -23,16 +23,13 @@ class WebSocketManager: ObservableObject, WebSocketDelegate {
     init() {
         // Init logic if needed
     }
-    
-    // ... connection methods ...
 
     func sendDrawingRecognized(_ status: Bool) {
         guard isConnected else { return }
         
         var payload = self.lastState
         payload["lost_drawing_recognized"] = status
-        // Ensure device_id is set if missing (assuming "APP" or similar, or just rely on existing)
-        // If lastState was empty, this might be partial, but usually we receive state first.
+        payload["device_id"] = "lost-flower-phone"
         
         do {
             let data = try JSONSerialization.data(withJSONObject: payload, options: [])
@@ -48,7 +45,6 @@ class WebSocketManager: ObservableObject, WebSocketDelegate {
     func connect() {
         var request = URLRequest(url: serverUrl)
         request.timeoutInterval = 5
-        
         // Starscream setup
         socket = WebSocket(request: request)
         socket?.delegate = self
@@ -85,16 +81,12 @@ class WebSocketManager: ObservableObject, WebSocketDelegate {
                 
             case .text(let string):
                 self.appendMessage("Received: \(string)")
-                
                 // Parse for Sound Commands
-                // New format: {"...": ..., "lost_mp3_play": "filename.mp3"}
                 if let data = string.data(using: .utf8) {
                     do {
                         if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                            
                             // 1. Store State
                             self.lastState = json
-                            
                             // 2. Check for lost_mp3_play
                             if let filename = json["lost_mp3_play"] as? String, !filename.isEmpty {
                                 print("[WebSocket] Triggering Sound: \(filename)")

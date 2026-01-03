@@ -24,27 +24,24 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Tab 1: Fleur (Scanner)
+            // Tab 1: Flower (Scanner)
             ScannerView(cameraManager: cameraManager, knnService: KNNService, wsManager: wsManager)
                 .tabItem {
                     Label("Flower", systemImage: "leaf.fill")
                 }
                 .tag(0)
-            
             // Tab 2: Training
             TrainingView(cameraManager: cameraManager, knnService: KNNService)
                 .tabItem {
                     Label("Training", systemImage: "brain.head.profile")
                 }
                 .tag(1)
-            
             // Tab 3: Sounds
             SoundView()
                 .tabItem {
                     Label("Sounds", systemImage: "music.note.list")
                 }
                 .tag(2)
-            
             // Tab 4: Network
             WebSocketView(wsManager: wsManager)
                 .tabItem {
