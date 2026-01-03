@@ -1,3 +1,10 @@
+//
+//  CameraManager.swift
+//  lost-knn
+//
+//  Created by Tom Boullay on 03/01/2025
+//
+
 import SwiftUI
 import AVFoundation
 import Combine
@@ -5,7 +12,7 @@ import UIKit
 
 class CameraManager: NSObject, ObservableObject {
     @Published var session = AVCaptureSession()
-    // NOTE: We do NOT publish currentFrame to avoid flooding the Main Thread.
+    // NOTE: We do NOT publish currentFrame to avoid flooding the Main Thread
     private var _currentFrame: CVPixelBuffer?
     private let frameLock = NSLock()
     
@@ -94,7 +101,7 @@ class PreviewView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         videoPreviewLayer.frame = bounds
-        // Fix orientation if needed (usually portrait is default but good to know)
+        // Fix orientation if needed
     }
 }
 
@@ -115,7 +122,6 @@ struct CameraPreview: UIViewRepresentable {
         if uiView.videoPreviewLayer.session != cameraManager.session {
             uiView.videoPreviewLayer.session = cameraManager.session
         }
-        
         // Ensure orientation is correct
         if let connection = uiView.videoPreviewLayer.connection, connection.isVideoOrientationSupported {
             connection.videoOrientation = .portrait

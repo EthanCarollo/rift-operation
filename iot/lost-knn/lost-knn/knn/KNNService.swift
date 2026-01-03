@@ -1,3 +1,10 @@
+//
+//  KNNService.swift
+//  lost-knn
+//
+//  Created by Tom Boullay on 03/01/2025
+//
+
 import SwiftUI
 import CoreML
 import Vision
@@ -12,7 +19,6 @@ struct TrainingSample: Identifiable {
 class KNNService: ObservableObject {
     @Published var trainingSamples: [TrainingSample] = []
     @Published var predictedLabel: String = "Scanning..."
-    
     // CoreML Model + Vision Request
     private var model: VNCoreMLModel?
     private var request: VNCoreMLRequest?
@@ -37,11 +43,9 @@ class KNNService: ObservableObject {
     }
     
     // MARK: - Public API
-    
     func learn(buffer: CVPixelBuffer, label: String) {
         performRequest(on: buffer) { [weak self] vector in
             guard let self = self, let vector = vector else { return }
-            
             // Log Data (Simulating robust JSON logging)
             let logString = "ID: \(UUID().uuidString.prefix(8)) | Object: \(label) | VectorSize: \(vector.count)"
             print("[KNNService] \(logString)")
@@ -99,7 +103,6 @@ class KNNService: ObservableObject {
                     bestLabel = sample.label
                 }
             }
-            
             // Console Log for Scanner
             let confidence = String(format: "%.2f", minDistance)
             print("[Scanner] Pred: \(bestLabel) | Dist: \(confidence) | Best Match: \(minDistance < 100 ? "Yes" : "No")")
@@ -111,7 +114,6 @@ class KNNService: ObservableObject {
     }
     
     // MARK: - Internal Logic
-    
     private func performRequest(on buffer: CVPixelBuffer, completion: @escaping ([Float]?) -> Void) {
         guard let request = self.request else { return }
         

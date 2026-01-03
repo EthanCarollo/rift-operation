@@ -1,26 +1,29 @@
+//
+//  TrainingView.swift
+//  lost-knn
+//
+//  Created by Tom Boullay on 03/01/2025
+//
+
 import SwiftUI
 
 struct TrainingView: View {
     @ObservedObject var cameraManager: CameraManager
     @ObservedObject var knnService: KNNService
-    
     @State private var labelInput: String = ""
     @State private var isLearning = false
     @FocusState private var isInputFocused: Bool
-    
     // UI Helpers
     @State private var showDetails = false
     
     var body: some View {
         ZStack {
-            
             // Full Screen Camera
             CameraPreview(cameraManager: cameraManager)
                 .ignoresSafeArea()
                 .onTapGesture {
                     isInputFocused = false
                 }
-            
             // UI Overlay
             VStack {
                 // Header
@@ -30,14 +33,12 @@ struct TrainingView: View {
                         .foregroundColor(.white)
                         .shadow(radius: 5)
                     Spacer()
-                    
                     // Show Details Button
                     Button(action: { showDetails.toggle() }) {
                         Image(systemName: "list.bullet.circle.fill")
                             .font(.system(size: 30))
                             .foregroundColor(.white)
                     }
-                    
                     // Reset All Button
                     Button(action: {
                         knnService.clearAll()
@@ -50,9 +51,7 @@ struct TrainingView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 60)
-                
                 Spacer()
-                
                 // Input Card
                 VStack(spacing: 20) {
                     TextField("Name this object...", text: $labelInput)
@@ -89,7 +88,6 @@ struct TrainingView: View {
                         .cornerRadius(15)
                     }
                     .disabled(labelInput.isEmpty || isLearning)
-                    
                     // Info text
                     let count = knnService.getCounts()[labelInput] ?? 0
                     if !labelInput.isEmpty {
@@ -126,9 +124,6 @@ struct TrainingView: View {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             isLearning = false
-            // Note: We intentionally DO NOT clear labelInput here to allow multiple samples
-            // isInputFocused = false // Keep focus if user wants to type, or maybe better to dismiss?
-            // Let's keep input active so they can just move object and tap Learn again.
         }
     }
 }

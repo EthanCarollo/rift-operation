@@ -1,50 +1,51 @@
+//
+//  ContentView.swift
+//  lost-knn
+//
+//  Created by Tom Boullay on 03/01/2025
+//
+
 import SwiftUI
 
 struct ContentView: View {
     @StateObject private var cameraManager = CameraManager()
-    @StateObject private var KNNService = KNNServiceClass() // Renamed to avoid confusion if needed, assuming class name is KNNService
+    @StateObject private var KNNService = KNNServiceClass()
+    @State private var selectedTab = 0
     
     init() {
-        // Transparent TabBar
         let appearance = UITabBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundColor = UIColor.black.withAlphaComponent(0.5) // Semi-transparent
-        
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor.black
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
     var body: some View {
-        // LAYER 2: Application UI
-        TabView {
-            // Tab 1: Home
-            VStack {
-                Spacer()
-                Image(systemName: "globe")
-                    .imageScale(.large)
-                    .foregroundStyle(.white)
-                Text("Rift Lost KNN")
-                    .font(.title)
-                    .bold()
-                    .foregroundColor(.white)
-                    .shadow(radius: 5)
-                Spacer()
-            }
-            .tabItem {
-                Label("Home", systemImage: "house.fill")
-            }
-            
-            // Tab 2: Scanner (Vision)
+        TabView(selection: $selectedTab) {
+            // Tab 1: Scanner (Default)
             ScannerView(cameraManager: cameraManager, knnService: KNNService)
                 .tabItem {
                     Label("Scanner", systemImage: "eye.circle.fill")
                 }
-            
-            // Tab 3: Training
+                .tag(0)
+            // Tab 2: Training
             TrainingView(cameraManager: cameraManager, knnService: KNNService)
                 .tabItem {
                     Label("Training", systemImage: "brain.head.profile")
                 }
+                .tag(1)
+            // Tab 3: Sounds
+            SoundView()
+                .tabItem {
+                    Label("Sounds", systemImage: "music.note.list")
+                }
+                .tag(2)
+            // Tab 4: WebSocket
+            WebSocketView()
+                .tabItem {
+                    Label("Network", systemImage: "network")
+                }
+                .tag(3)
         }
         .accentColor(.yellow)
         .preferredColorScheme(.dark)
@@ -54,5 +55,4 @@ struct ContentView: View {
     }
 }
 
-// Separate type alias to avoid conflict if any (Assuming KNNService is the class name)
 typealias KNNServiceClass = KNNService
