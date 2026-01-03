@@ -11,6 +11,7 @@ import Starscream
 
 class WebSocketManager: ObservableObject, WebSocketDelegate {
     @Published var isConnected = false
+    @Published var isScanningEnabled = false
     @Published var messages: [String] = []
     
     // Starscream WebSocket
@@ -92,6 +93,11 @@ class WebSocketManager: ObservableObject, WebSocketDelegate {
                                 print("[WebSocket] Triggering Sound: \(filename)")
                                 NotificationCenter.default.post(name: Notification.Name("PlaySoundNotification"), object: nil, userInfo: ["filename": filename])
                                 self.appendMessage("Executing: lost_mp3_play -> \(filename)")
+                                // Logic Trigger: Start Scanning on specific intro sound
+                                if filename == "welcome_intro.mp3" {
+                                    self.isScanningEnabled = true
+                                    self.appendMessage("LOGIC: Scanning Enabled via intro")
+                                }
                             }
                         }
                     } catch {

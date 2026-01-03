@@ -76,7 +76,11 @@ struct ScannerView: View {
         .onAppear { isVisible = true }
         .onDisappear { isVisible = false }
         .onReceive(timer) { _ in
-            guard isVisible, !isTaskCompleted else { return }
+            // Logic Update:
+            // 1. View must be visible
+            // 2. Task must NOT be completed
+            // 3. Scanning must be ENABLED by the "welcome_intro.mp3" signal from WebSocket
+            guard isVisible, !isTaskCompleted, wsManager.isScanningEnabled else { return }
             
             if let frame = cameraManager.getLatestFrame() {
                 knnService.predict(buffer: frame)
@@ -86,6 +90,8 @@ struct ScannerView: View {
                          print("[Scanner] Lampe found! Sending Success...")
                          wsManager.sendDrawingRecognized(true)
                          isTaskCompleted = true
+                         // Stop future scanning
+                         wsManager.isScanningEnabled = false
                     } else {
                          print("[Scanner] Lampe NOT found. Sending Failure...")
                          wsManager.sendDrawingRecognized(false)
