@@ -17,7 +17,7 @@ useSeoMeta({
         </div>
 
         <!-- Navigation Cards -->
-        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <!-- Studio Card -->
             <NuxtLink to="/studio"
                 class="group p-8 border border-border bg-white hover:border-accent hover:shadow-lg transition-all duration-300 rounded-lg flex flex-col items-center text-center">
@@ -36,6 +36,25 @@ useSeoMeta({
                 <span
                     class="mt-6 text-xs font-bold uppercase tracking-wider text-accent opacity-0 group-hover:opacity-100 transition-opacity">
                     Accéder au Studio →
+                </span>
+            </NuxtLink>
+
+            <!-- Video Card -->
+            <NuxtLink to="/video"
+                class="group p-8 border border-border bg-white hover:border-accent hover:shadow-lg transition-all duration-300 rounded-lg flex flex-col items-center text-center">
+                <div
+                    class="mb-6 mx-auto w-16 h-16 bg-bg-sec rounded-full flex items-center justify-center group-hover:bg-accent group-hover:text-accent-text transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-3 group-hover:text-accent">Projection</h2>
+                <p class="text-text-sec text-sm">
+                    Affichage principal pour le mapping vidéo et les retours visuels immersifs.
+                </p>
+                <span
+                    class="mt-6 text-xs font-bold uppercase tracking-wider text-accent opacity-0 group-hover:opacity-100 transition-opacity">
+                    Ouvrir la Projection →
                 </span>
             </NuxtLink>
 
