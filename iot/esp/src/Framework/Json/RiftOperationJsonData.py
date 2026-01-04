@@ -33,7 +33,9 @@ class RiftOperationJsonData:
                 lost_video_play=None,
 
                 end_system=None,
-                reset_system=None):
+                reset_system=None,
+                **kwargs
+                ):
         
         if device_id is None:
             raise ValueError("device_id is mandatory")
