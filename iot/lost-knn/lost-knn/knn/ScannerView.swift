@@ -73,8 +73,14 @@ struct ScannerView: View {
                 .padding(.bottom, 50)
             }
         }
-        .onAppear { isVisible = true }
-        .onDisappear { isVisible = false }
+        .onAppear { 
+            isVisible = true 
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear { 
+            isVisible = false 
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
         .onReceive(timer) { _ in
             // Logic Update:
             // 1. View must be visible

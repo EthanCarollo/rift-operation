@@ -10,10 +10,16 @@ import CoreML
 import Vision
 import Combine
 
-struct TrainingSample: Identifiable {
-    let id = UUID()
+struct TrainingSample: Identifiable, Codable {
+    let id: UUID
     let label: String
     let vector: [Float]
+    
+    init(label: String, vector: [Float]) {
+        self.id = UUID()
+        self.label = label
+        self.vector = vector
+    }
 }
 
 class KNNService: ObservableObject {
@@ -22,9 +28,11 @@ class KNNService: ObservableObject {
     // CoreML Model + Vision Request
     private var model: VNCoreMLModel?
     private var request: VNCoreMLRequest?
+    private let kSavedSamplesKey = "saved_knn_samples"
     
     init() {
         setupModel()
+        loadSamples()
     }
     
     private func setupModel() {
@@ -53,6 +61,7 @@ class KNNService: ObservableObject {
             DispatchQueue.main.async {
                 let sample = TrainingSample(label: label, vector: vector)
                 self.trainingSamples.append(sample)
+                self.saveSamples() // Save
                 print("[KNNService] Total Samples: \(self.trainingSamples.count)")
             }
         }
@@ -61,6 +70,7 @@ class KNNService: ObservableObject {
     func deleteObject(label: String) {
         DispatchQueue.main.async {
             self.trainingSamples.removeAll { $0.label == label }
+            self.saveSamples() // Save
             print("[KNNService] Removed all samples for: \(label)")
         }
     }
@@ -68,7 +78,23 @@ class KNNService: ObservableObject {
     func clearAll() {
         DispatchQueue.main.async {
             self.trainingSamples.removeAll()
+            self.saveSamples() // Save
             print("[KNNService] Cleared all training data")
+        }
+    }
+    
+    // MARK: - Persistence
+    private func saveSamples() {
+        if let encoded = try? JSONEncoder().encode(trainingSamples) {
+            UserDefaults.standard.set(encoded, forKey: kSavedSamplesKey)
+        }
+    }
+    
+    private func loadSamples() {
+        if let data = UserDefaults.standard.data(forKey: kSavedSamplesKey),
+           let decoded = try? JSONDecoder().decode([TrainingSample].self, from: data) {
+            self.trainingSamples = decoded
+            print("[KNNService] Loaded \(decoded.count) samples from disk")
         }
     }
     
