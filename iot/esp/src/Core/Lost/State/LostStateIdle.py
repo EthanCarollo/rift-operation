@@ -17,23 +17,18 @@ class LostStateIdle(LostState):
         self.workshop.hardware.set_servo(0)
 
     async def handle_message(self, payload):
-        counts = (payload.get("dream_rift_part_count"), payload.get("nightmare_rift_part_count"))
-        if counts != LC.LostGameConfig.TARGET_COUNTS:
-            return
-
-        role = self.workshop.hardware.role
-        
-        if role == "dream":
-            # Just wait for start signal
+        # Trigger condition: rift_part_count == 2
+        if payload.get("rift_part_count") == 2:
             device_id = self.workshop.controller.config.device_id
-            await self.workshop.controller.websocket_client.send(json.dumps({"signal": "Active", "device_id": device_id}))
-            from src.Core.Lost.State.LostStateDistance import LostStateDistance
-            await self.workshop.swap_state(LostStateDistance(self.workshop))
+            # Send activation confirmation + Start Video 1
+            await self.workshop.send_rift_json(
+                lost_state="active", 
+                rift_part_count=2, 
+                lost_video_play="video1.mp4",
+                device_id=device_id
+            )
+            await self.next_step()
 
-        elif role == "nightmare":
-            # Check torch_scanned
-            if payload.get("torch_scanned") is True:
-                device_id = self.workshop.controller.config.device_id
-                await self.workshop.controller.websocket_client.send(json.dumps({"signal": "Active", "device_id": device_id}))
-                from src.Core.Lost.State.LostStateLight import LostStateLight
-                await self.workshop.swap_state(LostStateLight(self.workshop))
+    async def next_step(self):
+        from src.Core.Lost.State.LostStateLight import LostStateLight
+        await self.workshop.swap_state(LostStateLight(self.workshop))

@@ -27,15 +27,11 @@ class LostStateCage(LostState):
         if self.workshop.light_triggered:
             if uid == LC.LostGameConfig.VALID_RFID_UID:
                 self.workshop.logger.info("RFID VALID -> Cage Unlocked")
-                self.workshop.logger.info("Audio: Capture Success")
                 await self.workshop.send_rift_json(cage=True, lost_mp3_play="capture_success.mp3")
-                self.workshop.logger.info("State: CAGE -> Sending json with value : \"cage_is_on_monster=True\"")
-                await self.workshop.send_rift_json(cage=True)
                 # Auto transition to Done
                 await self.next_step()
             else:
                 self.workshop.logger.warning(f"RFID INVALID: {uid}")
-                self.workshop.logger.info("Audio: Capture Fail")
                 await self.workshop.send_rift_json(lost_mp3_play="capture_fail.mp3")
                 
     async def next_step(self):

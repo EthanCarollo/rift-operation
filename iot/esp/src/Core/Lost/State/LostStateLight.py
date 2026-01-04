@@ -30,22 +30,15 @@ class LostStateLight(LostState):
             self.light_triggered = True
             self.workshop.logger.info("Button pressed -> Light triggered")
             self.workshop.logger.info("Futur implementation : Changement Mapping Video")
-            self.workshop.logger.info("Audio: Identify Monster")
-            # Send signal to sync with Dream
+            # Send signal to sync with Dream via JSON payload
             device_id = self.workshop.controller.config.device_id
-            await self.workshop.controller.websocket_client.send(json.dumps({
-                "signal": "light_sensor_triggered", 
-                "device_id": device_id,
-                "lost_mp3_play": "identify_monster.mp3"
-            }))
-            # Also self-trigger signal handling to transition
-            await self.handle_signal("light_sensor_triggered")
+            await self.workshop.send_rift_json(lost_mp3_play="identify_monster.mp3", lost_light_is_triggered=True, lost_video_play="video2.mp4", device_id=device_id)
 
-    async def handle_signal(self, signal):
-        if signal == "light_sensor_triggered":
-             if not self.light_triggered:
+    async def handle_message(self, payload):
+        if payload.get("lost_light_is_triggered") is True:
+             if not self.light_triggered: # Prevent double trigger logic if needed, though handle_button sets it too. 
                  self.light_triggered = True
-                 self.workshop.logger.info("Signal received: Light Sensor Triggered")
+                 self.workshop.logger.info("Light Sensor Triggered")
                  # Auto transition to Cage
                  await self.next_step()
 

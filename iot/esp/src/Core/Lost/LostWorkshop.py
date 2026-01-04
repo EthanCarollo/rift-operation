@@ -68,14 +68,16 @@ class LostWorkshop:
         if not isinstance(payload, dict):
             return
             
-        # Handle signals
-        if payload.get("signal") == "light_sensor_triggered":
+        # Global Reset Logic
+        if payload.get("reset_system") is True:
+             self.controller.logger.info("Received reset_system command")
+             await self.reset()
+             return
+        # Update light trigger status from payload
+        if payload.get("lost_light_is_triggered") is True:
             self.light_triggered = True
-            if self.state:
-                await self.state.handle_signal("light_sensor_triggered")
-            return
 
-        if "dream_rift_part_count" not in payload and "nightmare_rift_part_count" not in payload:
+        if "rift_part_count" not in payload:
             return
         self._last_payload = payload
         
@@ -88,7 +90,7 @@ class LostWorkshop:
         if self.state:
             await self.state.handle_message(payload)
 
-    async def send_rift_json(self, torch=None, cage=None, drawing=None, lost_mp3_play=None):
+    async def send_rift_json(self, torch=None, cage=None, drawing=None, lost_mp3_play=None, lost_video_play=None, lost_state=None, lost_light_is_triggered=None, device_id=None):
         if not self._last_payload:
             self.controller.logger.error("Cannot send: no payload received")
             return
@@ -98,11 +100,24 @@ class LostWorkshop:
         if drawing is not None: self._state_data["drawing"] = drawing
 
         payload = dict(self._last_payload)
-        payload["device_id"] = self.controller.config.device_id
+        # Use provided device_id or fallback to config
+        payload["device_id"] = device_id if device_id else self.controller.config.device_id
         
         # Add transient sound command if present
         if lost_mp3_play:
             payload["lost_mp3_play"] = lost_mp3_play
+
+        # Add transient video command if present
+        if lost_video_play:
+            payload["lost_video_play"] = lost_video_play
+            
+        # Add explicitly requested lost_state
+        if lost_state:
+            payload["lost_state"] = lost_state
+
+        # Add light trigger if provided
+        if lost_light_is_triggered is not None:
+             payload["lost_light_is_triggered"] = lost_light_is_triggered
         
         for key, val in [("lost_torch_scanned", self._state_data["torch"]),
                          ("lost_cage_is_on_monster", self._state_data["cage"]),
@@ -113,8 +128,8 @@ class LostWorkshop:
         self._last_payload = payload
 
         try:
-            self.logger.log_ws("torch={}, cage={}, drawing={}, mp3={}".format(
-                self._state_data["torch"], self._state_data["cage"], self._state_data.get("drawing"), lost_mp3_play
+            self.logger.log_ws("torch={}, cage={}, drawing={}, mp3={}, video={}, lost_state={}, light={}".format(
+                self._state_data["torch"], self._state_data["cage"], self._state_data.get("drawing"), lost_mp3_play, lost_video_play, lost_state, lost_light_is_triggered
             ))
             await self.controller.websocket_client.send(json.dumps(payload))
         except Exception as e:

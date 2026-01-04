@@ -20,13 +20,11 @@ class LostStateDrawing(LostState):
         recognized = payload.get("lost_drawing_recognized")
         
         if recognized is True:
-            self.workshop.logger.info("Audio: Drawing Success")
             await self.workshop.send_rift_json(torch=True, lost_mp3_play="drawing_success.mp3")
             await self.next_step()
             
         elif recognized is False:
             # Play Error Sound
-            self.workshop.logger.info("Audio: Drawing Error")
             await self.workshop.send_rift_json(lost_mp3_play="drawing_error.mp3")
 
     async def next_step(self):

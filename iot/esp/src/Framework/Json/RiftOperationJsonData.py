@@ -30,6 +30,7 @@ class RiftOperationJsonData:
                 lost_light_is_triggered=None,
                 lost_drawing_recognized=None,
                 lost_mp3_play=None,
+                lost_video_play=None,
 
                 end_system=None,
                 reset_system=None):
@@ -65,6 +66,7 @@ class RiftOperationJsonData:
         self.lost_light_is_triggered = lost_light_is_triggered
         self.lost_drawing_recognized = lost_drawing_recognized
         self.lost_mp3_play = lost_mp3_play
+        self.lost_video_play = lost_video_play
         
         self.end_system = end_system
         self.reset_system = reset_system
