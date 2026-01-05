@@ -8,6 +8,11 @@ from services.PinguinQaService import PinguinQaService
 from typing import Dict, Any
 import socket
 import base64
+import asyncio
+import websockets
+import json
+from config import WS_SERVER_URI
+
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -26,15 +31,85 @@ print(f"Local network address: http://{local_ip}:8000")
 stt_service = KyutaiSttService()
 qa_service = PinguinQaService()
 
+# Global State
+IS_ACTIVE = True
+connected_clients: list[WebSocket] = []
+
+async def broadcast_state(state: str):
+    print(f"📡 [BROADCAST] Sending state '{state}' to {len(connected_clients)} clients")
+    if not connected_clients:
+        return
+    
+    message = json.dumps({
+        "type": "stranger_state",
+        "state": state
+    })
+    
+    to_remove = []
+    for client in connected_clients:
+        try:
+            await client.send_text(message)
+        except Exception as e:
+            print(f"❌ Failed to broadcast to client: {e}")
+            to_remove.append(client)
+            
+    for client in to_remove:
+        if client in connected_clients:
+            connected_clients.remove(client)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     stt_service.load_model()
     qa_service.load_model()
+    # Start the connection to the main server
+    asyncio.create_task(connect_to_main_server())
     yield
     # Clean up resources if needed
     pass
 
 app = FastAPI(lifespan=lifespan)
+
+async def connect_to_main_server():
+    global IS_ACTIVE
+    uri = WS_SERVER_URI
+    while True:
+        try:
+            print(f"🔄 [MAIN SERVER] Attempting to connect to {uri}...")
+            async with websockets.connect(uri) as websocket:
+                print(f"✅ [MAIN SERVER] Connected to {uri}")
+                # Send identification if needed, or just listen
+                await websocket.send(json.dumps({"type": "identify", "client": "stranger-pinguin"}))
+                
+                while True:
+                    try:
+                        message_str = await websocket.recv()
+                        print(f"📩 [MAIN SERVER] Received: {message_str}")
+                        
+                        try:
+                            message = json.loads(message_str)
+                            if isinstance(message, dict):
+                                state = message.get("stranger_state")
+                                if state == "active":
+                                    IS_ACTIVE = True
+                                    print("🟢 [STATE] Server ACTIVATED remotely")
+                                elif state == "inactive":
+                                    IS_ACTIVE = False
+                                    print("🔴 [STATE] Server DEACTIVATED remotely")
+                                    
+                                # Broadcast the new state to all connected Pinguin clients
+                                await broadcast_state(state)
+                        except json.JSONDecodeError:
+                            print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
+                            
+                    except websockets.ConnectionClosed:
+                        print("⚠️ [MAIN SERVER] Connection closed")
+                        break
+        except Exception as e:
+            print(f"❌ [MAIN SERVER] Connection failed: {e}")
+        
+        # Wait before reconnecting
+        await asyncio.sleep(5)
+
 
 # Servir les fichiers audio
 import os
@@ -81,7 +156,18 @@ async def health_check():
 @app.websocket("/ws")
 async def audio_websocket(websocket: WebSocket):
     await websocket.accept()
-    print("Client connected")
+    connected_clients.append(websocket)
+    print(f"Client connected (Total: {len(connected_clients)})")
+    
+    # Send current state immediately on connection
+    try:
+        current_state = "active" if IS_ACTIVE else "inactive"
+        await websocket.send_json({
+            "type": "stranger_state",
+            "state": current_state
+        })
+    except Exception as e:
+        print(f"Error sending initial state: {e}")
     
     # Create a fresh generator for this session
     local_gen = stt_service.create_generator()
@@ -100,7 +186,16 @@ async def audio_websocket(websocket: WebSocket):
             # 🛑 Check for disconnect
             if message["type"] == "websocket.disconnect":
                 print(f"Client disconnected (clean) after {chunk_count} chunks")
+                if websocket in connected_clients:
+                    connected_clients.remove(websocket)
                 break
+                
+            if not IS_ACTIVE:
+                # ⏸️ Server is inactive, ignore input but keep connection alive
+                # Optional: rate limit this log if it's too spammy
+                if chunk_count % 50 == 0:
+                    print("😴 [SERVER] Inactive - ignoring input")
+                continue
 
             if "bytes" in message:
                 # 🎙️ Handle Audio (Transcription)
@@ -194,6 +289,8 @@ async def audio_websocket(websocket: WebSocket):
         traceback.print_exc()
         # Only try to close if we didn't just crash on receiving
     finally:
+        if websocket in connected_clients:
+            connected_clients.remove(websocket)
         try:
             await websocket.close()
         except:

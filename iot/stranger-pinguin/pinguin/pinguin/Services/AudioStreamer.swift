@@ -25,6 +25,17 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     override init() {
         super.init()
         startHealthCheck()
+        // Auto-connect on startup
+        connect()
+    }
+    
+    func connect() {
+        print("[AudioStreamer] Connecting to WebSocket...")
+        let url = AppConfig.websocketURL
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
+        socket = session.webSocketTask(with: url)
+        socket?.resume()
+        receiveMessage()
     }
     
     private func setPlaybackActive(_ active: Bool) {
@@ -58,21 +69,21 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         }.resume()
     }
     
-    func startRecording() {
-        let url = AppConfig.websocketURL
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
-        socket = session.webSocketTask(with: url)
-        socket?.resume()
-        receiveMessage()
-        
+    func startAudioCapture() {
+        if isRecording { return }
+        print("[AudioStreamer] Starting audio capture...")
         setupAudio()
     }
     
-    func stopRecording() {
+    func stopAudioCapture() {
+        if !isRecording { return }
+        print("[AudioStreamer] Stopping audio capture...")
         engine.stop()
         engine.inputNode.removeTap(onBus: 0)
-        socket?.cancel(with: .normalClosure, reason: nil)
-        isRecording = false
+        // Do NOT close the socket here, we want to keep listening for state changes
+        DispatchQueue.main.async {
+            self.isRecording = false
+        }
         setPlaybackActive(false) // Safety reset
     }
     
@@ -234,26 +245,34 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
                             self?.transcribedText += content
                         }
                     } else if let data = text.data(using: .utf8),
-                              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                              let type = json["type"] as? String, type == "qa_answer",
-                              let answer = json["answer"] as? String {
-                        DispatchQueue.main.async {
-                            self?.latestAnswer = answer
-                            self?.latestConfidence = Float(json["confidence"] as? Double ?? 0.0)
-                            print("[AudioStreamer] Received QA Answer: \(answer) (conf: \(self?.latestConfidence ?? 0))")
-                            
-                            // Handle Audio Playback (Base64)
-                            if let audioBase64 = json["audio_base64"] as? String,
-                               let audioData = Data(base64Encoded: audioBase64) {
-                                let filename = json["audio_file"] as? String ?? "unknown"
-                                self?.playAudioData(data: audioData, filename: filename)
+                              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        
+                        if let type = json["type"] as? String {
+                            if type == "stranger_state", let state = json["state"] as? String {
+                                print("[AudioStreamer] Received STATE command: \(state)")
+                                if state == "active" {
+                                    self?.startAudioCapture()
+                                } else {
+                                    self?.stopAudioCapture()
+                                }
+                            } else if type == "qa_answer", let answer = json["answer"] as? String {
+                                DispatchQueue.main.async {
+                                    self?.latestAnswer = answer
+                                    self?.latestConfidence = Float(json["confidence"] as? Double ?? 0.0)
+                                    print("[AudioStreamer] Received QA Answer: \(answer) (conf: \(self?.latestConfidence ?? 0))")
+                                    
+                                    // Handle Audio Playback (Base64)
+                                    if let audioBase64 = json["audio_base64"] as? String,
+                                       let audioData = Data(base64Encoded: audioBase64) {
+                                        let filename = json["audio_file"] as? String ?? "unknown"
+                                        self?.playAudioData(data: audioData, filename: filename)
+                                    }
+                                }
+                            } else if type == "system_error" {
+                                DispatchQueue.main.async {
+                                    self?.errorMessage = json["message"] as? String
+                                }
                             }
-                        }
-                    } else if let data = text.data(using: .utf8),
-                              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                              let type = json["type"] as? String, type == "system_error" {
-                        DispatchQueue.main.async {
-                            self?.errorMessage = json["message"] as? String
                         }
                     } else {
                         // Fallback/Legacy

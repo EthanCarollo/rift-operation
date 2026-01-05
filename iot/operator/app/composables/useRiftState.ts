@@ -7,15 +7,19 @@ export const useRiftState = () => {
   const appMode = useState<AppMode | null>('rift-mode', () => null)
   // Store selected webcams as a map of ID -> Name
   const selectedWebcams = useState<WebcamMap>('rift-webcams', () => ({}))
+  // Store webcam rotations as Map<DeviceID, RotationAngle>
+  const webcamRotations = useState<Record<string, number>>('rift-webcams-rotations', () => ({}))
 
   const resetState = () => {
     appMode.value = null
     selectedWebcams.value = {}
+    webcamRotations.value = {}
   }
 
   return {
     appMode,
     selectedWebcams,
+    webcamRotations,
     resetState
   }
 }

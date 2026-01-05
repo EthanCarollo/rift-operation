@@ -8,3 +8,4 @@ sentencepiece
 mlx
 sentence-transformers
 faiss-cpu
+websockets

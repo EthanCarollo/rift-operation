@@ -5,6 +5,7 @@
        <WebcamGrid 
          mode="view"
          :initial-selected="selectedWebcams"
+         :initial-rotations="webcamRotations"
        />
        <!-- Overlay Lines for "Screen" effect -->
        <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] z-10 bg-[length:100%_4px,6px_100%]"></div>
@@ -24,6 +25,15 @@
 
 <script setup lang="ts">
 import { useRiftState } from '~/composables/useRiftState'
+import { useRouter } from '#app'
+import { onMounted } from 'vue'
 
-const { selectedWebcams } = useRiftState()
+const { selectedWebcams, webcamRotations } = useRiftState()
+const router = useRouter()
+
+onMounted(() => {
+  if (Object.keys(selectedWebcams.value).length === 0) {
+    router.push('/config')
+  }
+})
 </script>
