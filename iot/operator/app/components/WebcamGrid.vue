@@ -62,9 +62,13 @@
           :class="{
             'opacity-50 group-hover:opacity-80': mode === 'selection' && !currentSelection[cam.deviceId], 
             'opacity-100': currentSelection[cam.deviceId] || mode === 'view',
-            'grayscale contrast-125 brightness-90': true /* SURVEILLANCE FILTER */
+            'grayscale': filters[cam.deviceId]?.grayscale, 
+            'contrast-125 brightness-90': true /* SURVEILLANCE FILTER BASE */
           }"
         ></video>
+        
+        <!-- FNAF OVERLAY -->
+        <div v-if="filters[cam.deviceId]?.fnaf" class="pointer-events-none absolute inset-0 z-0 fnaf-overlay"></div>
 
         <!-- SELECTION MODE UI -->
         <div v-if="mode === 'selection'" class="absolute inset-x-0 bottom-0 p-3 bg-black/90 border-t border-white/10 z-10 flex flex-col gap-2">
@@ -82,14 +86,14 @@
             </div>
             
             <!-- Renaming Input (Only if selected) -->
-            <div v-if="currentSelection[cam.deviceId]" @click.stop class="flex flex-col gap-2">
+            <div v-if="currentSelection[cam.deviceId] !== undefined" @click.stop class="flex flex-col gap-2">
                 <input 
                     type="text" 
                     v-model="currentSelection[cam.deviceId]"
                     class="w-full bg-white/10 border border-white/20 text-white text-xs px-2 py-1 focus:border-[var(--success)] focus:outline-none placeholder-white/30 font-bold uppercase"
                     placeholder="ENTER DESIGNATOR"
                 />
-                 <!-- Rotation Control (Moved to Config) -->
+                <!-- Rotation Control -->
                 <button 
                     @click.stop="rotateCamera(cam.deviceId)"
                     class="w-full text-[10px] bg-white/10 hover:bg-white/20 text-gray-300 px-2 py-1 uppercase font-bold border border-white/20 transition-colors flex justify-between"
@@ -97,6 +101,24 @@
                     <span>Rotate</span>
                     <span>{{ rotations[cam.deviceId] || 0 }}°</span>
                 </button>
+
+                <!-- Filter Controls -->
+                <div class="flex gap-2">
+                    <button 
+                        @click.stop="toggleFilter(cam.deviceId, 'grayscale')"
+                        class="flex-1 text-[10px] bg-white/10 hover:bg-white/20 text-gray-300 px-2 py-1 uppercase font-bold border border-white/20 transition-colors"
+                        :class="{'bg-[var(--accent)] text-[var(--accent-text)] border-[var(--accent)]': filters[cam.deviceId]?.grayscale}"
+                    >
+                        B&W
+                    </button>
+                    <button 
+                        @click.stop="toggleFilter(cam.deviceId, 'fnaf')"
+                        class="flex-1 text-[10px] bg-white/10 hover:bg-white/20 text-gray-300 px-2 py-1 uppercase font-bold border border-white/20 transition-colors"
+                         :class="{'bg-[var(--accent)] text-[var(--accent-text)] border-[var(--accent)]': filters[cam.deviceId]?.fnaf}"
+                    >
+                        FNAF
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -137,10 +159,11 @@ const props = defineProps<{
   mode: 'selection' | 'view'
   initialSelected?: Record<string, string>
   initialRotations?: Record<string, number>
+  initialFilters?: Record<string, { grayscale: boolean, fnaf: boolean }>
 }>()
 
 const emit = defineEmits<{
-  (e: 'continue', selection: Record<string, string>, rotations: Record<string, number>): void
+  (e: 'continue', selection: Record<string, string>, rotations: Record<string, number>, filters: Record<string, { grayscale: boolean, fnaf: boolean }>): void
 }>()
 
 interface WebcamInfo {
@@ -159,6 +182,9 @@ const currentSelection = ref<Record<string, string>>({ ...props.initialSelected 
 
 // State for rotation: Map<ID, Angle>
 const rotations = ref<Record<string, number>>({ ...props.initialRotations })
+
+// State for filters: Map<ID, Config>
+const filters = ref<Record<string, { grayscale: boolean, fnaf: boolean }>>({ ...props.initialFilters })
 
 const customNames = computed(() => {
     return props.mode === 'view' ? (props.initialSelected || {}) : currentSelection.value
@@ -227,7 +253,14 @@ const handleCellClick = (id: string) => {
 }
 
 const confirmSelection = () => {
-    emit('continue', currentSelection.value, rotations.value)
+    emit('continue', currentSelection.value, rotations.value, filters.value)
+}
+
+const toggleFilter = (deviceId: string, type: 'grayscale' | 'fnaf') => {
+    if (!filters.value[deviceId]) {
+        filters.value[deviceId] = { grayscale: false, fnaf: false }
+    }
+    filters.value[deviceId][type] = !filters.value[deviceId][type]
 }
 
 const rotateCamera = (deviceId: string) => {
@@ -304,3 +337,23 @@ onUnmounted(() => stopAllStreams())
 
 watch(() => props.mode, () => refreshDevices())
 </script>
+
+<style scoped>
+.fnaf-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  background-size: 100% 4px;
+  animation: scanlines 1s linear infinite;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+}
+
+@keyframes scanlines {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 4px; }
+}
+</style>

@@ -4,6 +4,7 @@
       mode="selection"
       :initial-selected="selectedWebcams"
       :initial-rotations="webcamRotations"
+      :initial-filters="webcamFilters"
       @continue="handleContinue"
     />
   </div>
@@ -14,11 +15,12 @@ import { useRouter } from '#app'
 import { useRiftState } from '~/composables/useRiftState'
 
 const router = useRouter()
-const { selectedWebcams, webcamRotations } = useRiftState()
+const { selectedWebcams, webcamRotations, webcamFilters } = useRiftState()
 
-const handleContinue = (selection: Record<string, string>, rotations: Record<string, number>) => {
+const handleContinue = (selection: Record<string, string>, rotations: Record<string, number>, filters: Record<string, { grayscale: boolean, fnaf: boolean }>) => {
   selectedWebcams.value = selection
   webcamRotations.value = rotations
+  webcamFilters.value = filters
   router.push('/standby')
 }
 </script>

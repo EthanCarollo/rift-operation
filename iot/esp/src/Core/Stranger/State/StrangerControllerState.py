@@ -15,7 +15,8 @@ class StrangerControllerState:
         pass
 
     def send_state(self, state_name):
-        asyncio.run(self.controller.websocket_client.send(
+        print("send state name : "+state_name)
+        asyncio.create_task(self.controller.websocket_client.send(
             RiftOperationJsonData(
                 device_id= self.controller.config.device_id,
                 stranger_state= state_name
