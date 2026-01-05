@@ -38,16 +38,17 @@
     <div 
       class="flex-1 overflow-hidden" 
       :class="{
-        'grid gap-4 auto-rows-min overflow-y-auto grid-cols-1 md:grid-cols-2 lg:grid-cols-4': mode === 'selection',
+        'grid gap-4 auto-rows-min overflow-y-auto grid-cols-1 md:grid-cols-2': mode === 'selection',
         'grid h-full w-full': mode === 'view'
       }"
       :style="mode === 'view' ? viewGridStyle : {}"
     >
       <div 
-        v-for="cam in displayList" 
+        v-for="(cam, index) in displayList" 
         :key="cam.deviceId"
         class="relative bg-black group overflow-hidden border transition-all"
         :class="getCellClass(cam.deviceId)"
+        :style="getCellStyle(index)"
         @click="handleCellClick(cam.deviceId)"
       >
         <!-- Video Element -->
@@ -56,7 +57,8 @@
           autoplay 
           playsinline 
           muted 
-          class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          class="absolute inset-0 w-full h-full object-cover transition-transform duration-300"
+          :style="{ transform: `rotate(${rotations[cam.deviceId] || 0}deg)` }"
           :class="{
             'opacity-50 group-hover:opacity-80': mode === 'selection' && !currentSelection[cam.deviceId], 
             'opacity-100': currentSelection[cam.deviceId] || mode === 'view',
@@ -80,13 +82,21 @@
             </div>
             
             <!-- Renaming Input (Only if selected) -->
-            <div v-if="currentSelection[cam.deviceId]" @click.stop>
+            <div v-if="currentSelection[cam.deviceId]" @click.stop class="flex flex-col gap-2">
                 <input 
                     type="text" 
                     v-model="currentSelection[cam.deviceId]"
                     class="w-full bg-white/10 border border-white/20 text-white text-xs px-2 py-1 focus:border-[var(--success)] focus:outline-none placeholder-white/30 font-bold uppercase"
                     placeholder="ENTER DESIGNATOR"
                 />
+                 <!-- Rotation Control (Moved to Config) -->
+                <button 
+                    @click.stop="rotateCamera(cam.deviceId)"
+                    class="w-full text-[10px] bg-white/10 hover:bg-white/20 text-gray-300 px-2 py-1 uppercase font-bold border border-white/20 transition-colors flex justify-between"
+                >
+                    <span>Rotate</span>
+                    <span>{{ rotations[cam.deviceId] || 0 }}°</span>
+                </button>
             </div>
         </div>
 
@@ -104,6 +114,7 @@
                     ● {{ props.initialSelected ? 'REC' : 'LIVE' }}
                 </span>
             </div>
+            <!-- Rotation Control Removed from Monitor -->
         </div>
 
       </div>
@@ -125,10 +136,11 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 const props = defineProps<{
   mode: 'selection' | 'view'
   initialSelected?: Record<string, string>
+  initialRotations?: Record<string, number>
 }>()
 
 const emit = defineEmits<{
-  (e: 'continue', selection: Record<string, string>): void
+  (e: 'continue', selection: Record<string, string>, rotations: Record<string, number>): void
 }>()
 
 interface WebcamInfo {
@@ -144,6 +156,9 @@ const videoRefs = ref<Map<string, HTMLVideoElement>>(new Map())
 // State for selection mode: Map<ID, CustomName>
 // In view mode, we use props.initialSelected directly
 const currentSelection = ref<Record<string, string>>({ ...props.initialSelected })
+
+// State for rotation: Map<ID, Angle>
+const rotations = ref<Record<string, number>>({ ...props.initialRotations })
 
 const customNames = computed(() => {
     return props.mode === 'view' ? (props.initialSelected || {}) : currentSelection.value
@@ -164,6 +179,15 @@ const displayList = computed(() => {
 const viewGridStyle = computed(() => {
   const count = displayList.value.length
   if (count === 0) return {}
+  
+  // Bento Layout for 3 items: 2 columns (Large Left, Stacked Right)
+  if (count === 3) {
+      return {
+          gridTemplateColumns: '2fr 1fr',
+          gridTemplateRows: '1fr 1fr'
+      }
+  }
+
   const cols = Math.ceil(Math.sqrt(count))
   const rows = Math.ceil(count / cols)
   return {
@@ -171,6 +195,13 @@ const viewGridStyle = computed(() => {
     gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
   }
 })
+
+const getCellStyle = (index: number) => {
+    if (props.mode === 'view' && displayList.value.length === 3 && index === 0) {
+        return { gridRow: 'span 2' }
+    }
+    return {}
+}
 
 const getCellClass = (id: string) => {
   if (props.mode === 'view') {
@@ -196,7 +227,12 @@ const handleCellClick = (id: string) => {
 }
 
 const confirmSelection = () => {
-    emit('continue', currentSelection.value)
+    emit('continue', currentSelection.value, rotations.value)
+}
+
+const rotateCamera = (deviceId: string) => {
+    const current = rotations.value[deviceId] || 0
+    rotations.value[deviceId] = (current + 90) % 360
 }
 
 // ... Camera logic ...

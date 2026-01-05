@@ -4,6 +4,7 @@ class RiftOperationJsonData:
     def __init__(self, 
                 device_id,
                 rift_part_count=None,
+                start_system=None,
                 
                 operator_launch_close_rift_step_1=None,
                 operator_launch_close_rift_step_2=None,
@@ -40,6 +41,7 @@ class RiftOperationJsonData:
             
         self.device_id = device_id
         self.rift_part_count = rift_part_count
+        self.start_system = start_system
         
         self.operator_launch_close_rift_step_1 = operator_launch_close_rift_step_1
         self.operator_launch_close_rift_step_2 = operator_launch_close_rift_step_2

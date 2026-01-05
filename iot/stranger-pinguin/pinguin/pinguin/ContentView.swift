@@ -112,12 +112,32 @@ struct ContentView: View {
                     
                     // Interactive Footer
                     VStack(spacing: 16) {
-                        RecordingButton(isRecording: streamer.isRecording) {
-                            feedback()
+                        // Manual recording button removed in favor of remote control
+                        
+                        // Status Display
+                        VStack(spacing: 8) {
                             if streamer.isRecording {
-                                streamer.stopRecording()
+                                Text("LISTENING")
+                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(Capsule().fill(Color.red.opacity(0.8)))
+                                    .overlay(
+                                        Capsule()
+                                            .strokeBorder(Color.red, lineWidth: 1)
+                                            .scaleEffect(1.1)
+                                            .opacity(0.5)
+                                            .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: true)
+                                    )
                             } else {
-                                streamer.startRecording()
+                                Text("WAITING FOR COMMAND")
+                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(.gray.opacity(0.6))
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(Capsule().fill(Color.white))
+                                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                             }
                         }
                         
