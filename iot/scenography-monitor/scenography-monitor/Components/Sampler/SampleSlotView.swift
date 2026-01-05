@@ -12,10 +12,14 @@ struct SampleSlotView: View {
     var body: some View {
         let isPlaying = soundManager.activeInstanceIds.contains(instance.id)
         let isLoading = soundManager.loadingInstanceIds.contains(instance.id)
-        let bindingCount = soundTrigger.bindings.filter { $0.instanceId == instance.id }.count // Filter by Instance ID
+        let bindingCount = soundTrigger.bindings.filter { $0.instanceId == instance.id }.count
         let isSelected = soundManager.selectedInstanceId == instance.id
+        let progress = soundManager.playbackProgress[instance.id] ?? 0
         
-        VStack(spacing: 4) {
+        // Get file URL for waveform
+        let fileURL = soundManager.getAllFiles().first(where: { $0.name == instance.filename })?.url
+        
+        VStack(spacing: 2) {
             // Header / Status
             HStack {
                 // Play Status Indicator
@@ -35,7 +39,7 @@ struct SampleSlotView: View {
                         .clipShape(Circle())
                 }
                 
-                // Remove Button (Small X)
+                // Remove Button
                 Button(action: {
                     soundManager.removeInstance(instance.id, fromBus: busId)
                     if isSelected { soundManager.selectedInstanceId = nil }
@@ -48,22 +52,47 @@ struct SampleSlotView: View {
                 .padding(.leading, 4)
             }
             
-            Spacer()
+            // Waveform with Progress Overlay
+            if let url = fileURL {
+                ZStack(alignment: .leading) {
+                    // Waveform background
+                    WaveformView(url: url, tintColor: .white.opacity(0.3))
+                        .frame(height: 24)
+                    
+                    // Progress overlay (filled waveform)
+                    WaveformView(url: url, tintColor: isPlaying ? .green : .blue.opacity(0.6))
+                        .frame(height: 24)
+                        .mask(
+                            GeometryReader { geo in
+                                Rectangle()
+                                    .frame(width: geo.size.width * CGFloat(progress))
+                            }
+                        )
+                    
+                    // Playhead line
+                    if isPlaying && progress > 0 {
+                        GeometryReader { geo in
+                            Rectangle()
+                                .fill(Color.white)
+                                .frame(width: 2, height: 24)
+                                .offset(x: geo.size.width * CGFloat(progress) - 1)
+                        }
+                    }
+                }
+                .cornerRadius(4)
+            }
             
             // Name
             Text(instance.filename)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
+                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .lineLimit(1)
+                .truncationMode(.middle)
                 .foregroundColor(.white.opacity(0.9))
-            
-            Spacer()
             
             // Controls
             HStack {
                 Button(action: {
                     if isPlaying {
-                        // Stop specific instance
                         soundManager.stopSound(instanceID: instance.id)
                     } else {
                         soundManager.playSound(instance: instance, onBus: busId)
@@ -77,14 +106,10 @@ struct SampleSlotView: View {
                 .disabled(isLoading)
                 
                 Spacer()
-                
-                // Select Button (Hidden hit area or explicit)
-                // Actually the whole background will select.
-                // Just showing play logic here.
             }
         }
         .padding(6)
-        .frame(width: 100, height: 90)
+        .frame(width: 110, height: 100)
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(isSelected ? Color.blue.opacity(0.3) : Color(white: 0.15))

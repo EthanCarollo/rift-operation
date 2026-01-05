@@ -134,6 +134,7 @@ class SoundManager: NSObject, ObservableObject {
     @Published var selectedSoundURL: URL?
 
     @Published var loadingInstanceIds: Set<UUID> = []
+    @Published var playbackProgress: [UUID: Float] = [:] // 0.0 to 1.0 progress for each playing instance
     @Published var selectedInstanceId: UUID? = nil // For Inspector
     
     // Available Audio Devices
@@ -633,6 +634,25 @@ class SoundManager: NSObject, ObservableObject {
         }
     }
     
+    // MARK: - Preview Playback (Library)
+    
+    private var previewPlayer: AVAudioPlayer?
+    
+    /// Quick preview of a sound file on default output
+    func previewSound(at url: URL) {
+        // Stop any existing preview
+        previewPlayer?.stop()
+        
+        do {
+            previewPlayer = try AVAudioPlayer(contentsOf: url)
+            previewPlayer?.volume = 0.8
+            previewPlayer?.play()
+            print("Preview playing: \(url.lastPathComponent)")
+        } catch {
+            print("Preview failed: \(error)")
+        }
+    }
+    
     func playSound(instance: SoundInstance, onBus busId: Int) {
         // Get File Node from Filename
         guard let node = getAllFiles().first(where: { $0.name == instance.filename }) else {
@@ -709,8 +729,23 @@ class SoundManager: NSObject, ObservableObject {
             }
         }
         
+        let fileLength = file.length
+        let sampleRate = file.processingFormat.sampleRate
+        
         player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buf, time) in
-             self?.processMeter(buffer: buf, busId: busId)
+            self?.processMeter(buffer: buf, busId: busId)
+            
+            // Calculate playback progress
+            if let nodeTime = player.lastRenderTime,
+               let playerTime = player.playerTime(forNodeTime: nodeTime) {
+                let currentFrame = playerTime.sampleTime
+                // Use modulo for looping sounds to wrap progress
+                let wrappedFrame = instance.loopEnabled ? (currentFrame % Int64(fileLength)) : currentFrame
+                let progress = Float(wrappedFrame) / Float(fileLength)
+                DispatchQueue.main.async {
+                    self?.playbackProgress[instance.id] = min(max(progress, 0), 1)
+                }
+            }
         }
         
         do {
@@ -738,6 +773,7 @@ class SoundManager: NSObject, ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.activeInstanceIds.remove(instanceID)
+            self.playbackProgress.removeValue(forKey: instanceID)
         }
         
         audioGraphQueue.async { [weak self] in

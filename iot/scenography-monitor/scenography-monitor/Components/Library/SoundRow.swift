@@ -1,6 +1,7 @@
 
 import SwiftUI
 import AppKit
+import AVFoundation
 
 struct SoundRow: View {
     let node: SoundManager.FileNode
@@ -53,6 +54,10 @@ struct SoundRow: View {
             return NSItemProvider(object: node.name as NSString)
         }
         .contextMenu {
+            Button("Play Preview") {
+                playPreview()
+            }
+            Divider()
             Button("Rename") {
                 newName = node.name
                 isRenaming = true
@@ -85,4 +90,22 @@ struct SoundRow: View {
         SoundManager.shared.renameSound(at: node.url, to: newName)
         isRenaming = false
     }
+    
+    private func formatDuration(for url: URL) -> String {
+        do {
+            let file = try AVAudioFile(forReading: url)
+            let duration = Double(file.length) / file.processingFormat.sampleRate
+            let minutes = Int(duration) / 60
+            let seconds = Int(duration) % 60
+            return String(format: "%d:%02d", minutes, seconds)
+        } catch {
+            return "--:--"
+        }
+    }
+    
+    private func playPreview() {
+        // Quick preview on default output
+        SoundManager.shared.previewSound(at: node.url)
+    }
 }
+
