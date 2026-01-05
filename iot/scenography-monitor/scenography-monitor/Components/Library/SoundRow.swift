@@ -29,10 +29,16 @@ struct SoundRow: View {
                 Spacer()
             }
             
-            // Mini Waveform
-            WaveformView(url: node.url)
-                .frame(height: 20)
-                .opacity(isSelected ? 0.9 : 0.7)
+            // Mini Waveform + Duration
+            HStack(spacing: 4) {
+                WaveformView(url: node.url, tintColor: isSelected ? .white.opacity(0.9) : .blue.opacity(0.6))
+                    .frame(height: 20)
+                
+                // Duration
+                Text(formatDuration(for: node.url))
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(isSelected ? .white.opacity(0.7) : .secondary)
+            }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 6)

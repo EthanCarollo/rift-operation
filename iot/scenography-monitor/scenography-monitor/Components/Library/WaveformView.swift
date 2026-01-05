@@ -19,6 +19,7 @@ class WaveformCache {
 /// A mini waveform visualization for audio files
 struct WaveformView: View {
     let url: URL
+    var tintColor: Color = Color.blue.opacity(0.6)
     let barCount: Int = 40
     let height: CGFloat = 24
     
@@ -39,7 +40,7 @@ struct WaveformView: View {
             } else {
                 ForEach(0..<samples.count, id: \.self) { index in
                     RoundedRectangle(cornerRadius: 1)
-                        .fill(Color.blue.opacity(0.6))
+                        .fill(tintColor)
                         .frame(width: 2, height: max(2, CGFloat(samples[index]) * height))
                 }
             }
