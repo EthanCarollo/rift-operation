@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 19E3C1612EF80AED00657BAE /* Build configuration list for PBXProject "scenography-monitor" */;
+			buildConfigurationList = 19E3C1612EF80AED00657BAE /* Build configuration list for PBXProject "Rift Scenography" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -394,6 +394,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -419,6 +420,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "scenography-monitor/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rift Scenography";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -442,6 +444,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -467,6 +470,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "scenography-monitor/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Rift Scenography";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -568,7 +572,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		19E3C1612EF80AED00657BAE /* Build configuration list for PBXProject "scenography-monitor" */ = {
+		19E3C1612EF80AED00657BAE /* Build configuration list for PBXProject "Rift Scenography" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				19E3C1852EF80AF100657BAE /* Debug */,
