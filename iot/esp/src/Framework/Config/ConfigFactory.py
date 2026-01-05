@@ -106,7 +106,7 @@ class ConfigFactory:
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
             websocket=WebsocketConfigFactory.create_prod(),
-            device_id="STRANGER-CUDY-ESP",
+            device_id="STRANGER-DREAM-SCRABBLE-ESP",
             debug_mode=True,
             heartbeat_interval=15
         )
