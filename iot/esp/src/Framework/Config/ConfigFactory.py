@@ -57,7 +57,7 @@ class WebsocketConfigFactory:
     @staticmethod
     def create_prod():
         return WebsocketConfig(
-            server="ws://server.riftoperation.ethan-folio.fr",
+            server="ws://192.168.10.5:8000",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
