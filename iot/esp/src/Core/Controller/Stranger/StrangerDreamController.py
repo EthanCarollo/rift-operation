@@ -1,9 +1,6 @@
-import ujson as json
 from src.Framework.Config.Config import Config
 from src.Framework.EspController import EspController
 from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
-from src.Framework.Led.LedStrip import LedStrip
-from src.Framework.Led.LedController import LedController
 from src.Framework.Rfid.RfidFactory import RFIDFactory
 from src.Core.Stranger.Rfid.StrangerRfidDelegate import StrangerRFIDDelegate
 from src.Framework.Servo.Servo import Servo
@@ -14,10 +11,6 @@ class StrangerDreamController(EspController):
     def __init__(self, config: Config):
         super().__init__(config)
         self.logger.name = "StrangerController"
-        self.led_strip: LedStrip = LedStrip(13, 32)
-        self.led_controller: LedController = LedController(self.led_strip)
-        self.led_controller: LedController = LedController(self.led_strip)
-        self.led_controller.start_thread()
 
         spi = SPI(
             1,

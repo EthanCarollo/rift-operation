@@ -12,7 +12,6 @@ class StrangerActiveState(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
         self.send_state("active")
-        self.controller.led_controller.play_from_json("data/stranger/led_anim_active.json")
         # Ensure servo is closed/off when entering active state, if coming from inactive
         self.controller.servo_motor.off()
 

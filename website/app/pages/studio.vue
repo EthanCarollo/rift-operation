@@ -90,7 +90,7 @@
                 v-for="(color, cIndex) in frame.colors"
                 :key="cIndex"
                 class="absolute -top-1 w-3 h-10 bg-white border-2 border-black rounded cursor-grab shadow-lg hover:scale-110 active:cursor-grabbing transition-transform z-10"
-                :style="{ left: color.position + '%', background: `rgb(${color.color})`, transform: 'translateX(-50%)' }"
+                :style="{ left: color.position + '%', background: getPreviewColor(color), transform: 'translateX(-50%)' }"
                 @mousedown.stop="startDrag(index, cIndex, $event)"
                 @contextmenu.prevent.stop="removeStop(index, cIndex)"
                 @click.stop
@@ -125,7 +125,36 @@
         ref="colorPicker" 
         style="display:none" 
         @input="onColorPicked"
+        @change="onColorChange"
       >
+
+      <!-- Intensity Slider Modal/Popup -->
+      <div v-if="pickerState.display" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 rounded-lg" @click.self="closePicker">
+        <div class="bg-bg-sec border border-border p-6 w-80 shadow-2xl rounded-lg">
+            <h3 class="text-sm font-bold uppercase text-accent mb-4">Edit Color</h3>
+            
+            <div class="mb-4">
+                <label class="text-[10px] uppercase font-bold text-text-sec block mb-2">Color</label>
+                <div class="flex gap-2 h-10">
+                    <div class="w-10 h-10 border border-border" :style="{ backgroundColor: pickerState.previewColor }"></div>
+                    <button @click="$refs.colorPicker.click()" class="flex-1 border border-border hover:bg-bg-main text-xs font-bold uppercase transition-colors">Pick Color</button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between mb-2">
+                    <label class="text-[10px] uppercase font-bold text-text-sec">Intensity (Alpha)</label>
+                    <span class="text-[10px] font-mono">{{ selectedColorAlpha.toFixed(2) }}</span>
+                </div>
+                <input type="range" v-model.number="selectedColorAlpha" min="0" max="1" step="0.01" class="w-full accent-accent" @input="updateSelectedColor">
+            </div>
+
+            <div class="flex justify-between">
+                 <button @click="closePicker" class="px-4 py-2 border border-border hover:bg-bg-main text-xs font-bold uppercase">Done</button>
+                 <button @click="deleteSelectedStop" class="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/50 hover:bg-red-500/20 text-xs font-bold uppercase">Delete</button>
+            </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -153,6 +182,7 @@ const showJson = ref(false);
 const selectedPreset = ref('');
 const trackRefs = ref([]);
 const colorPicker = ref(null);
+const selectedColorAlpha = ref(1.0); // State for the slider
 
 // Preview State
 const isPlaying = ref(false);
@@ -171,11 +201,18 @@ const dragState = reactive({
 
 // Color Picker State
 const pickerState = reactive({
+  display: false,
   frameIndex: -1,
   colorIndex: -1,
+  previewColor: 'rgba(0,0,0,1)'
 });
 
 // --- METHODS ---
+function getPreviewColor(colorObj) {
+    const parts = colorObj.color.split(',');
+    if (parts.length === 3) return `rgb(${colorObj.color})`;
+    return `rgba(${colorObj.color})`;
+}
 
 // Presets
 const PRESETS = {
@@ -226,7 +263,12 @@ function removeFrame(index) {
 // Gradient Logic
 function getGradientStyle(frame) {
   const sorted = [...frame.colors].sort((a, b) => a.position - b.position);
-  const stops = sorted.map((c) => `rgb(${c.color}) ${c.position}%`).join(', ');
+  // Support RGB and RGBA in gradient
+  const stops = sorted.map((c) => {
+      const parts = c.color.split(',');
+      if (parts.length === 3) return `rgb(${c.color}) ${c.position}%`;
+      return `rgba(${c.color}) ${c.position}%`;
+  }).join(', ');
   return `linear-gradient(to right, ${stops})`;
 }
 
@@ -307,48 +349,122 @@ function openColorPicker(fIdx, cIdx) {
   pickerState.frameIndex = fIdx;
   pickerState.colorIndex = cIdx;
   
-  const colorStr = animation.frames[fIdx].colors[cIdx].color; // "r,g,b"
-  const rgb = colorStr.split(',').map(Number);
+  const colorObj = animation.frames[fIdx].colors[cIdx];
+  const parts = colorObj.color.split(',').map(Number);
   
-  // Convert rgb to hex for input
-  const hex = "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1);
-  colorPicker.value.value = hex;
-  colorPicker.value.click();
+  // Set initial alpha
+  selectedColorAlpha.value = parts.length > 3 ? parts[3] : 1.0;
+  
+  // Update preview
+  updatePickerPreview();
+  pickerState.display = true;
+  
+  // Sync hidden picker
+  const r = parts[0];
+  const g = parts[1];
+  const b = parts[2];
+  const hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  if (colorPicker.value) colorPicker.value.value = hex;
+}
+
+function closePicker() {
+    pickerState.display = false;
+    pickerState.frameIndex = -1;
+    pickerState.colorIndex = -1;
+}
+
+function updatePickerPreview() {
+    if (pickerState.frameIndex === -1) return;
+    const colorStr = animation.frames[pickerState.frameIndex].colors[pickerState.colorIndex].color;
+    const parts = colorStr.split(',');
+    if (parts.length === 3) pickerState.previewColor = `rgb(${colorStr})`;
+    else pickerState.previewColor = `rgba(${colorStr})`;
+}
+
+function updateSelectedColor() {
+     if (pickerState.frameIndex === -1) return;
+     
+     // Get current RGB from the model (assuming it's up to date from color picker or init)
+     const currentStr = animation.frames[pickerState.frameIndex].colors[pickerState.colorIndex].color;
+     const parts = currentStr.split(',').map(Number);
+     
+     // Reconstruct with new alpha
+     const r = parts[0];
+     const g = parts[1];
+     const b = parts[2];
+     const a = selectedColorAlpha.value;
+     
+     // Update model to r,g,b,a
+     // Use minimal float precision for cleaner JSON
+     const aStr = a === 1 ? '1' : parseFloat(a.toFixed(3)); 
+     
+     if (a === 1) {
+          animation.frames[pickerState.frameIndex].colors[pickerState.colorIndex].color = `${r},${g},${b}`;
+     } else {
+          animation.frames[pickerState.frameIndex].colors[pickerState.colorIndex].color = `${r},${g},${b},${aStr}`;
+     }
+     
+     updatePickerPreview();
 }
 
 function onColorPicked(e) {
+    if (pickerState.frameIndex === -1) return;
+    
     const hex = e.target.value;
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     
-    if (pickerState.frameIndex >= 0) {
+    // Preserve current alpha
+    const a = selectedColorAlpha.value;
+    const aStr = a === 1 ? '1' : parseFloat(a.toFixed(3));
+    
+    if (a === 1) {
         animation.frames[pickerState.frameIndex].colors[pickerState.colorIndex].color = `${r},${g},${b}`;
+    } else {
+        animation.frames[pickerState.frameIndex].colors[pickerState.colorIndex].color = `${r},${g},${b},${aStr}`;
+    }
+    updatePickerPreview();
+}
+
+// Optional: triggered when picker closes if using native UI, but we use input event
+function onColorChange(e) {
+    onColorPicked(e);
+}
+
+function deleteSelectedStop() {
+    if (pickerState.frameIndex !== -1) {
+        removeStop(pickerState.frameIndex, pickerState.colorIndex);
+        closePicker();
     }
 }
 
 
 // --- PREVIEW PLAYER ---
 function parseColor(colorStr) {
-    if (!colorStr) return [0, 0, 0];
-    return colorStr.split(',').map(Number);
+    if (!colorStr) return [0, 0, 0, 1];
+    const parts = colorStr.split(',').map(Number);
+    if (parts.length === 3) return [...parts, 1]; // Default alpha 1
+    return parts;
 }
 
 function lerp(start, end, t) {
     return start + (end - start) * t;
 }
 
-function interpolateColorRGB(c1, c2, t) {
+function interpolateColorRGBA(c1, c2, t) {
     const r = Math.round(lerp(c1[0], c2[0], t));
     const g = Math.round(lerp(c1[1], c2[1], t));
     const b = Math.round(lerp(c1[2], c2[2], t));
-    return [r, g, b];
+    const a = lerp(c1[3], c2[3], t);
+    return [r, g, b, a];
 }
 
 function lerpColor(c1, c2, t) {
-    const [r, g, b] = interpolateColorRGB(c1, c2, t);
-    return `rgb(${r},${g},${b})`;
+   const [r, g, b, a] = interpolateColorRGBA(c1, c2, t);
+   return `rgba(${r},${g},${b},${a})`;
 }
+
 
 // Calculate pixels for a specific frame configuration
 function calculatePixelsForFrame(frame) {
@@ -378,8 +494,9 @@ function calculatePixelsForFrame(frame) {
         const r = Math.round(start.rgb[0] + (end.rgb[0] - start.rgb[0]) * ratio);
         const g = Math.round(start.rgb[1] + (end.rgb[1] - start.rgb[1]) * ratio);
         const b = Math.round(start.rgb[2] + (end.rgb[2] - start.rgb[2]) * ratio);
+        const a = start.rgb[3] + (end.rgb[3] - start.rgb[3]) * ratio;
         
-        pixels.push([r, g, b]); // Return array [r,g,b] for easier lerping later
+        pixels.push([r, g, b, a]); 
     }
     return pixels;
 }
@@ -425,10 +542,21 @@ async function playPreview() {
                 // Render interpolated pixels
                 const rendered = startPixels.map((p1, i) => {
                     const p2 = endPixels[i];
-                    const rawColor = interpolateColorRGB(p1, p2, progress);
+                    const rawColor = interpolateColorRGBA(p1, p2, progress);
                     // Apply brightness
-                    const b = animation.brightness ?? 1.0;
-                    return `rgb(${Math.round(rawColor[0] * b)}, ${Math.round(rawColor[1] * b)}, ${Math.round(rawColor[2] * b)})`;
+                    const globalBrightness = animation.brightness ?? 1.0;
+                    
+                    // Mix Alpha + Global Brightness effectively for viewing
+                    // In CSS, we can just use RGBA. The Controller will use alpha * brightness.
+                    // For preview accuracy, we should multiply RGB by brightness if imitating an LED?
+                    // Actually, LED brightness scales the emitted light. CSS opacity scales background.
+                    
+                    // Let's use pure RGBA for the preview color, but pre-multiply brightness into RGB?
+                    // No, `rgba(r,g,b, alpha * brightness)` is arguably the best visual approximation
+                    // on a black background.
+                    
+                    const finalAlpha = rawColor[3] * globalBrightness;
+                    return `rgba(${rawColor[0]}, ${rawColor[1]}, ${rawColor[2]}, ${finalAlpha})`;
                 });
                 previewPixels.value = rendered;
                 

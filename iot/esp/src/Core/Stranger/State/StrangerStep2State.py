@@ -4,7 +4,6 @@ class StrangerStep2State(StrangerControllerState):
     def __init__(self, controller):
         super().__init__(controller)
         self.send_state("step_2")
-        self.controller.led_controller.play_from_json("data/stranger/led_anim_step2.json")
 
     def on_letter_detected(self, reader_name, letter):
         # Reader 2 for 'A'
