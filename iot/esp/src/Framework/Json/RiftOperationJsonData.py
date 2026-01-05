@@ -25,10 +25,9 @@ class RiftOperationJsonData:
                 depth_step_3_dream_sucess=None, 
                 
                 lost_state=None,
-                lost_torch_scanned=None, 
                 lost_cage_is_on_monster=None, 
                 lost_light_is_triggered=None,
-                lost_drawing_recognized=None,
+                lost_drawing_light_recognized=None,
                 lost_mp3_play=None,
                 lost_video_play=None,
 
@@ -61,10 +60,9 @@ class RiftOperationJsonData:
         self.depth_step_3_dream_sucess = depth_step_3_dream_sucess
         
         self.lost_state = lost_state
-        self.lost_torch_scanned = lost_torch_scanned
         self.lost_cage_is_on_monster = lost_cage_is_on_monster
         self.lost_light_is_triggered = lost_light_is_triggered
-        self.lost_drawing_recognized = lost_drawing_recognized
+        self.lost_drawing_light_recognized = lost_drawing_light_recognized
         self.lost_mp3_play = lost_mp3_play
         self.lost_video_play = lost_video_play
         

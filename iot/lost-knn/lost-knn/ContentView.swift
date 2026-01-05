@@ -53,6 +53,7 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             cameraManager.start()
+            wsManager.connect() // Auto-connect WebSocket on launch
         }
     }
 }

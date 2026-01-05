@@ -17,18 +17,18 @@ class LostStateIdle(LostState):
         self.workshop.hardware.set_servo(0)
 
     async def handle_message(self, payload):
-        # Trigger condition: rift_part_count == 2
-        if payload.get("rift_part_count") == 2:
+        # Trigger condition: rift_part_count == 4
+        if payload.get("rift_part_count") == 4:
             device_id = self.workshop.controller.config.device_id
             # Send activation confirmation + Start Video 1
             await self.workshop.send_rift_json(
                 lost_state="active", 
-                rift_part_count=2, 
+                rift_part_count=4, 
                 lost_video_play="video1.mp4",
                 device_id=device_id
             )
             await self.next_step()
 
     async def next_step(self):
-        from src.Core.Lost.State.LostStateLight import LostStateLight
-        await self.workshop.swap_state(LostStateLight(self.workshop))
+        from src.Core.Lost.State.LostStateDistance import LostStateDistance
+        await self.workshop.swap_state(LostStateDistance(self.workshop))

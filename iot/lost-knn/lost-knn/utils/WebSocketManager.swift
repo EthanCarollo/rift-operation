@@ -29,7 +29,7 @@ class WebSocketManager: ObservableObject, WebSocketDelegate {
         guard isConnected else { return }
         
         var payload = self.lastState
-        payload["lost_drawing_recognized"] = status
+        payload["lost_drawing_light_recognized"] = status
         payload["device_id"] = "lost-flower-phone"
         
         do {
