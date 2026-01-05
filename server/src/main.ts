@@ -1,4 +1,4 @@
 import { RiftOperationServer } from "./Core/Server/RiftOperationServer";
 
-const port = 3000;
+const port = 8000;
 new RiftOperationServer(port);
