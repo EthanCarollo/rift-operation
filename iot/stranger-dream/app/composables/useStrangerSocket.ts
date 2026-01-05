@@ -1,6 +1,7 @@
 export const useStrangerSocket = () => {
     const isConnected = useState<boolean>('socket-connected', () => false)
     const messages = useState<any[]>('socket-messages', () => [])
+    const strangerState = useState<string>('stranger-state', () => 'inactive')
     let socket: WebSocket | null = null
     let reconnectTimer: any = null
 
@@ -36,6 +37,11 @@ export const useStrangerSocket = () => {
                     const data = JSON.parse(event.data)
                     console.log('Received:', data)
                     messages.value.push(data)
+                    
+                    if (data.stranger_state) {
+                        strangerState.value = data.stranger_state
+                    }
+                    
                     // Keep log short
                     if (messages.value.length > 50) messages.value.shift()
                 } catch (e) {
@@ -55,6 +61,7 @@ export const useStrangerSocket = () => {
 
     return {
         isConnected,
-        messages
+        messages,
+        strangerState
     }
 }
