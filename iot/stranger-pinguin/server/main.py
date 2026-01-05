@@ -8,6 +8,11 @@ from services.PinguinQaService import PinguinQaService
 from typing import Dict, Any
 import socket
 import base64
+import asyncio
+import websockets
+import json
+from config import WS_SERVER_URI
+
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -30,11 +35,38 @@ qa_service = PinguinQaService()
 async def lifespan(app: FastAPI):
     stt_service.load_model()
     qa_service.load_model()
+    # Start the connection to the main server
+    asyncio.create_task(connect_to_main_server())
     yield
     # Clean up resources if needed
     pass
 
 app = FastAPI(lifespan=lifespan)
+
+async def connect_to_main_server():
+    uri = WS_SERVER_URI
+    while True:
+        try:
+            print(f"🔄 [MAIN SERVER] Attempting to connect to {uri}...")
+            async with websockets.connect(uri) as websocket:
+                print(f"✅ [MAIN SERVER] Connected to {uri}")
+                # Send identification if needed, or just listen
+                await websocket.send(json.dumps({"type": "identify", "client": "stranger-pinguin"}))
+                
+                while True:
+                    try:
+                        message = await websocket.recv()
+                        print(f"📩 [MAIN SERVER] Received: {message}")
+                        # Handle specific control messages if necessary
+                    except websockets.ConnectionClosed:
+                        print("⚠️ [MAIN SERVER] Connection closed")
+                        break
+        except Exception as e:
+            print(f"❌ [MAIN SERVER] Connection failed: {e}")
+        
+        # Wait before reconnecting
+        await asyncio.sleep(5)
+
 
 # Servir les fichiers audio
 import os
