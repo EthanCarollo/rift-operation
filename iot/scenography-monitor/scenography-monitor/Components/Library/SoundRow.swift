@@ -5,6 +5,7 @@ import AppKit
 struct SoundRow: View {
     let node: SoundManager.FileNode
     @State private var isRenaming = false
+    @State private var newName: String = ""
     @ObservedObject var soundManager = SoundManager.shared
     
     var isSelected: Bool {

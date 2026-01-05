@@ -41,7 +41,7 @@ struct SampleSlotView: View {
                     if isSelected { soundManager.selectedInstanceId = nil }
                 }) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 8))
+                        .font(.system(size: 12))
                         .foregroundColor(.gray)
                 }
                 .buttonStyle(.plain)
