@@ -17,22 +17,26 @@ class LostStateLight(LostState):
         
         if role == "nightmare":
             self.workshop.logger.info("Futur implementation : Allumage des Leds du Hibou")
-            self.workshop.logger.info("State: LIGHT -> Waiting for button press (Simulating Light Sensor)")
+            self.workshop.logger.info("State: LIGHT -> Waiting for TEMT6000 sensor trigger...")
         else:
             self.workshop.logger.info("State: LIGHT -> Waiting for Nightmare Light Sensor signal...")
 
-    async def handle_button(self):
-        # Only Nightmare handles the light sensor button
+    async def handle_light(self, value, triggered):
+        """Called by LostWorkshop.on_light_event() when sensor is read."""
+        # Only nightmare role handles light sensor directly
         if self.workshop.hardware.role != "nightmare":
             return
-
-        if not self.light_triggered:
+        
+        if triggered and not self.light_triggered:
             self.light_triggered = True
-            self.workshop.logger.info("Button pressed -> Light triggered")
-            self.workshop.logger.info("Futur implementation : Changement Mapping Video")
-            # Send signal to sync with Dream via JSON payload
+            self.workshop.logger.info(f"TEMT6000 triggered (ADC: {value}) -> Switching video!")
             device_id = self.workshop.controller.config.device_id
-            await self.workshop.send_rift_json(lost_mp3_play="identify_monster.mp3", lost_light_is_triggered=True, lost_video_play="video2.mp4", device_id=device_id)
+            await self.workshop.send_rift_json(
+                lost_mp3_play="identify_monster.mp3", 
+                lost_light_is_triggered=True, 
+                lost_video_play="video2.mp4", 
+                device_id=device_id
+            )
 
     async def handle_message(self, payload):
         if payload.get("lost_light_is_triggered") is True:

@@ -58,6 +58,12 @@ class LostWorkshop:
         if self.state:
             await self.state.handle_button()
 
+    def on_light_event(self, value, triggered, name):
+        """Called by LostLightDelegate when light sensor is read."""
+        if self.state and hasattr(self.state, "handle_light"):
+            import uasyncio as asyncio
+            asyncio.create_task(self.state.handle_light(value, triggered))
+
     async def process_message(self, message: str):
         try:
             data = json.loads(message)
