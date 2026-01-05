@@ -33,6 +33,29 @@ qa_service = PinguinQaService()
 
 # Global State
 IS_ACTIVE = True
+connected_clients: list[WebSocket] = []
+
+async def broadcast_state(state: str):
+    print(f"📡 [BROADCAST] Sending state '{state}' to {len(connected_clients)} clients")
+    if not connected_clients:
+        return
+    
+    message = json.dumps({
+        "type": "stranger_state",
+        "state": state
+    })
+    
+    to_remove = []
+    for client in connected_clients:
+        try:
+            await client.send_text(message)
+        except Exception as e:
+            print(f"❌ Failed to broadcast to client: {e}")
+            to_remove.append(client)
+            
+    for client in to_remove:
+        if client in connected_clients:
+            connected_clients.remove(client)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -72,6 +95,9 @@ async def connect_to_main_server():
                                 elif state == "inactive":
                                     IS_ACTIVE = False
                                     print("🔴 [STATE] Server DEACTIVATED remotely")
+                                    
+                                # Broadcast the new state to all connected Pinguin clients
+                                await broadcast_state(state)
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             
@@ -130,7 +156,18 @@ async def health_check():
 @app.websocket("/ws")
 async def audio_websocket(websocket: WebSocket):
     await websocket.accept()
-    print("Client connected")
+    connected_clients.append(websocket)
+    print(f"Client connected (Total: {len(connected_clients)})")
+    
+    # Send current state immediately on connection
+    try:
+        current_state = "active" if IS_ACTIVE else "inactive"
+        await websocket.send_json({
+            "type": "stranger_state",
+            "state": current_state
+        })
+    except Exception as e:
+        print(f"Error sending initial state: {e}")
     
     # Create a fresh generator for this session
     local_gen = stt_service.create_generator()
@@ -149,6 +186,8 @@ async def audio_websocket(websocket: WebSocket):
             # 🛑 Check for disconnect
             if message["type"] == "websocket.disconnect":
                 print(f"Client disconnected (clean) after {chunk_count} chunks")
+                if websocket in connected_clients:
+                    connected_clients.remove(websocket)
                 break
                 
             if not IS_ACTIVE:
@@ -250,6 +289,8 @@ async def audio_websocket(websocket: WebSocket):
         traceback.print_exc()
         # Only try to close if we didn't just crash on receiving
     finally:
+        if websocket in connected_clients:
+            connected_clients.remove(websocket)
         try:
             await websocket.close()
         except:
