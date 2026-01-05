@@ -90,7 +90,7 @@ class LostWorkshop:
         if self.state:
             await self.state.handle_message(payload)
 
-    async def send_rift_json(self, torch=None, cage=None, drawing=None, lost_mp3_play=None, lost_video_play=None, lost_state=None, lost_light_is_triggered=None, device_id=None):
+    async def send_rift_json(self, torch=None, cage=None, drawing=None, lost_mp3_play=None, lost_video_play=None, lost_state=None, lost_light_is_triggered=None, rift_part_count=None, device_id=None):
         if not self._last_payload:
             self.controller.logger.error("Cannot send: no payload received")
             return
@@ -118,6 +118,10 @@ class LostWorkshop:
         # Add light trigger if provided
         if lost_light_is_triggered is not None:
              payload["lost_light_is_triggered"] = lost_light_is_triggered
+
+        # Add rift_part_count if provided
+        if rift_part_count is not None:
+             payload["rift_part_count"] = rift_part_count
         
         for key, val in [("lost_torch_scanned", self._state_data["torch"]),
                          ("lost_cage_is_on_monster", self._state_data["cage"]),

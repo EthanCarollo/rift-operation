@@ -126,6 +126,9 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 
+// Disable default layout (hide nav bar for fullscreen video)
+definePageMeta({ layout: false });
+
 const VIDEO_LIST = ['/video1.mp4', '/video2.mp4'];
 
 // Use Shared Composable
