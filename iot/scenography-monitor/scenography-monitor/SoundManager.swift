@@ -98,6 +98,9 @@ class SoundManager: NSObject, ObservableObject {
     @Published var soundRoutes: [String: Int] = [:] // Backwards compatibility mock if needed, but better to remove usage.
 
     @Published var activeInstanceIds: Set<UUID> = []
+    
+    // UI Selection State
+    @Published var selectedSoundURL: URL?
 
     @Published var loadingInstanceIds: Set<UUID> = []
     @Published var selectedInstanceId: UUID? = nil // For Inspector
