@@ -126,7 +126,6 @@ class ConfigFactory:
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
             websocket=WebsocketConfigFactory.create_prod(),
-            depth=DepthConfigFactory.create_default_child(),
             device_id="CUDY-FA5C-ESP",
             debug_mode=True,
             heartbeat_interval=15
