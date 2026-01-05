@@ -54,6 +54,10 @@ class LedController:
         if not frames:
             return
 
+        # Extract brightness, default to 1.0
+        brightness = animation_data.get("brightness", 1.0)
+        self.set_brightness(float(brightness))
+
         # Pre-calculate
         rendered = []
         for frame in frames:

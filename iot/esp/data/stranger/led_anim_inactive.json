@@ -2,44 +2,23 @@
     "name": "My Animation",
     "frames": [
         {
-            "time": 1000,
+            "time": 500,
             "colors": [
                 {
-                    "color": "255,0,0",
+                    "color": "0,0,0",
                     "position": 0
                 },
                 {
-                    "color": "158,26,26",
+                    "color": "0,0,0",
+                    "position": 80
+                },
+                {
+                    "color": "0,0,0",
+                    "position": 54
+                },
+                {
+                    "color": "0,0,0",
                     "position": 100
-                },
-                {
-                    "color": "255,0,0",
-                    "position": 66
-                },
-                {
-                    "color": "255,112,112",
-                    "position": 25
-                }
-            ]
-        },
-        {
-            "time": 1000,
-            "colors": [
-                {
-                    "color": "255,77,77",
-                    "position": 0
-                },
-                {
-                    "color": "255,0,0",
-                    "position": 100
-                },
-                {
-                    "color": "255,0,0",
-                    "position": 28
-                },
-                {
-                    "color": "255,138,138",
-                    "position": 73
                 }
             ]
         }

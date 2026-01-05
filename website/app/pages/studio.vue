@@ -7,8 +7,16 @@
           <h1 class="text-2xl font-bold uppercase tracking-widest text-accent mb-1">Led Controller</h1>
           <h2 class="text-xs uppercase tracking-wider text-text-sec">Animation Studio</h2>
         </div>
-        <div class="flex gap-2">
-          <select v-model="selectedPreset" @change="loadPreset" class="raw-input w-40 h-10 uppercase text-xs">
+        <div class="flex gap-4 items-center">
+            <div class="flex flex-col items-end">
+                <label class="text-[10px] uppercase font-bold text-text-sec">Global Brightness</label>
+                <div class="flex items-center gap-2">
+                    <input type="range" min="0" max="1" step="0.05" v-model.number="animation.brightness" class="w-24 accent-accent cursor-pointer">
+                    <span class="text-xs font-mono w-8 text-right">{{ animation.brightness?.toFixed(2) }}</span>
+                </div>
+            </div>
+          <div class="flex gap-2">
+           <select v-model="selectedPreset" @change="loadPreset" class="raw-input w-40 h-10 uppercase text-xs">
             <option value="">Load Preset...</option>
             <option value="police">Police Lights</option>
             <option value="rainbow">Rainbow Wave</option>
@@ -17,6 +25,7 @@
           <button @click="showJson = !showJson" class="tri-state-btn px-4 h-10 border border-border bg-bg-sec hover:bg-bg-main hover:border-border-focus uppercase text-xs font-bold transition-all">
             Toggle JSON
           </button>
+          </div>
         </div>
       </div>
 
@@ -128,6 +137,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 const NUM_PIXELS = 30;
 const animation = reactive({
   name: 'My Animation',
+  brightness: 1.0,
   frames: [
     {
       time: 500,
@@ -328,10 +338,15 @@ function lerp(start, end, t) {
     return start + (end - start) * t;
 }
 
-function lerpColor(c1, c2, t) {
+function interpolateColorRGB(c1, c2, t) {
     const r = Math.round(lerp(c1[0], c2[0], t));
     const g = Math.round(lerp(c1[1], c2[1], t));
     const b = Math.round(lerp(c1[2], c2[2], t));
+    return [r, g, b];
+}
+
+function lerpColor(c1, c2, t) {
+    const [r, g, b] = interpolateColorRGB(c1, c2, t);
     return `rgb(${r},${g},${b})`;
 }
 
@@ -410,7 +425,10 @@ async function playPreview() {
                 // Render interpolated pixels
                 const rendered = startPixels.map((p1, i) => {
                     const p2 = endPixels[i];
-                    return lerpColor(p1, p2, progress);
+                    const rawColor = interpolateColorRGB(p1, p2, progress);
+                    // Apply brightness
+                    const b = animation.brightness ?? 1.0;
+                    return `rgb(${Math.round(rawColor[0] * b)}, ${Math.round(rawColor[1] * b)}, ${Math.round(rawColor[2] * b)})`;
                 });
                 previewPixels.value = rendered;
                 
