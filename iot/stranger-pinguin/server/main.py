@@ -31,6 +31,9 @@ print(f"Local network address: http://{local_ip}:8000")
 stt_service = KyutaiSttService()
 qa_service = PinguinQaService()
 
+# Global State
+IS_ACTIVE = True
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     stt_service.load_model()
@@ -44,6 +47,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 async def connect_to_main_server():
+    global IS_ACTIVE
     uri = WS_SERVER_URI
     while True:
         try:
@@ -55,9 +59,22 @@ async def connect_to_main_server():
                 
                 while True:
                     try:
-                        message = await websocket.recv()
-                        print(f"📩 [MAIN SERVER] Received: {message}")
-                        # Handle specific control messages if necessary
+                        message_str = await websocket.recv()
+                        print(f"📩 [MAIN SERVER] Received: {message_str}")
+                        
+                        try:
+                            message = json.loads(message_str)
+                            if isinstance(message, dict):
+                                state = message.get("stranger_state")
+                                if state == "active":
+                                    IS_ACTIVE = True
+                                    print("🟢 [STATE] Server ACTIVATED remotely")
+                                elif state == "inactive":
+                                    IS_ACTIVE = False
+                                    print("🔴 [STATE] Server DEACTIVATED remotely")
+                        except json.JSONDecodeError:
+                            print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
+                            
                     except websockets.ConnectionClosed:
                         print("⚠️ [MAIN SERVER] Connection closed")
                         break
@@ -133,6 +150,13 @@ async def audio_websocket(websocket: WebSocket):
             if message["type"] == "websocket.disconnect":
                 print(f"Client disconnected (clean) after {chunk_count} chunks")
                 break
+                
+            if not IS_ACTIVE:
+                # ⏸️ Server is inactive, ignore input but keep connection alive
+                # Optional: rate limit this log if it's too spammy
+                if chunk_count % 50 == 0:
+                    print("😴 [SERVER] Inactive - ignoring input")
+                continue
 
             if "bytes" in message:
                 # 🎙️ Handle Audio (Transcription)
