@@ -51,7 +51,7 @@ class EspController:
         while True:
             try:
                 await self.update()
-                await asyncio.sleep(0.05)
+                await asyncio.sleep(0.02)
             except Exception as e:
                 self.logger.error("Error in main loop: {}".format(e))
                 await asyncio.sleep(1)

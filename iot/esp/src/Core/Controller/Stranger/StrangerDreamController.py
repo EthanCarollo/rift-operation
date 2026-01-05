@@ -14,7 +14,7 @@ class StrangerDreamController(EspController):
 
         spi = SPI(
             1,
-            baudrate=1_000_000,
+            baudrate=5_000_000,
             polarity=0,
             phase=0,
             sck=Pin(18),
