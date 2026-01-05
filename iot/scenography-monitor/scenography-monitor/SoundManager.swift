@@ -310,7 +310,7 @@ class SoundManager: NSObject, ObservableObject {
                 let name = resourceValues.name ?? itemURL.lastPathComponent
                 if isDirectory {
                     let children = scanDirectory(at: itemURL)
-                    nodes.append(FileNode(name: name, url: itemURL, isDirectory: true, children: children.sorted { $0.name < $1.name }))
+                    nodes.append(FileNode(name: name, url: itemURL, isDirectory: true, children: children))
                 } else {
                     if name.hasSuffix(".mp3") || name.hasSuffix(".wav") || name.hasSuffix(".m4a") {
                         nodes.append(FileNode(name: name, url: itemURL, isDirectory: false, children: nil))
@@ -318,7 +318,13 @@ class SoundManager: NSObject, ObservableObject {
                 }
             }
         } catch { print("scan error: \(error)") }
-        return nodes.sorted { ($0.isDirectory ? 0 : 1) < ($1.isDirectory ? 0 : 1) }
+        
+        return nodes.sorted { (n1, n2) -> Bool in
+            if n1.isDirectory != n2.isDirectory {
+                return n1.isDirectory // Directories first
+            }
+            return n1.name.localizedStandardCompare(n2.name) == .orderedAscending
+        }
     }
     
     func getAssignedSound(forBus busId: Int) -> String? {
