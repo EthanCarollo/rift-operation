@@ -3,6 +3,7 @@
     <WebcamGrid 
       mode="selection"
       :initial-selected="selectedWebcams"
+      :initial-rotations="webcamRotations"
       @continue="handleContinue"
     />
   </div>
@@ -13,10 +14,11 @@ import { useRouter } from '#app'
 import { useRiftState } from '~/composables/useRiftState'
 
 const router = useRouter()
-const { selectedWebcams } = useRiftState()
+const { selectedWebcams, webcamRotations } = useRiftState()
 
-const handleContinue = (selection: Record<string, string>) => {
+const handleContinue = (selection: Record<string, string>, rotations: Record<string, number>) => {
   selectedWebcams.value = selection
+  webcamRotations.value = rotations
   router.push('/standby')
 }
 </script>
