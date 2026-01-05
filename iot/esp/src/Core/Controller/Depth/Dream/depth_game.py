@@ -124,14 +124,13 @@ class DepthController:
     # Conditions
     # --------------------------------------------------
     def depth_started(self):
-        children_count = self.state.get("dream_rift_part_count", 0)
-        parent_count = self.state.get("nightmare_rift_part_count", 0)
-        started = children_count == 1 and parent_count == 1
+        rift_part_count = self.state.get("rift_part_count", 0)
+        started = rift_part_count == 2
         
         # Periodic logging for debugging wait state
         now = time.time()
         if not started and now - self.last_log_time > 5:
-            self.logger.info(f"⏳ Waiting for start conditions... (ChildCount: {children_count}, ParentCount: {parent_count})")
+            self.logger.info(f"⏳ Waiting for start conditions... (RiftPartCount: {rift_part_count})")
             self.last_log_time = now
             
         return started
@@ -164,6 +163,11 @@ class DepthController:
 
         index = 0
         while index < len(sequence):
+            # 🛑 Check Reset
+            if self.state.get("reset_system"):
+                self.logger.info("🔄 Reset triggered during game!")
+                return False
+
             if not self.running:
                 return False
 
@@ -210,6 +214,14 @@ class DepthController:
                 self.ws_app.close()
 
     def game_logic(self):
+        # 0. Check Reset System
+        if self.state.get("reset_system") is True:
+            if self.is_playing:
+                self.is_playing = False
+                self.logger.info("🔄 Reset active - Pausing system")
+            time.sleep(1)
+            return
+
         if not self.depth_started():
             time.sleep(0.1)
             return
@@ -242,6 +254,10 @@ class DepthController:
         if success:
             key = f"depth_step_{step}_{self.role}_sucess"
             self.state[key] = True
+            
+            # Update depth_state for LED controller
+            self.state["depth_state"] = f"step_{step}_{self.role}_success"
+            
             self.send_state()
 
             if self.depth_finished():

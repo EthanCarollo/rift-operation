@@ -34,3 +34,4 @@ bria*safetensors
 bria*wav
 lab/pinguin/.jupyter_ystore.db
 .ipynb_checkpoints
+iot/esp/src/Core/Controller/Depth/Dream/dream_env

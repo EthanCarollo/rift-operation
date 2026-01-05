@@ -140,6 +140,23 @@ class SpheroController:
                 now = time.time()
                 if now > current_cooldown:
                     self.on_shake(name, magnitude)
+                    
+                    # --- Visual Feedback ---
+                    try:
+                        # Blink 3 times (Full Matrix)
+                        for _ in range(3):
+                            # ON
+                            droid.set_matrix_fill(0, 0, 7, 7, Color(255, 255, 255))
+                            time.sleep(0.1)
+                            
+                            # OFF
+                            droid.clear_matrix()
+                            time.sleep(0.1)
+
+                    except Exception as e:
+                        print(f"[{name}] LED Feedback Error: {e}")
+                    # ------------------------
+
                     return now + SHAKE_COOLDOWN
             
             return current_cooldown

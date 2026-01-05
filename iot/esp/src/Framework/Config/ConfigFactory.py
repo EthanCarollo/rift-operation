@@ -9,6 +9,15 @@ class WifiConfigFactory:
             timeout=15,
             auto_reconnect=True
         )
+    
+    @staticmethod
+    def create_antho_house():
+        return WifiConfig(
+            ssid="Freebox-A01429",
+            password="5f4ktqwkwkqdx62rqcdwxs",
+            timeout=15,
+            auto_reconnect=True
+        )
 
     @staticmethod
     def create_cudy():
@@ -63,11 +72,11 @@ class WebsocketConfigFactory:
 
 class ConfigFactory:
     @staticmethod
-    def create_rift_config():
+    def create_table_config():
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
             websocket=WebsocketConfigFactory.create_prod(),
-            device_id=f"RIFT-ESP",
+            device_id=f"TABLE-ESP",
             debug_mode=True,
             heartbeat_interval=15
         )
@@ -78,6 +87,16 @@ class ConfigFactory:
             wifi=WifiConfigFactory.create_cudy(),
             websocket=WebsocketConfigFactory.create_prod(),
             device_id=f"LOST-{role.upper()}-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
+    @staticmethod
+    def create_cudy_depth_config_home():
+        return Config(
+            wifi=WifiConfigFactory.create_antho_house(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id="DEPTH-HOME-ESP",
             debug_mode=True,
             heartbeat_interval=15
         )
