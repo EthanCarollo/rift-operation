@@ -1,15 +1,12 @@
 {
     "start_system": true,
     "rift_part_count": null,
-
     "operator_launch_close_rift_step_1": null,
     "operator_launch_close_rift_step_2": null,
     "operator_launch_close_rift_step_3": null,
     "operator_start_system": null,
-
     "stranger_state": null,
     "stranger_recognized_name": null,
-    
     "depth_state": null,
     "depth_step_1_nightmare_sucess": null,
     "depth_step_2_nightmare_sucess": null,
@@ -17,12 +14,10 @@
     "depth_step_1_dream_sucess": null,
     "depth_step_2_dream_sucess": null,
     "depth_step_3_dream_sucess": null,
-    
     "lost_state": null,
-    "lost_torch_scanned": null,
+    "lost_drawing_light_recognized": null,
     "lost_cage_is_on_monster": null,
     "lost_light_is_triggered": null,
-
     "end_system": null,
     "reset_system": null
 }

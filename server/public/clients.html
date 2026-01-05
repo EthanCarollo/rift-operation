@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-main: #ffffff;
@@ -48,9 +50,17 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-sec); }
-        ::-webkit-scrollbar-thumb { background: var(--border); }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-sec);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
 
         /* Inputs */
         .raw-input {
@@ -63,10 +73,12 @@
             outline: none;
             transition: all 0.2s;
         }
+
         .raw-input:focus {
             border-color: var(--border-focus);
             background: var(--bg-main);
         }
+
         .raw-input[readonly] {
             opacity: 0.5;
             cursor: not-allowed;
@@ -80,6 +92,7 @@
             background: var(--tri-state-bg);
             height: 32px;
         }
+
         .tri-state-btn {
             flex: 1;
             font-size: 10px;
@@ -92,11 +105,16 @@
             transition: all 0.2s;
             border-right: 1px solid var(--border);
         }
-        .tri-state-btn:last-child { border-right: none; }
+
+        .tri-state-btn:last-child {
+            border-right: none;
+        }
+
         .tri-state-btn:hover {
             color: var(--text-main);
             background: var(--tri-state-hover);
         }
+
         .tri-state-btn[data-active="true"] {
             background: var(--accent);
             color: var(--accent-text);
@@ -109,6 +127,7 @@
             position: relative;
             margin-bottom: 24px;
         }
+
         .section-title {
             position: absolute;
             top: -10px;
@@ -128,12 +147,14 @@
             background-color: var(--bg-sec);
             border-left: 1px solid var(--border);
         }
+
         .client-card {
             border-bottom: 1px solid var(--border);
             padding: 12px 16px;
         }
-        .client-card:hover { 
-            background-color: var(--card-hover); 
+
+        .client-card:hover {
+            background-color: var(--card-hover);
         }
 
         /* Tabs */
@@ -147,9 +168,11 @@
             color: var(--text-sec);
             transition: all 0.2s;
         }
+
         .nav-tab:hover {
             color: var(--text-main);
         }
+
         .nav-tab.active {
             border: 1px solid var(--border-focus);
             color: var(--text-main);
@@ -162,13 +185,16 @@
             border-top: 1px solid var(--border);
             backdrop-filter: blur(10px);
         }
+
         .btn-broadcast {
             background-color: var(--accent);
             color: var(--accent-text);
         }
+
         .btn-broadcast:hover {
             opacity: 0.9;
         }
+
         .btn-broadcast:active {
             transform: scale(0.99);
         }
@@ -184,6 +210,7 @@
             overflow-x: auto;
             white-space: pre-wrap;
         }
+
         .log-entry {
             border-bottom: 1px solid var(--border);
             padding: 8px;
@@ -191,11 +218,15 @@
             font-family: 'Space Mono', monospace;
             transition: background-color 0.2s;
         }
+
         .log-entry:hover {
             background-color: var(--tri-state-hover);
         }
-        .log-entry:last-child { border-bottom: none; }
-        
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
         /* Fast Command Button */
         .fast-cmd-btn {
             border: 1px solid var(--border);
@@ -207,31 +238,35 @@
             flex-direction: column;
             gap: 4px;
         }
+
         .fast-cmd-btn:hover {
             border-color: var(--border-focus);
             background: var(--bg-main);
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
         .fast-cmd-title {
             font-weight: bold;
             text-transform: uppercase;
             font-size: 12px;
         }
+
         .fast-cmd-desc {
             font-size: 10px;
             color: var(--text-sec);
         }
-
     </style>
 </head>
+
 <body class="h-screen flex flex-col md:flex-row overflow-hidden">
-    <div class="fixed top-0 left-0 bg-red-600 text-white px-3 py-1.5 text-sm font-bold z-50 pointer-events-none">DEV</div>
+    <div class="fixed top-0 left-0 bg-red-600 text-white px-3 py-1.5 text-sm font-bold z-50 pointer-events-none">DEV
+    </div>
 
     <!-- LEFT: CONTROLS -->
     <main class="flex-1 overflow-y-auto pt-6 px-6 md:px-10 pb-32 scroll-smooth relative flex flex-col">
         <div class="max-w-6xl mx-auto w-full">
-            
+
             <!-- HEADER -->
             <header class="mb-8 flex justify-between items-end border-b-2" style="border-color: var(--border-focus);">
                 <div class="pb-4 flex items-center gap-4">
@@ -242,11 +277,14 @@
                     </div>
                 </div>
                 <div class="pb-4 flex flex-col items-end gap-2">
-                     <button onclick="toggleTheme()" class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors" style="border-color: var(--border);">
+                    <button onclick="toggleTheme()"
+                        class="text-[10px] font-bold uppercase border px-2 py-1 hover:bg-black hover:text-white transition-colors"
+                        style="border-color: var(--border);">
                         Mode: <span id="theme-label">LIGHT</span>
                     </button>
                     <!-- SERVER STATUS -->
-                    <div class="text-[10px] font-bold uppercase border px-2 py-1 transition-colors flex items-center gap-2" style="border-color: var(--border);">
+                    <div class="text-[10px] font-bold uppercase border px-2 py-1 transition-colors flex items-center gap-2"
+                        style="border-color: var(--border);">
                         SERVER: <span id="header-ws-status">CONNECTING...</span>
                         <div id="header-ws-dot" class="h-2 w-2 rounded-full bg-orange-500"></div>
                     </div>
@@ -261,10 +299,10 @@
             </header>
 
             <div class="flex gap-8 items-start">
-                
+
                 <!-- MAIN CONTENT AREA -->
                 <div class="flex-1 w-full relative">
-                    
+
                     <!-- VIEW: STAGED JSON (Predefined Form) -->
                     <div id="view-staged">
                         <div class="flex justify-end mb-4">
@@ -281,7 +319,8 @@
                                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div class="control-group" data-type="int">
                                         <label class="block text-xs font-bold mb-2 uppercase">Rift Part Count</label>
-                                        <input type="number" name="rift_part_count" class="raw-input" placeholder="NULL">
+                                        <input type="number" name="rift_part_count" class="raw-input"
+                                            placeholder="NULL">
                                     </div>
                                     <div class="control-group" data-type="bool">
                                         <label class="block text-[10px] uppercase font-bold mb-2 truncate">Start System</label>
@@ -294,7 +333,8 @@
                                     </div>
                                     <!-- Operator Steps -->
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close Step 1</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close
+                                            Step 1</label>
                                         <input type="hidden" name="operator_launch_close_rift_step_1" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -303,7 +343,8 @@
                                         </div>
                                     </div>
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close Step 2</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close
+                                            Step 2</label>
                                         <input type="hidden" name="operator_launch_close_rift_step_2" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -312,7 +353,8 @@
                                         </div>
                                     </div>
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close Step 3</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Launch Close
+                                            Step 3</label>
                                         <input type="hidden" name="operator_launch_close_rift_step_3" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -330,23 +372,28 @@
                                     <div class="grid grid-cols-2 gap-6">
                                         <!-- Toggle -->
                                         <div class="control-group" data-type="bool">
-                                            <label class="block text-xs font-bold mb-2 uppercase">Operator Start System</label>
+                                            <label class="block text-xs font-bold mb-2 uppercase">Operator Start
+                                                System</label>
                                             <input type="hidden" name="operator_start_system" value="null">
                                             <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL
+                                                </div>
                                                 <div class="tri-state-btn" data-value="false">FALSE</div>
                                                 <div class="tri-state-btn" data-value="true">TRUE</div>
                                             </div>
                                         </div>
                                         <div class="control-group" data-type="text">
                                             <label class="block text-xs font-bold mb-2 uppercase">Stranger State</label>
-                                            <input type="text" name="stranger_state" class="raw-input" placeholder="NULL">
+                                            <input type="text" name="stranger_state" class="raw-input"
+                                                placeholder="NULL">
                                         </div>
                                         <div class="control-group" data-type="bool">
-                                            <label class="block text-xs font-bold mb-2 uppercase">Stranger Recognized Name</label>
+                                            <label class="block text-xs font-bold mb-2 uppercase">Stranger Recognized
+                                                Name</label>
                                             <input type="hidden" name="stranger_recognized_name" value="null">
                                             <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL
+                                                </div>
                                                 <div class="tri-state-btn" data-value="false">NO</div>
                                                 <div class="tri-state-btn" data-value="true">YES</div>
                                             </div>
@@ -357,12 +404,18 @@
                                     <div class="border-t pt-4" style="border-color: var(--border);">
                                         <div class="grid grid-cols-1 gap-4">
                                             <div class="control-group" data-type="text">
-                                                <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Micro (Base64) [READ ONLY]</label>
-                                                <input type="text" name="pinguin_micro" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                                                <label class="block text-xs font-bold mb-2 uppercase"
+                                                    style="color: var(--text-sec)">Pinguin Micro (Base64) [READ
+                                                    ONLY]</label>
+                                                <input type="text" name="pinguin_micro" class="raw-input"
+                                                    placeholder="SYSTEM_MANAGED" readonly>
                                             </div>
                                             <div class="control-group" data-type="text">
-                                                <label class="block text-xs font-bold mb-2 uppercase" style="color: var(--text-sec)">Pinguin Audio (Base64) [READ ONLY]</label>
-                                                <input type="text" name="pinguin_audio" class="raw-input" placeholder="SYSTEM_MANAGED" readonly>
+                                                <label class="block text-xs font-bold mb-2 uppercase"
+                                                    style="color: var(--text-sec)">Pinguin Audio (Base64) [READ
+                                                    ONLY]</label>
+                                                <input type="text" name="pinguin_audio" class="raw-input"
+                                                    placeholder="SYSTEM_MANAGED" readonly>
                                             </div>
                                         </div>
                                     </div>
@@ -375,9 +428,11 @@
                                 <div class="grid grid-cols-2 gap-8">
                                     <!-- Nightmare Group -->
                                     <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Nightmare Steps</h3>
+                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2"
+                                            style="border-color: var(--border);">Nightmare Steps</h3>
                                         <div class="control-group" data-type="text">
-                                            <label class="block text-[10px] font-bold mb-1 uppercase">Depth State</label>
+                                            <label class="block text-[10px] font-bold mb-1 uppercase">Depth
+                                                State</label>
                                             <input type="text" name="depth_state" class="raw-input" placeholder="NULL">
                                         </div>
                                         <!-- Step 1 -->
@@ -414,7 +469,8 @@
 
                                     <!-- Dream Group -->
                                     <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2" style="border-color: var(--border);">Dream Steps</h3>
+                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2"
+                                            style="border-color: var(--border);">Dream Steps</h3>
                                         <!-- Step 1 -->
                                         <div class="control-group grid grid-cols-2 items-center" data-type="bool">
                                             <label class="text-[10px] uppercase">Step 1 Success</label>
@@ -456,10 +512,10 @@
                                     <label class="block text-xs font-bold mb-2 uppercase">Lost State</label>
                                     <input type="text" name="lost_state" class="raw-input" placeholder="NULL">
                                 </div>
-                                
+
                                 <div class="grid grid-cols-2 gap-6 mb-4">
-                                     <!-- Audio/Video -->
-                                     <div class="control-group" data-type="text">
+                                    <!-- Audio/Video -->
+                                    <div class="control-group" data-type="text">
                                         <label class="block text-xs font-bold mb-2 uppercase">Lost MP3 Play</label>
                                         <input type="text" name="lost_mp3_play" class="raw-input" placeholder="NULL">
                                     </div>
@@ -470,8 +526,9 @@
                                 </div>
 
                                 <div class="control-group mb-4" data-type="bool">
-                                    <label class="block text-xs font-bold mb-2 uppercase">Lost Drawing Recognized</label>
-                                    <input type="hidden" name="lost_drawing_recognized" value="null">
+                                    <label class="block text-xs font-bold mb-2 uppercase">Lost Drawing
+                                        Recognized</label>
+                                    <input type="hidden" name="lost_drawing_light_recognized" value="null">
                                     <div class="tri-state-container">
                                         <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
                                         <div class="tri-state-btn" data-value="false">FALSE</div>
@@ -479,15 +536,7 @@
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-6">
-                                    <div class="control-group" data-type="bool">
-                                        <label class="block text-xs font-bold mb-2 uppercase">Torch Scanned</label>
-                                        <input type="hidden" name="lost_torch_scanned" value="null">
-                                        <div class="tri-state-container">
-                                            <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
-                                            <div class="tri-state-btn" data-value="false">FALSE</div>
-                                            <div class="tri-state-btn" data-value="true">TRUE</div>
-                                        </div>
-                                    </div>
+
                                     <div class="control-group" data-type="bool">
                                         <label class="block text-xs font-bold mb-2 uppercase">Cage Is On Monster</label>
                                         <input type="hidden" name="lost_cage_is_on_monster" value="null">
@@ -511,15 +560,17 @@
 
 
 
-                             <!-- 6. ENDING -->
+                            <!-- 6. ENDING -->
                             <section class="section-box">
                                 <span class="section-title">05_Ending</span>
                                 <div class="control-group" data-type="text">
                                     <label class="block text-xs font-bold mb-2 uppercase">End System State</label>
                                     <input type="text" name="end_system" class="raw-input" placeholder="NULL">
                                 </div>
-                                <div class="control-group pt-4 border-t mt-4" data-type="bool" style="border-color: var(--border);">
-                                    <label class="block text-xs font-bold mb-2 uppercase text-red-500">Reset System</label>
+                                <div class="control-group pt-4 border-t mt-4" data-type="bool"
+                                    style="border-color: var(--border);">
+                                    <label class="block text-xs font-bold mb-2 uppercase text-red-500">Reset
+                                        System</label>
                                     <input type="hidden" name="reset_system" value="null">
                                     <div class="tri-state-container">
                                         <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
@@ -531,9 +582,9 @@
                         </form>
                     </div>
 
-                     <!-- VIEW: FAST COMMANDS -->
+                    <!-- VIEW: FAST COMMANDS -->
                     <div id="view-fast" class="hidden">
-                        
+
                         <!-- 00. Part Table -->
                         <section class="section-box">
                             <span class="section-title">00_Part_Table</span>
@@ -557,7 +608,9 @@
                         <section class="section-box">
                             <span class="section-title">01_Stranger (System)</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button onclick="sendFastCmd({operator_start_system: true, stranger_recognized_name: true})" class="fast-cmd-btn">
+                                <button
+                                    onclick="sendFastCmd({operator_start_system: true, stranger_recognized_name: true})"
+                                    class="fast-cmd-btn">
                                     <span class="fast-cmd-title">START SYSTEM</span>
                                     <span class="fast-cmd-desc">System: ON, Stranger: YES</span>
                                 </button>
@@ -620,16 +673,20 @@
                             <span class="section-title z-10">Raw JSON Payload</span>
                             <div id="raw-json-editor" class="w-full h-full"></div>
                         </section>
-                        <p class="text-xs mt-2" style="color: var(--text-sec)">CAUTION: This bypasses validation. Ensure JSON is valid.</p>
+                        <p class="text-xs mt-2" style="color: var(--text-sec)">CAUTION: This bypasses validation. Ensure
+                            JSON is valid.</p>
                     </div>
 
                     <!-- VIEW: MONITOR -->
                     <div id="view-monitor" class="hidden">
-                         <div class="flex justify-between items-end mb-4">
+                        <div class="flex justify-between items-end mb-4">
                             <h2 class="text-xs font-bold uppercase tracking-wider">Live Server Log</h2>
-                            <button onclick="document.getElementById('monitor-log').innerHTML = ''" class="text-[10px] underline hover:text-red-500">CLEAR LOG</button>
+                            <button onclick="document.getElementById('monitor-log').innerHTML = ''"
+                                class="text-[10px] underline hover:text-red-500">CLEAR LOG</button>
                         </div>
-                        <div id="monitor-log" class="section-box h-[65vh] overflow-y-auto font-mono text-xs p-0 bg-transparent" style="background: var(--bg-sec);">
+                        <div id="monitor-log"
+                            class="section-box h-[65vh] overflow-y-auto font-mono text-xs p-0 bg-transparent"
+                            style="background: var(--bg-sec);">
                             <div class="p-4 text-center text-gray-500 italic">Waiting for incoming messages...</div>
                         </div>
                     </div>
@@ -638,16 +695,18 @@
 
                 <!-- LIVE PREVIEW STICKY (Visible only in Staged view) -->
                 <div id="live-preview-panel" class="hidden md:block w-[300px] sticky top-6 self-start z-10">
-                   <div class="section-box p-0 overflow-hidden">
-                        <span class="section-title" style="left: 0; top: -20px; background: transparent;">Live Payload</span>
-                        <div class="bg-black text-white p-2 text-[10px] font-bold uppercase flex justify-between items-center">
+                    <div class="section-box p-0 overflow-hidden">
+                        <span class="section-title" style="left: 0; top: -20px; background: transparent;">Live
+                            Payload</span>
+                        <div
+                            class="bg-black text-white p-2 text-[10px] font-bold uppercase flex justify-between items-center">
                             <span>JSON PREVIEW</span>
                             <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                         </div>
                         <div id="json-preview" class="code-preview h-[400px] overflow-y-auto text-[10px]">
-{}
+                            {}
                         </div>
-                   </div>
+                    </div>
                 </div>
 
             </div>
@@ -657,20 +716,23 @@
     <!-- RIGHT: SIDEBAR -->
     <aside class="sidebar w-full md:w-[320px] flex flex-col h-screen md:sticky md:top-0 z-20 hidden md:flex">
         <div class="p-4 border-b" style="border-color: var(--border);">
-            <h2 class="text-xs uppercase font-bold tracking-wider" style="color: var(--text-sec);">Connected Clients</h2>
+            <h2 class="text-xs uppercase font-bold tracking-wider" style="color: var(--text-sec);">Connected Clients
+            </h2>
         </div>
         <div id="clients-list" class="flex-1 overflow-y-auto">
-             <!-- Clients -->
+            <!-- Clients -->
         </div>
-        <div class="p-4 border-t text-[10px]" style="border-color: var(--border); background-color: var(--bg-main); color: var(--text-sec);">
+        <div class="p-4 border-t text-[10px]"
+            style="border-color: var(--border); background-color: var(--bg-main); color: var(--text-sec);">
             WS_STATUS: <span id="ws-status" class="text-orange-500">CONNECTING...</span>
         </div>
     </aside>
-    
+
     <!-- BOTTOM BAR -->
     <div class="fixed bottom-0 left-0 right-0 md:pr-[320px] z-50">
         <div class="bottom-bar p-4 flex justify-center">
-             <button onclick="broadcastCurrent()" class="btn-broadcast uppercase font-bold tracking-widest py-4 px-12 text-sm w-full md:w-auto md:min-w-[400px] shadow-lg transition-transform flex items-center justify-center gap-2">
+            <button onclick="broadcastCurrent()"
+                class="btn-broadcast uppercase font-bold tracking-widest py-4 px-12 text-sm w-full md:w-auto md:min-w-[400px] shadow-lg transition-transform flex items-center justify-center gap-2">
                 <span>●</span> BROADCAST PAYLOAD
             </button>
         </div>
@@ -686,7 +748,7 @@
             // UI
             document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
-            
+
             // Views
             document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${tab}`).classList.remove('hidden');
@@ -709,13 +771,13 @@
             const isDark = body.classList.contains('dark-mode');
             document.getElementById('theme-label').textContent = isDark ? 'DARK' : 'LIGHT';
             localStorage.setItem('rift-theme', isDark ? 'dark' : 'light');
-            
+
             // Update Ace Theme
             if (rawEditor) {
                 rawEditor.setTheme(isDark ? "ace/theme/twilight" : "ace/theme/chrome");
             }
         }
-        
+
         // --- Init Ace Editor ---
         const rawEditor = ace.edit("raw-json-editor");
         rawEditor.session.setMode("ace/mode/json");
@@ -736,16 +798,16 @@
         if (localStorage.getItem('rift-theme') === 'dark') {
             toggleTheme(); // This handles the Ace theme too
         } else {
-             rawEditor.setTheme("ace/theme/chrome");
+            rawEditor.setTheme("ace/theme/chrome");
         }
 
         // --- Form & Real-time Preview Logic ---
         const form = document.getElementById('broadcastForm');
-        
+
         function getFormData() {
             const payload = {};
             // Identification
-            payload['device_id'] = "RIFT_PANEL"; 
+            payload['device_id'] = "RIFT_PANEL";
 
             // Ints
             form.querySelectorAll('.control-group[data-type="int"] input').forEach(input => {
@@ -806,9 +868,9 @@
         // --- Broadcast Logic ---
         // Helper to perform the actual send
         function sendPayload(payload) {
-             if (ws.readyState === WebSocket.OPEN) {
+            if (ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify(payload));
-                
+
                 // Feedback
                 const btn = document.querySelector('.btn-broadcast');
                 const originalText = btn.innerHTML;
@@ -846,24 +908,24 @@
             }
             sendPayload(payload);
         }
-        
+
         // Fast Cmd Logic
         function sendFastCmd(payload) {
             payload['device_id'] = "RIFT_PANEL";
             console.log("Fast Command:", payload);
             sendPayload(payload);
         }
-        
+
         // --- Monitor Logic ---
         function addLog(msg, type = 'rx') {
             const container = document.getElementById('monitor-log');
             if (container.children.length === 1 && container.children[0].textContent.includes('Waiting')) {
                 container.innerHTML = '';
             }
-            
+
             const el = document.createElement('div');
             el.className = 'log-entry';
-            
+
             const time = new Date().toLocaleTimeString();
             const prefix = type === 'rx' ? '↓ REC' : '↑ SND';
             const color = type === 'rx' ? 'text-blue-500' : 'text-green-500';
@@ -875,7 +937,7 @@
                 </div>
                 <pre class="whitespace-pre-wrap text-[10px] pl-4 border-l-2 border-gray-200 dark:border-gray-700">${msg}</pre>
             `;
-            
+
             container.prepend(el); // Newest top
         }
 
@@ -933,16 +995,16 @@
             };
 
             ws.onmessage = (event) => {
-                 // Try to parse prettily
-                 let displayMsg = event.data;
-                 try {
-                     const json = JSON.parse(event.data);
-                     displayMsg = JSON.stringify(json, null, 2);
-                 } catch(e) {}
-                 
-                 addLog(displayMsg, 'rx');
+                // Try to parse prettily
+                let displayMsg = event.data;
+                try {
+                    const json = JSON.parse(event.data);
+                    displayMsg = JSON.stringify(json, null, 2);
+                } catch (e) { }
+
+                addLog(displayMsg, 'rx');
             };
-            
+
             ws.onerror = (err) => {
                 console.error("WS Error", err);
                 ws.close(); // Ensure onclose is called
@@ -956,13 +1018,13 @@
                 const res = await fetch('/api/clients');
                 const data = await res.json();
                 renderClients(data.clients);
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
 
         function renderClients(clients) {
             const container = document.getElementById('clients-list');
             container.innerHTML = '';
-            
+
             if (clients.length === 0) {
                 container.innerHTML = '<div class="p-4 text-center text-xs" style="color: var(--text-sec)">NO SIGNAL</div>';
                 return;
@@ -971,12 +1033,12 @@
             clients.forEach(c => {
                 const el = document.createElement('div');
                 el.className = 'client-card transition-colors cursor-default';
-                const roleColor = c.role === 'depth' ? 'text-blue-600' : 
-                                  c.role === 'stranger' ? 'text-green-600' : 'text-gray-600';
-                
+                const roleColor = c.role === 'depth' ? 'text-blue-600' :
+                    c.role === 'stranger' ? 'text-green-600' : 'text-gray-600';
+
                 el.innerHTML = `
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold font-mono">${c.deviceId !== 'unknown' ? c.deviceId : c.id.substring(0,6)}</span>
+                        <span class="text-xs font-bold font-mono">${c.deviceId !== 'unknown' ? c.deviceId : c.id.substring(0, 6)}</span>
                         <div class="h-1.5 w-1.5 rounded-full ${c.readyState === 1 ? 'bg-green-500' : 'bg-red-500'}"></div>
                     </div>
                     <div class="flex justify-between items-end">
@@ -990,10 +1052,11 @@
 
         setInterval(fetchClients, 2000);
         fetchClients();
-        
+
         // Init Preview
         updatePreview();
 
     </script>
 </body>
+
 </html>

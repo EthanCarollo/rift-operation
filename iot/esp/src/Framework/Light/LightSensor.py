@@ -17,9 +17,12 @@ class LightSensor:
         if not isinstance(delegate, LightDelegate):
             raise TypeError("delegate must be an instance of LightDelegate")
         
+        # Simple ADC init - avoid methods that may cause WDT on some ESP32 versions
         self.adc = ADC(Pin(pin))
-        self.adc.atten(ADC.ATTN_11DB)  # Full range 0-3.3V
-        self.adc.width(ADC.WIDTH_12BIT)  # 0-4095
+        try:
+            self.adc.atten(ADC.ATTN_11DB)  # Full range 0-3.3V
+        except Exception:
+            pass  # Use default attenuation if fails
         
         self.delegate = delegate
         self.threshold = threshold

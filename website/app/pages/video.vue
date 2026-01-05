@@ -12,7 +12,6 @@
       :src="currentVideo"
       autoplay
       loop
-      muted
       playsinline
       @error="handleVideoError"
       @loadeddata="onVideoLoaded"
@@ -151,12 +150,13 @@ let uiTimeout = null;
 
 // Watch global payload for video commands
 watch(lastPayload, (newPayload) => {
+    console.log('[Video] lastPayload changed:', newPayload);
     if (newPayload?.lost_video_play) {
         console.log(`[Video] Received command: ${newPayload.lost_video_play}`);
         const filename = newPayload.lost_video_play.startsWith('/') ? newPayload.lost_video_play : `/${newPayload.lost_video_play}`;
         changeVideo(filename);
     }
-}, { deep: true });
+}, { deep: true, immediate: true });
 
 // Reset error when source changes
 watch(currentVideo, () => {

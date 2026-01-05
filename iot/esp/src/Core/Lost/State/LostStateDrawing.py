@@ -17,10 +17,10 @@ class LostStateDrawing(LostState):
         pass
 
     async def handle_message(self, payload):
-        recognized = payload.get("lost_drawing_recognized")
+        recognized = payload.get("lost_drawing_light_recognized")
         
         if recognized is True:
-            await self.workshop.send_rift_json(torch=True, lost_mp3_play="drawing_success.mp3")
+            await self.workshop.send_rift_json(lost_drawing_light_recognized=True, lost_mp3_play="drawing_success.mp3")
             await self.next_step()
             
         elif recognized is False:

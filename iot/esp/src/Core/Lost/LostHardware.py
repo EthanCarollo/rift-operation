@@ -123,7 +123,7 @@ class LostHardware:
             # Light Sensor (TEMT6000)
             try:
                 self.light_sensor = LightSensor(pin=34, delegate=self.light_delegate, 
-                                               threshold=1000, name="TEMT6000")
+                                               threshold=300, name="TEMT6000")
                 self.logger.info("Light Sensor initialized (34)")
             except Exception as e:
                 self.logger.error(f"Light sensor init failed: {e}")

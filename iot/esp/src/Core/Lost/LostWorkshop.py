@@ -16,7 +16,7 @@ class LostWorkshop:
         # State & Config
         self.current_step_delay = LC.LostGameConfig.DEFAULT_STEP_DELAY
         self._last_payload = None
-        self._state_data = {"torch": None, "cage": None}
+        self._state_data = {"drawing": None, "cage": None}
         self.light_triggered = False
         self.state = None
         # Initialize State
@@ -96,14 +96,13 @@ class LostWorkshop:
         if self.state:
             await self.state.handle_message(payload)
 
-    async def send_rift_json(self, torch=None, cage=None, drawing=None, lost_mp3_play=None, lost_video_play=None, lost_state=None, lost_light_is_triggered=None, rift_part_count=None, device_id=None):
+    async def send_rift_json(self, lost_drawing_light_recognized=None, cage=None, drawing=None, lost_mp3_play=None, lost_video_play=None, lost_state=None, lost_light_is_triggered=None, rift_part_count=None, device_id=None):
         if not self._last_payload:
             self.controller.logger.error("Cannot send: no payload received")
             return
 
-        if torch is not None: self._state_data["torch"] = torch
+        if lost_drawing_light_recognized is not None: self._state_data["drawing"] = lost_drawing_light_recognized
         if cage is not None: self._state_data["cage"] = cage
-        if drawing is not None: self._state_data["drawing"] = drawing
 
         payload = dict(self._last_payload)
         # Use provided device_id or fallback to config
@@ -129,24 +128,23 @@ class LostWorkshop:
         if rift_part_count is not None:
              payload["rift_part_count"] = rift_part_count
         
-        for key, val in [("lost_torch_scanned", self._state_data["torch"]),
-                         ("lost_cage_is_on_monster", self._state_data["cage"]),
-                         ("lost_drawing_recognized", self._state_data.get("drawing"))]:
+        for key, val in [("lost_cage_is_on_monster", self._state_data["cage"]),
+                         ("lost_drawing_light_recognized", self._state_data.get("drawing"))]:
             if val is not None:
                 payload[key] = val
         
         self._last_payload = payload
 
         try:
-            self.logger.log_ws("torch={}, cage={}, drawing={}, mp3={}, video={}, lost_state={}, light={}".format(
-                self._state_data["torch"], self._state_data["cage"], self._state_data.get("drawing"), lost_mp3_play, lost_video_play, lost_state, lost_light_is_triggered
+            self.logger.log_ws("drawing={}, cage={}, mp3={}, video={}, lost_state={}, light={}".format(
+                self._state_data["drawing"], self._state_data["cage"], lost_mp3_play, lost_video_play, lost_state, lost_light_is_triggered
             ))
             await self.controller.websocket_client.send(json.dumps(payload))
         except Exception as e:
             self.controller.logger.error("Send failed: {}".format(e))
 
     async def reset(self):
-        self._state_data = {"torch": None, "cage": None}
+        self._state_data = {"drawing": None, "cage": None}
         self.light_triggered = False
         self.controller.logger.info("Lost workshop reset")
         await self.swap_state(LostStateIdle(self))
