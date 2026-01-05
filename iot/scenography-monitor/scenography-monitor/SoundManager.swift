@@ -264,6 +264,41 @@ class SoundManager: NSObject, ObservableObject {
         rootNodes = scanDirectory(at: soundDirectoryURL)
     }
     
+    func renameSound(at url: URL, to newName: String) {
+        let oldName = url.lastPathComponent
+        
+        // Ensure the new name has the original extension if the user didn't provide one
+        let originalExtension = url.pathExtension
+        var finalNewName = newName
+        if !originalExtension.isEmpty && !newName.hasSuffix("." + originalExtension) {
+            finalNewName = newName + "." + originalExtension
+        }
+        
+        let targetURL = url.deletingLastPathComponent().appendingPathComponent(finalNewName)
+        
+        do {
+            try FileManager.default.moveItem(at: url, to: targetURL)
+            print("Renamed \(oldName) to \(finalNewName)")
+            
+            // Update all instances in busSamples to match the new filename
+            DispatchQueue.main.async {
+                for (busId, instances) in self.busSamples {
+                    let updatedInstances = instances.map { instance -> SoundInstance in
+                        if instance.filename == oldName {
+                            return SoundInstance(id: instance.id, filename: finalNewName)
+                        }
+                        return instance
+                    }
+                    self.busSamples[busId] = updatedInstances
+                }
+                
+                self.refreshSounds()
+            }
+        } catch {
+            print("Failed to rename sound: \(error)")
+        }
+    }
+    
     private func scanDirectory(at url: URL) -> [FileNode] {
         var nodes: [FileNode] = []
         do {

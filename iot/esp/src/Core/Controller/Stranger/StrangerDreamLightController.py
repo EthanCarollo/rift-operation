@@ -11,7 +11,7 @@ class StrangerDreamLightController(EspController):
         # Initialize LED Strip and Controller
         # Pin 15 is used in the original controller, keeping it as default
         # but config could override this if needed.
-        self.led_strip = LedStrip(15, 32)
+        self.led_strip = LedStrip(18, 32)
         self.led_controller = LedController(self.led_strip)
         self.led_controller.start_thread()
         
