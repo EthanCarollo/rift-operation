@@ -244,8 +244,6 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
                         DispatchQueue.main.async {
                             self?.transcribedText += content
                         }
-                            self?.transcribedText += text
-                        }
                     } else if let data = text.data(using: .utf8),
                               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                         
