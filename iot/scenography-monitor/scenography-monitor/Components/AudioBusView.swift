@@ -263,7 +263,7 @@ struct AudioBusView: View {
                 
                 Picker("", selection: Binding(
                     get: { bus?.outputDeviceName ?? "System/Default" },
-                    set: { soundManager.setOutput($0, onBus: busId) }
+                    set: { soundManager.selectOutput(name: $0, forBus: busId) }
                 )) {
                     Text("System Default").tag("System/Default")
                     Text("-- Out --").tag("")

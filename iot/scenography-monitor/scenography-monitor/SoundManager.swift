@@ -155,9 +155,7 @@ class SoundManager: NSObject, ObservableObject {
                 color = "#DBA9A9" // Darker Pastel Red
             default: 
                 // Generate varied darker pastels for others
-                let hue = Double(i) * 0.15
-                let sat = 0.4
-                let bri = 0.7
+                // Simplified: alternating greys if not specific?
                 // NSColor check not needed if we just mock hex strings or use helper.
                 // Simplified: alternating greys if not specific?
                 // Or rotation:
@@ -172,6 +170,34 @@ class SoundManager: NSObject, ObservableObject {
         refreshSounds()
         refreshAudioDevices()
         startMetering()
+        setupHardwareListener()
+    }
+
+    private func setupHardwareListener() {
+        var propertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        
+        let status = AudioObjectAddPropertyListener(
+            AudioObjectID(kAudioObjectSystemObject),
+            &propertyAddress,
+            { (inObjectID, inNumberAddresses, inAddresses, inClientData) -> OSStatus in
+                // Using a block/closure for simplicity, though a static proc is also fine.
+                // Re-scan devices when hardware changes.
+                DispatchQueue.main.async {
+                    SoundManager.shared.refreshAudioDevices()
+                    print("Hardware devices changed, refreshing list...")
+                }
+                return noErr
+            },
+            nil
+        )
+        
+        if status != noErr {
+            print("Failed to add hardware property listener: \(status)")
+        }
     }
 
     // MARK: - Directory Management
@@ -364,16 +390,19 @@ class SoundManager: NSObject, ObservableObject {
         
         for id in deviceIDs {
             // Get Name
-            var nameSize = UInt32(MemoryLayout<CFString>.size)
-            var deviceName: CFString = "" as CFString
+            var deviceName: Unmanaged<CFString>?
+            var nameSize = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
             var nameAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyDeviceNameCFString, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
             AudioObjectGetPropertyData(id, &nameAddr, 0, nil, &nameSize, &deviceName)
             
             // Get UID
-            var uidSize = UInt32(MemoryLayout<CFString>.size)
-            var deviceUID: CFString = "" as CFString
+            var deviceUID: Unmanaged<CFString>?
+            var uidSize = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
             var uidAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyDeviceUID, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
             AudioObjectGetPropertyData(id, &uidAddr, 0, nil, &uidSize, &deviceUID)
+            
+            let name = deviceName?.takeRetainedValue() as String? ?? "Unknown"
+            let uid = deviceUID?.takeRetainedValue() as String? ?? "Unknown"
             
             // Check output channels
             var streamAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams, mScope: kAudioDevicePropertyScopeOutput, mElement: kAudioObjectPropertyElementMain)
@@ -381,7 +410,7 @@ class SoundManager: NSObject, ObservableObject {
             AudioObjectGetPropertyDataSize(id, &streamAddr, 0, nil, &streamSize)
             
             if streamSize > 0 {
-                newDevices.append(AudioDeviceInput(id: id, name: String(deviceName), uid: String(deviceUID)))
+                newDevices.append(AudioDeviceInput(id: id, name: name, uid: uid))
             }
         }
         
@@ -442,35 +471,6 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     // MARK: - Playback Control
-    
-    func setOutput(_ deviceName: String, onBus busId: Int) {
-        if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
-            // Find UID from Name
-            let uid: String
-            if let dev = availableOutputDevices.first(where: { $0.name == deviceName }) {
-                uid = dev.uid
-            } else {
-                uid = "default"
-            }
-            
-            let oldUID = audioBuses[index].outputDeviceUID
-            if oldUID == uid { return }
-            
-            // Update model
-            audioBuses[index].outputDeviceName = deviceName
-            audioBuses[index].outputDeviceUID = uid
-            
-            // If playing, restart on new engine
-            // Stop all playing instances on this bus
-            let instances = busSamples[busId] ?? []
-            for instance in instances {
-                if let player = players[instance.id], player.isPlaying {
-                    stopSound(instanceID: instance.id)
-                    print("Output changed for Bus \(busId). Stopped \(instance.filename).")
-                }
-            }
-        }
-    }
     
     func setVolume(_ volume: Float, onBus busId: Int) {
         if let index = audioBuses.firstIndex(where: { $0.id == busId }) {
@@ -772,20 +772,36 @@ class SoundManager: NSObject, ObservableObject {
     }
     
     // MARK: - Routing
-    func setOutputDevice(uid: String, name: String, onBus busId: Int) {
+    func selectOutput(name: String, forBus busId: Int) {
         guard let index = audioBuses.firstIndex(where: { $0.id == busId }) else { return }
         
-        // Update Bus Data on Main
-        DispatchQueue.main.async {
-            self.audioBuses[index].outputDeviceUID = uid
-            self.audioBuses[index].outputDeviceName = name
+        // Find UID from Name
+        let uid: String
+        if let dev = availableOutputDevices.first(where: { $0.name == name }) {
+            uid = dev.uid
+        } else {
+            uid = "default"
         }
-    }
-    
-    func selectOutput(name: String, forBus busId: Int) {
-        // Find device by name
-        if let device = availableOutputDevices.first(where: { $0.name == name }) {
-            setOutputDevice(uid: device.uid, name: device.name, onBus: busId)
+        
+        let oldUID = audioBuses[index].outputDeviceUID
+        if oldUID == uid { return }
+        
+        print("Switching Bus \(busId) from \(audioBuses[index].outputDeviceName) to \(name) (UID: \(uid))")
+        
+        // Update model immediately on main thread
+        DispatchQueue.main.async {
+            self.audioBuses[index].outputDeviceName = name
+            self.audioBuses[index].outputDeviceUID = uid
+            
+            // Handle active sounds: they must be moved or stopped. 
+            // Currently, we stop them to ensure a clean state on the new engine.
+            let instances = self.busSamples[busId] ?? []
+            for instance in instances {
+                if let player = self.players[instance.id], player.isPlaying {
+                    self.stopSound(instanceID: instance.id)
+                    print("Output changed for Bus \(busId). Stopped \(instance.filename) for re-routing.")
+                }
+            }
         }
     }
 }

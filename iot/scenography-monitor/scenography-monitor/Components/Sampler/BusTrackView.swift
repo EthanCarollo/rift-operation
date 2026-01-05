@@ -68,6 +68,7 @@ struct BusTrackView: View {
                         }
                         .menuStyle(.borderlessButton)
                         .frame(width: 16)
+                        .accessibilityIdentifier("RoutingMenu_\(bus.id)")
                     }
                     
                     // Volume Slider (Mini)
@@ -114,7 +115,7 @@ struct BusTrackView: View {
                 }
             }
             .onDrop(of: [.text], isTargeted: $isTargeted) { providers in
-                providers.first?.loadObject(ofClass: String.self) { (str, error) in
+                _ = providers.first?.loadObject(ofClass: String.self) { (str, error) in
                     guard let soundName = str else { return }
                     DispatchQueue.main.async {
                         // Add Instance Logic
@@ -131,5 +132,6 @@ struct BusTrackView: View {
         .frame(height: 100)
         .background(Color(nsColor: .controlBackgroundColor))
         .border(Color.gray.opacity(0.2), width: 1, edges: [.bottom])
+        .accessibilityIdentifier("BusTrack_\(bus.id)")
     }
 }
