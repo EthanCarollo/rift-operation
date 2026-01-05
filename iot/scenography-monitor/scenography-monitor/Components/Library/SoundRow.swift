@@ -13,22 +13,32 @@ struct SoundRow: View {
     }
     
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "waveform")
-                .font(.system(size: 10))
-                .foregroundColor(isSelected ? .white : .secondary)
+        VStack(alignment: .leading, spacing: 4) {
+            // Filename Row
+            HStack(spacing: 6) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 10))
+                    .foregroundColor(isSelected ? .white : .secondary)
+                
+                Text(node.name)
+                    .font(.system(size: 11, design: .monospaced))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .foregroundColor(isSelected ? .white : .primary)
+                
+                Spacer()
+            }
             
-            Text(node.name)
-                .font(.system(size: 11, design: .monospaced))
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .foregroundColor(isSelected ? .white : .primary)
-            
-            Spacer()
+            // Mini Waveform
+            WaveformView(url: node.url)
+                .frame(height: 20)
+                .opacity(isSelected ? 0.9 : 0.7)
         }
-        .padding(4)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
+        .frame(minWidth: 180)
         .background(isSelected ? Color.blue : Color.clear)
-        .cornerRadius(4)
+        .cornerRadius(6)
         .contentShape(Rectangle())
         .onTapGesture {
             soundManager.selectedSoundURL = node.url

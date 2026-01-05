@@ -11,8 +11,9 @@ class ProjectConfigUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         
+        // Wait for app to fully load
         let saveButton = app.buttons["SAVE"]
-        XCTAssertTrue(saveButton.exists, "SAVE button should exist")
+        XCTAssertTrue(saveButton.waitForExistence(timeout: 5), "SAVE button should exist")
         XCTAssertTrue(saveButton.isEnabled, "SAVE button should be enabled")
         XCTAssertTrue(saveButton.isHittable, "SAVE button should be hittable")
     }
@@ -22,18 +23,18 @@ class ProjectConfigUITests: XCTestCase {
         app.launch()
         
         let loadButton = app.buttons["LOAD"]
-        XCTAssertTrue(loadButton.exists, "LOAD button should exist")
+        XCTAssertTrue(loadButton.waitForExistence(timeout: 5), "LOAD button should exist")
         XCTAssertTrue(loadButton.isEnabled, "LOAD button should be enabled")
         XCTAssertTrue(loadButton.isHittable, "LOAD button should be hittable")
     }
     
     func testSamplerSlotRemoveButtonSize() throws {
-        // Test that the UI structure for sampler is present
         let app = XCUIApplication()
         app.launch()
         
         // Verify main app title is visible (confirms app loaded)
-        XCTAssertTrue(app.staticTexts["RIFT OP // SOUND MONITOR"].exists, "App should be loaded")
+        let title = app.staticTexts["RIFT OP // SOUND MONITOR"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "App should be loaded")
         
         // Verify SAVE and LOAD buttons exist (toolbar verification)
         XCTAssertTrue(app.buttons["SAVE"].exists)
@@ -44,14 +45,15 @@ class ProjectConfigUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         
-        // 1. Verify main interface elements exist
-        XCTAssertTrue(app.staticTexts["RIFT OP // SOUND MONITOR"].exists, "App title should be visible")
+        // Wait for main interface to load
+        let title = app.staticTexts["RIFT OP // SOUND MONITOR"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "App title should be visible")
         
-        // 2. Verify toolbar buttons
+        // Verify toolbar buttons
         XCTAssertTrue(app.buttons["SAVE"].exists)
         XCTAssertTrue(app.buttons["LOAD"].exists)
         
-        // 3. Verify the main app is rendering (any window exists)
+        // Verify the main app is rendering (any window exists)
         XCTAssertTrue(app.windows.count > 0, "App window should be present")
     }
 }

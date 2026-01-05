@@ -64,10 +64,14 @@ class SoundManager: NSObject, ObservableObject {
     struct SoundInstance: Identifiable, Codable, Hashable {
         let id: UUID
         let filename: String
+        var preventReplayWhilePlaying: Bool = false  // Don't restart if already playing
+        var loopEnabled: Bool = false                 // Loop until stopped
         
-        init(id: UUID = UUID(), filename: String) {
+        init(id: UUID = UUID(), filename: String, preventReplayWhilePlaying: Bool = false, loopEnabled: Bool = false) {
             self.id = id
             self.filename = filename
+            self.preventReplayWhilePlaying = preventReplayWhilePlaying
+            self.loopEnabled = loopEnabled
         }
     }
     
@@ -93,6 +97,33 @@ class SoundManager: NSObject, ObservableObject {
         }
         // Notify Trigger System/Cleanup Bindings
         SoundTrigger.shared.removeBindings(forInstance: instanceId)
+    }
+    
+    func updateInstance(_ instanceId: UUID, preventReplayWhilePlaying: Bool? = nil, loopEnabled: Bool? = nil) {
+        for (busId, instances) in busSamples {
+            if let index = instances.firstIndex(where: { $0.id == instanceId }) {
+                var updated = instances[index]
+                if let prevent = preventReplayWhilePlaying {
+                    updated.preventReplayWhilePlaying = prevent
+                }
+                if let loop = loopEnabled {
+                    updated.loopEnabled = loop
+                }
+                var list = instances
+                list[index] = updated
+                busSamples[busId] = list
+                return
+            }
+        }
+    }
+    
+    func getInstance(_ instanceId: UUID) -> SoundInstance? {
+        for (_, instances) in busSamples {
+            if let instance = instances.first(where: { $0.id == instanceId }) {
+                return instance
+            }
+        }
+        return nil
     }
     
     @Published var soundRoutes: [String: Int] = [:] // Backwards compatibility mock if needed, but better to remove usage.
@@ -651,13 +682,29 @@ class SoundManager: NSObject, ObservableObject {
         
         engine.connect(player, to: engine.mainMixerNode, format: file.processingFormat)
         
-        player.scheduleFile(file, at: nil) { [weak self] in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                if self.activeInstanceIds.contains(instance.id) {
-                     self.activeInstanceIds.remove(instance.id)
-                     // self.busLevels[busId] = 0 // Don't reset bus level, others might be playing
-                     print("Playback finished naturally for \(instance.filename)")
+        if instance.loopEnabled {
+            // Looping: Use buffer with .loops option
+            let frameCount = UInt32(file.length)
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: frameCount) else {
+                print("Failed to create buffer for looping")
+                return
+            }
+            do {
+                try file.read(into: buffer)
+                player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
+            } catch {
+                print("Failed to read file into buffer: \(error)")
+                return
+            }
+        } else {
+            // Normal playback
+            player.scheduleFile(file, at: nil) { [weak self] in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    if self.activeInstanceIds.contains(instance.id) {
+                        self.activeInstanceIds.remove(instance.id)
+                        print("Playback finished naturally for \(instance.filename)")
+                    }
                 }
             }
         }
@@ -665,11 +712,6 @@ class SoundManager: NSObject, ObservableObject {
         player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buf, time) in
              self?.processMeter(buffer: buf, busId: busId)
         }
-        
-        // Initial Volume/Pan
-        // We need to fetch it safely. Since we are in Graph Queue, we can't access Main Actor 'audioBuses'.
-        // But we can just trigger an update or default to 1.0 then update.
-        // Or wait, we are about to play. Let's play then update.
         
         do {
             if !engine.isRunning { try engine.start() }
@@ -680,11 +722,10 @@ class SoundManager: NSObject, ObservableObject {
             DispatchQueue.main.async {
                 self.activeInstanceIds.insert(instance.id)
                 self.loadingInstanceIds.remove(instance.id)
-                // Trigger volume update now that player exists
                 self.updatePlayerVolume(busId)
             }
             
-            print("Playing \(instance.id) (\(instance.filename)) on Bus \(busId)")
+            print("Playing \(instance.id) (\(instance.filename)) on Bus \(busId) [Loop: \(instance.loopEnabled)]")
         } catch {
              print("Engine/Play failed: \(error)")
              DispatchQueue.main.async {

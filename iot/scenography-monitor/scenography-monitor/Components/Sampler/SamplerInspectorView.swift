@@ -20,6 +20,8 @@ struct SamplerInspectorView: View {
         var id: String { self.rawValue }
     }
     
+    @State private var isStopTrigger: Bool = false  // For stop trigger bindings
+    
     var body: some View {
         HStack(spacing: 0) {
             if let selectedId = soundManager.selectedInstanceId,
@@ -46,8 +48,31 @@ struct SamplerInspectorView: View {
                     Divider()
                     
                     HStack(alignment: .top) {
-                        // Left: Existing Bindings List
-                        VStack(alignment: .leading) {
+                        // Left Column: Sound Options + Bindings
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Sound Options Section
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Sound Options").font(.caption).bold().foregroundColor(.secondary)
+                                
+                                Toggle("Don't replay if playing", isOn: Binding(
+                                    get: { instance.preventReplayWhilePlaying },
+                                    set: { soundManager.updateInstance(instance.id, preventReplayWhilePlaying: $0) }
+                                ))
+                                .font(.caption)
+                                .accessibilityIdentifier("preventReplayToggle")
+                                
+                                Toggle("Loop sound", isOn: Binding(
+                                    get: { instance.loopEnabled },
+                                    set: { soundManager.updateInstance(instance.id, loopEnabled: $0) }
+                                ))
+                                .font(.caption)
+                                .accessibilityIdentifier("loopEnabledToggle")
+                            }
+                            .padding(8)
+                            .background(Color.black.opacity(0.05))
+                            .cornerRadius(6)
+                            
+                            // Active Bindings
                             Text("Active Bindings").font(.caption).bold().foregroundColor(.secondary)
                             
                             let bindings = soundTrigger.bindings.filter { $0.instanceId == instance.id }
@@ -62,11 +87,20 @@ struct SamplerInspectorView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         ForEach(bindings) { binding in
                                             HStack {
-                                                Image(systemName: "link")
-                                                    .font(.system(size: 8))
+                                                Image(systemName: binding.isStopTrigger ? "stop.circle" : "play.circle")
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(binding.isStopTrigger ? .red : .green)
                                                 Text(binding.jsonKey)
                                                     .font(.system(size: 11, design: .monospaced))
                                                 Spacer()
+                                                if binding.isStopTrigger {
+                                                    Text("STOP")
+                                                        .font(.caption2)
+                                                        .padding(2)
+                                                        .background(Color.red.opacity(0.2))
+                                                        .foregroundColor(.red)
+                                                        .cornerRadius(4)
+                                                }
                                                 if let val = binding.targetValue {
                                                     Text("== \(val)")
                                                         .font(.caption2)
@@ -90,7 +124,7 @@ struct SamplerInspectorView: View {
                                 }
                             }
                         }
-                        .frame(width: 250)
+                        .frame(width: 280)
                         
                         Divider()
                         
@@ -143,9 +177,14 @@ struct SamplerInspectorView: View {
                                 }
                             }
                             
+                            // Stop Trigger Option
+                            Toggle("Stop Trigger (stops loop)", isOn: $isStopTrigger)
+                                .font(.caption)
+                                .accessibilityIdentifier("stopTriggerToggle")
+                            
                             Spacer()
                             
-                            Button("Add Binding") {
+                            Button(isStopTrigger ? "Add Stop Binding" : "Add Binding") {
                                 addBinding(for: instance)
                             }
                             .disabled((isCustomKey ? customKey.isEmpty : selectedKey.isEmpty))
@@ -197,10 +236,11 @@ struct SamplerInspectorView: View {
             }
         }
         
-        soundTrigger.addBinding(key: key, sound: instance.filename, instanceId: instance.id, value: finalVal)
+        soundTrigger.addBinding(key: key, sound: instance.filename, instanceId: instance.id, value: finalVal, isStopTrigger: isStopTrigger)
         
         // Reset
         if isCustomKey { customKey = "" }
         stringValue = ""
+        isStopTrigger = false
     }
 }

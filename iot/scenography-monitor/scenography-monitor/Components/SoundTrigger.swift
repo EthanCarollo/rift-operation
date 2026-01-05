@@ -11,14 +11,16 @@ class SoundTrigger: ObservableObject {
         let jsonKey: String
         let soundName: String // Keep for display/fallback
         var instanceId: UUID? // Optional for migration, but enforced for new bindings
-        let targetValue: String? 
+        let targetValue: String?
+        var isStopTrigger: Bool = false  // If true, stops sound instead of playing
         
-        init(id: UUID = UUID(), jsonKey: String, soundName: String, instanceId: UUID? = nil, targetValue: String?) {
+        init(id: UUID = UUID(), jsonKey: String, soundName: String, instanceId: UUID? = nil, targetValue: String?, isStopTrigger: Bool = false) {
             self.id = id
             self.jsonKey = jsonKey
             self.soundName = soundName
             self.instanceId = instanceId
             self.targetValue = targetValue
+            self.isStopTrigger = isStopTrigger
         }
     }
     
@@ -131,33 +133,47 @@ class SoundTrigger: ObservableObject {
     
     private func triggerSound(_ binding: BindingConfig) {
         DispatchQueue.main.async {
-            // New Instance Logic
-            if let instanceId = binding.instanceId {
-                // Find instance in buses
-                for (busId, instances) in SoundManager.shared.busSamples {
-                    if let instance = instances.first(where: { $0.id == instanceId }) {
-                        SoundManager.shared.playSound(instance: instance, onBus: busId)
+            guard let instanceId = binding.instanceId else {
+                print("SoundTrigger: Binding has no instance ID (Old Format).")
+                return
+            }
+            
+            // Find instance in buses
+            for (busId, instances) in SoundManager.shared.busSamples {
+                if let instance = instances.first(where: { $0.id == instanceId }) {
+                    
+                    // Handle stop trigger
+                    if binding.isStopTrigger {
+                        SoundManager.shared.stopSound(instanceID: instanceId)
+                        print("SoundTrigger: Stopped \(instance.filename)")
                         return
                     }
+                    
+                    // Check preventReplayWhilePlaying
+                    if instance.preventReplayWhilePlaying {
+                        if SoundManager.shared.activeInstanceIds.contains(instanceId) {
+                            print("SoundTrigger: Skipping \(instance.filename) - already playing (preventReplay)")
+                            return
+                        }
+                    }
+                    
+                    SoundManager.shared.playSound(instance: instance, onBus: busId)
+                    return
                 }
-                print("SoundTrigger: Instance \(instanceId) not found in any bus.")
-            } else {
-                // FALLBACK: Old SoundName logic (Temporary)
-                // We should eventually remove this.
-                print("SoundTrigger: Binding has no instance ID (Old Format).")
             }
+            print("SoundTrigger: Instance \(instanceId) not found in any bus.")
         }
     }
 
     // Public API to manage bindings
-    func addBinding(key: String, sound: String, instanceId: UUID, value: String? = nil) {
+    func addBinding(key: String, sound: String, instanceId: UUID, value: String? = nil, isStopTrigger: Bool = false) {
         // Allow multiple bindings for same key IF they have different values
         // But remove exact duplicates
-        bindings.removeAll { $0.jsonKey == key && $0.targetValue == value && $0.instanceId == instanceId }
+        bindings.removeAll { $0.jsonKey == key && $0.targetValue == value && $0.instanceId == instanceId && $0.isStopTrigger == isStopTrigger }
         
-        let binding = BindingConfig(jsonKey: key, soundName: sound, instanceId: instanceId, targetValue: value)
+        let binding = BindingConfig(jsonKey: key, soundName: sound, instanceId: instanceId, targetValue: value, isStopTrigger: isStopTrigger)
         bindings.append(binding)
-        print("Bound '\(key)' (Val: \(value ?? "Any")) to instance '\(instanceId)'")
+        print("Bound '\(key)' (Val: \(value ?? "Any")) to instance '\(instanceId)' [Stop: \(isStopTrigger)]")
     }
     
     func removeBindings(forInstance instanceId: UUID) {
