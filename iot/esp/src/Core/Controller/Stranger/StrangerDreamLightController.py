@@ -3,24 +3,32 @@ from src.Framework.Led.LedStrip import LedStrip
 from src.Framework.Led.LedController import LedController
 import ujson as json
 
+try:
+    import uasyncio as asyncio
+except ImportError:
+    import asyncio
+    asyncio.sleep_ms = lambda ms: asyncio.sleep(ms/1000)
+
 class StrangerDreamLightController(EspController):
     def __init__(self, config):
         super().__init__(config, "StrangerLightController")
         self.logger.name = "StrangerLightController"
         
-        # Initialize LED Strip and Controller
-        # Pin 15 is used in the original controller, keeping it as default
-        # but config could override this if needed.
-        self.led_strip = LedStrip(18, 32)
+        self.led_pin = 14
+        self.led_count = 32
+
+        self.led_strip = LedStrip(self.led_pin, self.led_count)
+        self.led_strip.clear()
         self.led_controller = LedController(self.led_strip)
-        
+        # self.led_controller.start_thread()
+        self.led_controller.play_from_json("data/stranger/led_inactive.json")
         # State to Animation mapping
         self.animation_map = {
-            "inactive": "data/stranger/led_anim_inactive.json",
-            "active": "data/stranger/led_anim_active.json",
-            "step_2": "data/stranger/led_anim_step2.json",
-            "step_3": "data/stranger/led_anim_step3.json",
-            "step_4": "data/stranger/led_anim_step4.json"
+            "inactive": "data/stranger/led_inactive.json",
+            "active": "data/stranger/led_active.json",
+            "step_2": "data/stranger/led_step2.json",
+            "step_3": "data/stranger/led_step3.json",
+            "step_4": "data/stranger/led_step4.json"
         }
 
     async def process_message(self, message):
@@ -49,3 +57,5 @@ class StrangerDreamLightController(EspController):
     async def update(self):
         # LedController thread handles animations, but we might need occasional updates
         self.led_controller.update()
+        asyncio.sleep_ms(50)
+

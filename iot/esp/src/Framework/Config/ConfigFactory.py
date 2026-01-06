@@ -57,7 +57,8 @@ class WebsocketConfigFactory:
     @staticmethod
     def create_prod():
         return WebsocketConfig(
-            server="ws://192.168.10.5:8000",
+            # Mac Mini (2) URL 
+            server="ws://192.168.10.7:8000",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60

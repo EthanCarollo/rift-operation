@@ -54,10 +54,6 @@ class LedController:
         if not frames:
             return
 
-        # Extract brightness, default to 1.0
-        brightness = animation_data.get("brightness", 1.0)
-        self.set_brightness(float(brightness))
-
         # Stop current animation first and acquire lock for ALL modifications
         with self.lock:
             self.is_playing = False  # Stop any ongoing render
@@ -151,21 +147,18 @@ class LedController:
                 r = int(c1[0] + (c2[0] - c1[0]) * alpha)
                 g = int(c1[1] + (c2[1] - c1[1]) * alpha)
                 b = int(c1[2] + (c2[2] - c1[2]) * alpha)
-                a = int(c1[3] + (c2[3] - c1[3]) * alpha)
+                a = c1[3] + (c2[3] - c1[3]) * alpha  # Keep as float 0.0-1.0
                 mixed_pixels.append((r, g, b, a))
             
             self._render_pixels(mixed_pixels)
 
     def _render_pixels(self, pixels):
         for i, color in enumerate(pixels):
-            # color is (r, g, b, a)
-            alpha_factor = color[3] / 255.0
-            total_factor = self.brightness * alpha_factor
-            
-            r = int(color[0] * total_factor)
-            g = int(color[1] * total_factor)
-            b = int(color[2] * total_factor)
-            self.strip.set_pixel(i, (r, g, b))
+            # color is (r, g, b, a) - a is float 0.0-1.0
+            r, g, b, a = color
+            # Combine alpha with global brightness (both 0.0-1.0)
+            final_alpha = a * self.brightness
+            self.strip.set_pixel(i, (r, g, b, final_alpha))
         self.strip.show()
 
     def _calculate_frame_pixels(self, frame):
@@ -192,17 +185,19 @@ class LedController:
                 val_g = int(parts[1])
                 val_b = int(parts[2])
                 
-                val_a = 255
+                # Keep alpha as float 0.0-1.0
+                val_a = 1.0
                 if len(parts) > 3:
                     raw_a = parts[3]
-                    if raw_a <= 1.0 and raw_a > 0:
-                        val_a = int(raw_a * 255)
+                    # If already 0.0-1.0, use directly; if > 1.0, normalize from 255
+                    if raw_a > 1.0:
+                        val_a = raw_a / 255.0
                     else:
-                        val_a = int(raw_a)
+                        val_a = raw_a
                 
-                rgb = (val_r, val_g, val_b, val_a)
+                rgba = (val_r, val_g, val_b, val_a)
                 pos = float(s.get("position", 0))
-                parsed_stops.append((pos, rgb))
+                parsed_stops.append((pos, rgba))
             except:
                 pass
         
@@ -234,7 +229,7 @@ class LedController:
             r = int(start_stop[1][0] + (end_stop[1][0] - start_stop[1][0]) * ratio)
             g = int(start_stop[1][1] + (end_stop[1][1] - start_stop[1][1]) * ratio)
             b = int(start_stop[1][2] + (end_stop[1][2] - start_stop[1][2]) * ratio)
-            a = int(start_stop[1][3] + (end_stop[1][3] - start_stop[1][3]) * ratio)
+            a = start_stop[1][3] + (end_stop[1][3] - start_stop[1][3]) * ratio  # Keep as float
             result[i] = (r, g, b, a)
             
         return result

@@ -8,7 +8,10 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "serve": "nuxt generate && npx serve .output/public"
+    "serve": "nuxt generate && npx serve .output/public",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "test:e2e": "cypress run --headless"
   },
   "dependencies": {
     "better-sqlite3": "^12.5.0",
@@ -20,6 +23,7 @@
   "devDependencies": {
     "@nuxt/content": "^3.9.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
-    "@tailwindcss/typography": "^0.5.19"
+    "@tailwindcss/typography": "^0.5.19",
+    "cypress": "^15.8.1"
   }
 }

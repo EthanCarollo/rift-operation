@@ -8,13 +8,7 @@
           <h2 class="text-xs uppercase tracking-wider text-text-sec">Animation Studio</h2>
         </div>
         <div class="flex gap-4 items-center">
-            <div class="flex flex-col items-end">
-                <label class="text-[10px] uppercase font-bold text-text-sec">Global Brightness</label>
-                <div class="flex items-center gap-2">
-                    <input type="range" min="0" max="1" step="0.05" v-model.number="animation.brightness" class="w-24 accent-accent cursor-pointer">
-                    <span class="text-xs font-mono w-8 text-right">{{ animation.brightness?.toFixed(2) }}</span>
-                </div>
-            </div>
+
           <div class="flex gap-2">
            <select v-model="selectedPreset" @change="loadPreset" class="raw-input w-40 h-10 uppercase text-xs">
             <option value="">Load Preset...</option>
@@ -146,7 +140,7 @@
                 <label class="text-[10px] uppercase font-bold text-text-sec block mb-2">Color</label>
                 <div class="flex gap-2 h-10">
                     <div class="w-10 h-10 border border-border" :style="{ backgroundColor: pickerState.previewColor }"></div>
-                    <button @click="$refs.colorPicker.click()" class="flex-1 border border-border hover:bg-bg-main text-xs font-bold uppercase transition-colors">Pick Color</button>
+                    <button @click="openNativeColorPicker" class="flex-1 border border-border hover:bg-bg-main text-xs font-bold uppercase transition-colors">Pick Color</button>
                 </div>
             </div>
 
@@ -175,7 +169,6 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 const NUM_PIXELS = 30;
 const animation = reactive({
   name: 'My Animation',
-  brightness: 1.0,
   frames: [
     {
       time: 500,
@@ -262,7 +255,6 @@ function importJson() {
       const data = JSON.parse(text);
       if (data.frames && Array.isArray(data.frames)) {
         animation.name = data.name || 'Imported Animation';
-        animation.brightness = data.brightness ?? 1.0;
         animation.frames = data.frames;
       } else {
         alert('Invalid animation file: missing frames array');
@@ -431,6 +423,12 @@ function closePicker() {
     pickerState.display = false;
     pickerState.frameIndex = -1;
     pickerState.colorIndex = -1;
+}
+
+function openNativeColorPicker() {
+    if (colorPicker.value) {
+        colorPicker.value.click();
+    }
 }
 
 function updatePickerPreview() {
@@ -603,19 +601,7 @@ async function playPreview() {
                 const rendered = startPixels.map((p1, i) => {
                     const p2 = endPixels[i];
                     const rawColor = interpolateColorRGBA(p1, p2, progress);
-                    // Apply brightness
-                    const globalBrightness = animation.brightness ?? 1.0;
-                    
-                    // Mix Alpha + Global Brightness effectively for viewing
-                    // In CSS, we can just use RGBA. The Controller will use alpha * brightness.
-                    // For preview accuracy, we should multiply RGB by brightness if imitating an LED?
-                    // Actually, LED brightness scales the emitted light. CSS opacity scales background.
-                    
-                    // Let's use pure RGBA for the preview color, but pre-multiply brightness into RGB?
-                    // No, `rgba(r,g,b, alpha * brightness)` is arguably the best visual approximation
-                    // on a black background.
-                    
-                    const finalAlpha = rawColor[3] * globalBrightness;
+                    const finalAlpha = rawColor[3];
                     return `rgba(${rawColor[0]}, ${rawColor[1]}, ${rawColor[2]}, ${finalAlpha})`;
                 });
                 previewPixels.value = rendered;
@@ -661,7 +647,8 @@ function stopPreview() {
 }
 
 .code-preview {
-  @apply font-mono text-[11px] bg-[var(--code-bg)] text-text-main p-4 border border-border whitespace-pre-wrap;
-  background-color: #1a1a1a; /* Fallback/Specific override if needed */
+  @apply font-mono text-[11px] p-4 border border-border whitespace-pre-wrap;
+  background-color: #1e1e1e;
+  color: #9cdcfe;
 }
 </style>

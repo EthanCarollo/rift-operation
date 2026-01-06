@@ -20,8 +20,20 @@ class LedStrip:
         self.clear()
 
     def set_pixel(self, index, color):
-        """Set a single pixel color (r, g, b). Does NOT show immediately."""
-        self.np[index] = color
+        """
+        Set a single pixel color. Does NOT show immediately.
+        :param index: Pixel index
+        :param color: Tuple of (r, g, b) or (r, g, b, a) where a is 0.0-1.0 alpha/intensity
+        """
+        if len(color) == 4:
+            r, g, b, a = color
+            # Apply alpha directly as intensity multiplier
+            r = int(r * a)
+            g = int(g * a)
+            b = int(b * a)
+            self.np[index] = (r, g, b)
+        else:
+            self.np[index] = color
 
     def fill(self, color):
         """Set all pixels to the same color. Does NOT show immediately."""
