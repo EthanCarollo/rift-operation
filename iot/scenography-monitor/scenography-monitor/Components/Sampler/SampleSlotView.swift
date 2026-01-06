@@ -9,6 +9,8 @@ struct SampleSlotView: View {
     
     @State private var isHovered: Bool = false
     
+    private let waveformHeight: CGFloat = 24
+    
     var body: some View {
         let isPlaying = soundManager.activeInstanceIds.contains(instance.id)
         let isLoading = soundManager.loadingInstanceIds.contains(instance.id)
@@ -22,14 +24,12 @@ struct SampleSlotView: View {
         VStack(spacing: 2) {
             // Header / Status
             HStack {
-                // Play Status Indicator
                 Circle()
                     .fill(isPlaying ? Color.green : (isLoading ? Color.orange : Color.gray.opacity(0.3)))
                     .frame(width: 8, height: 8)
                 
                 Spacer()
                 
-                // Binding Badge
                 if bindingCount > 0 {
                     Text("\(bindingCount)")
                         .font(.system(size: 8, weight: .bold))
@@ -39,7 +39,6 @@ struct SampleSlotView: View {
                         .clipShape(Circle())
                 }
                 
-                // Remove Button
                 Button(action: {
                     soundManager.removeInstance(instance.id, fromBus: busId)
                     if isSelected { soundManager.selectedInstanceId = nil }
@@ -51,35 +50,39 @@ struct SampleSlotView: View {
                 .buttonStyle(.plain)
                 .padding(.leading, 4)
             }
+            .fixedSize(horizontal: false, vertical: true)
             
             // Waveform with Progress Overlay
             if let url = fileURL {
                 ZStack(alignment: .leading) {
-                    // Waveform background
-                    WaveformView(url: url, tintColor: .white.opacity(0.3))
-                        .frame(height: 24)
+                    // Full waveform (always blue)
+                    WaveformView(url: url, tintColor: .blue.opacity(0.5))
                     
-                    // Progress overlay (filled waveform)
-                    WaveformView(url: url, tintColor: isPlaying ? .green : .blue.opacity(0.6))
-                        .frame(height: 24)
-                        .mask(
-                            GeometryReader { geo in
+                    // Progress overlay (green, only visible when playing)
+                    if isPlaying {
+                        WaveformView(url: url, tintColor: .green)
+                            .clipShape(
                                 Rectangle()
-                                    .frame(width: geo.size.width * CGFloat(progress))
-                            }
-                        )
-                    
-                    // Playhead line
-                    if isPlaying && progress > 0 {
-                        GeometryReader { geo in
+                                    .size(width: 110 * CGFloat(progress), height: waveformHeight)
+                            )
+                        
+                        // Playhead line
+                        if progress > 0 {
                             Rectangle()
                                 .fill(Color.white)
-                                .frame(width: 2, height: 24)
-                                .offset(x: geo.size.width * CGFloat(progress) - 1)
+                                .frame(width: 2)
+                                .offset(x: (110 - 12) * CGFloat(progress))
                         }
                     }
                 }
-                .cornerRadius(4)
+                .frame(height: waveformHeight)
+                .clipped()
+            } else {
+                // Fallback if file not found
+                Rectangle()
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(height: waveformHeight)
+                    .cornerRadius(4)
             }
             
             // Name
@@ -88,6 +91,7 @@ struct SampleSlotView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .foregroundColor(.white.opacity(0.9))
+                .fixedSize(horizontal: false, vertical: true)
             
             // Controls
             HStack {
@@ -107,9 +111,11 @@ struct SampleSlotView: View {
                 
                 Spacer()
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(6)
-        .frame(width: 110, height: 100)
+        .frame(width: 110)
+        .fixedSize(horizontal: true, vertical: true)
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(isSelected ? Color.blue.opacity(0.3) : Color(white: 0.15))

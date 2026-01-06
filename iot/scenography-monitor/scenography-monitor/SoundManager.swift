@@ -717,12 +717,13 @@ class SoundManager: NSObject, ObservableObject {
                 return
             }
         } else {
-            // Normal playback
-            player.scheduleFile(file, at: nil) { [weak self] in
+            // Normal playback - use completionCallbackType to fire AFTER playback finishes
+            player.scheduleFile(file, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 DispatchQueue.main.async {
                     guard let self = self else { return }
                     if self.activeInstanceIds.contains(instance.id) {
                         self.activeInstanceIds.remove(instance.id)
+                        self.playbackProgress.removeValue(forKey: instance.id)
                         print("Playback finished naturally for \(instance.filename)")
                     }
                 }
