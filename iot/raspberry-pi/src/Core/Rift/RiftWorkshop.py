@@ -1,10 +1,7 @@
 """
 RiftWorkshop - Business logic for the RIFT workshop
 """
-try:
-    import ujson as json
-except ImportError:
-    import json
+import json
 from src.Core.Rift.RiftState import RiftState
 
 class RiftWorkshop:
@@ -50,11 +47,15 @@ class RiftWorkshop:
 
     async def send_counts(self):
         payload = dict(self._last_payload) if self._last_payload else {}
-
         payload["device_id"] = self.controller.config.device_id
         # UPDATED KEYS as per request
         payload["rift_part_count"] = (len(self.scanned_dream_slots) + len(self.scanned_nightmare_slots))
-        await self.controller.websocket_client.send(json.dumps(payload))
+        
+        self.logger.info(f"Sending counts payload: {payload['rift_part_count']} parts")
+        try:
+            await self.controller.websocket_client.send(json.dumps(payload))
+        except Exception as e:
+            self.logger.error(f"Failed to send counts: {e}")
 
     async def reset(self):
         self.scanned_dream_slots.clear()

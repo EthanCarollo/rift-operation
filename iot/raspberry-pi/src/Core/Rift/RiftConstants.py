@@ -24,7 +24,7 @@ class RiftSteps:
 class RiftTags:
     """Expected RFID UIDs for each slot"""
     DREAM = {
-        "DreamSlot1": "AF-41-2B-1C-D9",  # MFD-1 a remplacer par le tag correct
+        "DreamSlot1": "13-8F-98-2F-2B",  # MFD-1
         "DreamSlot2": "9F-F8-46-1C-3D",  # MFD-2
         "DreamSlot3": "F3-3B-50-AC-34",  # MFD-3
     }

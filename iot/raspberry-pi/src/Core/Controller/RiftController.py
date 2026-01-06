@@ -1,8 +1,8 @@
 """
 RiftController - Universal Controller for the RIFT workshop (ESP32 & Raspberry Pi)
 """
-from src.Framework.PiController import PiController as BaseController
-from src.Core.Rift.RiftHardwarePi import RiftHardwarePi as HardwareRaspberry
+from src.Framework.Controller import Controller as BaseController
+from src.Core.Rift.RiftHardware import RiftHardware as HardwareRaspberry
 from src.Core.Rift.RiftWorkshop import RiftWorkshop
 
 class RiftController(BaseController):

@@ -1,8 +1,7 @@
-from machine import Pin, SPI
-from os import uname
+import RPi.GPIO as GPIO
+import time
 
 class MFRC522:
-    DEBUG = False
     OK = 0
     NOTAGERR = 1
     ERR = 2
@@ -12,27 +11,32 @@ class MFRC522:
     AUTHENT1A = 0x60
     AUTHENT1B = 0x61
 
-    def __init__(self, spi, cs, rst):
+    def __init__(self, spi, cs_pin, rst_pin):
         self.spi = spi
-        self.cs = cs
-        self.rst = rst
+        self.cs_pin = cs_pin
+        self.rst_pin = rst_pin
         
-        self.cs.init(self.cs.OUT, value=1)
-        self.rst.init(self.rst.OUT, value=1)
+        GPIO.setup(self.cs_pin, GPIO.OUT)
+        GPIO.setup(self.rst_pin, GPIO.OUT)
+        
+        GPIO.output(self.cs_pin, GPIO.HIGH)
+        GPIO.output(self.rst_pin, GPIO.HIGH)
+        
         self.init()
 
     def _wreg(self, reg, val):
-        self.cs.value(0)
-        self.spi.write(b'%c' % int((reg << 1) & 0x7e))
-        self.spi.write(b'%c' % int(val))
-        self.cs.value(1)
+        GPIO.output(self.cs_pin, GPIO.LOW)
+        # Address format: (reg << 1) & 0x7E
+        self.spi.xfer2([((reg << 1) & 0x7E), val])
+        GPIO.output(self.cs_pin, GPIO.HIGH)
 
     def _rreg(self, reg):
-        self.cs.value(0)
-        self.spi.write(b'%c' % int(((reg << 1) & 0x7e) | 0x80))
-        val = self.spi.read(1)
-        self.cs.value(1)
-        return val[0]
+        GPIO.output(self.cs_pin, GPIO.LOW)
+        # Address format for read: ((reg << 1) & 0x7E) | 0x80
+        # Send address, receive value in second byte
+        resp = self.spi.xfer2([((reg << 1) & 0x7E) | 0x80, 0x00])
+        GPIO.output(self.cs_pin, GPIO.HIGH)
+        return resp[1]
 
     def _sflags(self, reg, mask):
         self._wreg(reg, self._rreg(reg) | mask)
@@ -125,8 +129,12 @@ class MFRC522:
         return stat, recv
 
     def init(self):
-        self.rst.value(0)
-        self.rst.value(1)
+        # Shared RST Fix: Do not toggle RST here, strictly done in Hardware init globally
+        # GPIO.output(self.rst_pin, GPIO.LOW)
+        # time.sleep(0.0001)
+        # GPIO.output(self.rst_pin, GPIO.HIGH)
+        # time.sleep(0.05)
+        
         self._wreg(0x01, 0x0F)
         self._wreg(0x2A, 0x8D)
         self._wreg(0x2B, 0x3E)
@@ -147,4 +155,3 @@ class MFRC522:
 
     def antenna_off(self):
         self._cflags(0x14, 0x03)
-

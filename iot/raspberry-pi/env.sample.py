@@ -1,5 +1,5 @@
 import gc
-import uasyncio as asyncio
+import asyncio
 
 from src.Framework.Config.ConfigFactory import ConfigFactory
 

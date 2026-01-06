@@ -1,16 +1,17 @@
 import spidev
 import RPi.GPIO as GPIO
-from src.Framework.Rfid.RfidReaderPi import RfidReaderPi
+import time
+from src.Framework.Rfid.RfidReader import RfidReader
 from src.Core.Rift.RiftRfidDelegate import RiftRfidDelegate
 
-class RiftHardwarePi:
+class RiftHardware:
     def __init__(self, controller):
         self.logger = controller.logger
         self.controller = controller
         self.workshop = None
 
         self.spi = None
-        self.readers = []
+
         self.delegate = RiftRfidDelegate(None)
         
         # Setup GPIO mode
@@ -24,22 +25,29 @@ class RiftHardwarePi:
         self.delegate.workshop = workshop
 
     def init_hardware(self):
-        self.logger.info("Initializing RIFT Hardware (Raspberry Pi)")
+        self.logger.info("Initializing RIFT Hardware")
         
         # Initialize SPI
         try:
             self.spi = spidev.SpiDev()
             self.spi.open(0, 0) # Bus 0, Device 0
             self.spi.max_speed_hz = 1000000 
-            self.logger.info("SPI initialized (spidev 0.0)")
         except Exception as e:
             self.logger.error(f"SPI init failed: {e}")
             return
-
         # Readers Configuration (BCM Pins)
-        # Dream 1: CS=8 (CE0), RST=25
-        # Dream 2: CS=7 (CE1), RST=24
-        # Dream 3: CS=22, RST=27
+        # SHARED RESET LOGIC: Toggle the shared RST pin (27) once globally
+        rst_pin = 27
+        try:
+            GPIO.setup(rst_pin, GPIO.OUT)
+            GPIO.output(rst_pin, GPIO.LOW)
+            time.sleep(0.01) # 10ms reset
+            GPIO.output(rst_pin, GPIO.HIGH)
+            time.sleep(0.05) # 50ms startup
+            self.logger.info("Global RFID Reset performed on Pin 27")
+        except Exception as e:
+            self.logger.error(f"Global Reset failed: {e}")
+
         configs = [
             {"name": "DreamSlot1",     "cs": 4,   "rst": 27},
             {"name": "DreamSlot2",     "cs": 17,  "rst": 27},
@@ -52,7 +60,7 @@ class RiftHardwarePi:
         self.readers = []
         for cfg in configs:
             try:
-                reader = RfidReaderPi(
+                reader = RfidReader(
                     self.spi, 
                     cfg["cs"], 
                     cfg["rst"], 

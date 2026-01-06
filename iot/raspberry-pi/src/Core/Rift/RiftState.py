@@ -1,18 +1,10 @@
 """
 RiftState - Unified state machine for RIFT workshop
 """
-try:
-    import uasyncio as asyncio
-except ImportError:
-    import asyncio
-    asyncio.sleep_ms = lambda ms: asyncio.sleep(ms/1000)
-try:
-    import ujson as json
-except ImportError:
-    import json
+import asyncio
+import json
 
 from src.Core.Rift.RiftConstants import RiftSteps, RiftTags
-
 
 class RiftState:
     def __init__(self, workshop):
@@ -28,20 +20,21 @@ class RiftState:
     # Lifecycle
     # ------------------------------------------------------------------
     def enter(self):
-        self.logger.info(f"RIFT: Enter {RiftSteps.get_name(self.step)}")
-
         self._dream_valid = False
         self._nightmare_valid = False
         self._transitioning = False
 
-        if self.step == RiftSteps.IDLE:
-            self.workshop.scanned_dream_slots.clear()
-            self.workshop.scanned_nightmare_slots.clear()
 
     # ------------------------------------------------------------------
     # WebSocket
     # ------------------------------------------------------------------
     def process_json_message(self, data: dict):
+        # Reset System handling
+        if data.get("reset_system") is True:
+            self.logger.info("Reset System command received")
+            self._go_to_step(RiftSteps.STEP_1)
+            return
+
         if self.step == RiftSteps.IDLE and data.get("start_system") is True:
             self._go_to_step(RiftSteps.STEP_1)
 
@@ -76,11 +69,11 @@ class RiftState:
             return
 
         if uid != expected_uid:
-            self.logger.info(f"RIFT: INVALID Dream tag on {reader_name}")
+            self.logger.info(f"INVALID Dream tag on {reader_name} !")
             return
 
         if not self._dream_valid:
-            self.logger.info(f"RIFT: VALID Dream tag on {reader_name}")
+            self.logger.info(f"VALID Dream tag on {reader_name} !")
             self._dream_valid = True
             self.workshop.scanned_dream_slots.add(expected_slot)
             self._check_step_completion()
@@ -96,11 +89,11 @@ class RiftState:
             return
 
         if uid != expected_uid:
-            self.logger.info(f"RIFT: INVALID Nightmare tag on {reader_name}")
+            self.logger.info(f"INVALID Nightmare tag on {reader_name} !")
             return
 
         if not self._nightmare_valid:
-            self.logger.info(f"RIFT: VALID Nightmare tag on {reader_name}")
+            self.logger.info(f"VALID Nightmare tag on {reader_name} !")
             self._nightmare_valid = True
             self.workshop.scanned_nightmare_slots.add(expected_slot)
             self._check_step_completion()
@@ -115,8 +108,9 @@ class RiftState:
         if self._transitioning:
             return
 
-        # Pour l’instant : Dream obligatoire, Nightmare prêt mais optionnel
         if self._dream_valid and self._nightmare_valid:
+            self.logger.info("Futur implementation : Allumage Led et Animations de la Rift")
+            self.logger.info(f"All UUID Valid, {RiftSteps.get_name(self.step)} completed !")
             # Send updated counts only when both are valid
             asyncio.create_task(self.workshop.send_counts())
             self._transitioning = True
@@ -131,6 +125,11 @@ class RiftState:
             self._go_to_step(self.step + 1)
 
     def _go_to_step(self, step: int):
+        old_name = RiftSteps.get_name(self.step)
+        new_name = RiftSteps.get_name(step)
+        self.logger.info(f"-------- {old_name} -> {new_name} ---------")
+        self.logger.info(f"Waiting scan RIFT parts...")
+
         self.step = step
         self.enter()
 
@@ -151,6 +150,6 @@ class RiftState:
             await self.workshop.controller.websocket_client.send(
                 json.dumps(payload)
             )
-            self.logger.info("RIFT: end_system sent")
+            self.logger.info("End_system sent")
         except Exception as e:
-            self.logger.error(f"RIFT: failed to send end_system: {e}")
+            self.logger.error(f"Failed to send end_system: {e}")
