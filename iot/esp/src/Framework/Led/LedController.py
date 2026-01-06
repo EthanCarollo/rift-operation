@@ -58,19 +58,22 @@ class LedController:
         brightness = animation_data.get("brightness", 1.0)
         self.set_brightness(float(brightness))
 
-        # Pre-calculate
-        rendered = []
-        for frame in frames:
-            rendered.append(self._calculate_frame_pixels(frame))
-        
+        # Stop current animation first and acquire lock for ALL modifications
         with self.lock:
+            self.is_playing = False  # Stop any ongoing render
+            
+            # Pre-calculate frames INSIDE lock to prevent race condition
+            rendered = []
+            for frame in frames:
+                rendered.append(self._calculate_frame_pixels(frame))
+            
             self.rendered_frames = rendered
             self.frames_data = frames
             self.num_frames = len(frames)
             self.current_frame_idx = 0
             self.loop = loop
-            self.is_playing = True
             self.frame_start_time = time.ticks_ms()
+            self.is_playing = True
             
             # Render initial state immediately
             if self.num_frames > 0:

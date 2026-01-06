@@ -13,7 +13,6 @@ class StrangerDreamLightController(EspController):
         # but config could override this if needed.
         self.led_strip = LedStrip(18, 32)
         self.led_controller = LedController(self.led_strip)
-        self.led_controller.start_thread()
         
         # State to Animation mapping
         self.animation_map = {

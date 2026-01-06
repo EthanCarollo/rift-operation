@@ -22,8 +22,17 @@
             <option value="rainbow">Rainbow Wave</option>
             <option value="pulse">Blue Pulse</option>
           </select>
+          <button @click="importJson" class="tri-state-btn px-4 h-10 border border-border bg-bg-sec hover:bg-bg-main hover:border-border-focus uppercase text-xs font-bold transition-all">
+            Import
+          </button>
+          <button @click="downloadJson" class="tri-state-btn px-4 h-10 border border-accent bg-accent/10 text-accent hover:bg-accent hover:text-accent-text uppercase text-xs font-bold transition-all">
+            Download
+          </button>
+          <button @click="copyJson" class="tri-state-btn px-4 h-10 border border-border bg-bg-sec hover:bg-bg-main hover:border-border-focus uppercase text-xs font-bold transition-all">
+            {{ copyFeedback || 'Copy' }}
+          </button>
           <button @click="showJson = !showJson" class="tri-state-btn px-4 h-10 border border-border bg-bg-sec hover:bg-bg-main hover:border-border-focus uppercase text-xs font-bold transition-all">
-            Toggle JSON
+            JSON
           </button>
           </div>
         </div>
@@ -212,6 +221,57 @@ function getPreviewColor(colorObj) {
     const parts = colorObj.color.split(',');
     if (parts.length === 3) return `rgb(${colorObj.color})`;
     return `rgba(${colorObj.color})`;
+}
+
+// --- EXPORT / IMPORT ---
+const copyFeedback = ref('');
+
+function downloadJson() {
+  const json = JSON.stringify(animation, null, 4);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${animation.name || 'led_animation'}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function copyJson() {
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(animation, null, 4));
+    copyFeedback.value = 'Copied!';
+    setTimeout(() => { copyFeedback.value = ''; }, 1500);
+  } catch (e) {
+    copyFeedback.value = 'Error';
+    setTimeout(() => { copyFeedback.value = ''; }, 1500);
+  }
+}
+
+function importJson() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (data.frames && Array.isArray(data.frames)) {
+        animation.name = data.name || 'Imported Animation';
+        animation.brightness = data.brightness ?? 1.0;
+        animation.frames = data.frames;
+      } else {
+        alert('Invalid animation file: missing frames array');
+      }
+    } catch (err) {
+      alert('Failed to parse JSON file: ' + err.message);
+    }
+  };
+  input.click();
 }
 
 // Presets
