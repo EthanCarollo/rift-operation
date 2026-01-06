@@ -9,7 +9,7 @@ export const useStrangerSocket = () => {
         if (socket?.readyState === WebSocket.OPEN) return
 
         try {
-            socket = new WebSocket('ws://192.168.10.5:8000/ws')
+            socket = new WebSocket('ws://192.168.10.7:8000/ws')
 
             socket.onopen = () => {
                 console.log('WebSocket Connected')
