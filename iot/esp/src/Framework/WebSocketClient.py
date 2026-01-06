@@ -107,6 +107,24 @@ class WebSocketClient:
             if self.logger:
                 self.logger.warning("WebSocket not connected, cannot send message")
 
+    def send_now(self, message):
+        if self.websocket is not None and self.websocket.open:
+            try:
+                self.websocket.send(message)   # BLOCKING → FAST
+                if self.logger:
+                    self.logger.debug(f"WebSocket sent immediately: {message}")
+                return True
+            except Exception as e:
+                if self.logger:
+                    self.logger.error(f"Immediate send failed: {e}")
+                self.close()
+                return False
+        else:
+            if self.logger:
+                self.logger.warning("WebSocket not connected (send_now)")
+            return False
+
+
     def close(self):
         if self.websocket is not None:
             if self.logger:
