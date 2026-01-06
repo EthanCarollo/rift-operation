@@ -33,8 +33,19 @@ export class RiftOperationServer extends BaseWebSocketServer {
       this.handleRequest(req, res);
     });
 
+    this.httpServer.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        Logger.log(`Port ${port} is already in use, trying port ${port + 1}...`);
+        this.httpServer.listen(port + 1);
+      } else {
+        throw err;
+      }
+    });
+
     this.httpServer.listen(port, () => {
-      Logger.log(`Server running on port ${port} (HTTP + WebSocket on /ws)`);
+      const address = this.httpServer.address();
+      const actualPort = typeof address === 'object' && address ? address.port : port;
+      Logger.log(`Server running on port ${actualPort} (HTTP + WebSocket on /ws)`);
     });
   }
 
