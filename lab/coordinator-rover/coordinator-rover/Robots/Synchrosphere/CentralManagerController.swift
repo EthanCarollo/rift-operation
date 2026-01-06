@@ -77,8 +77,7 @@ final class CentralManagerController : NSObject, CBCentralManagerDelegate {
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        let matches = peripheral.matches(self.context.config.deviceSelector)
-        self.context.logInfo("did discover \(peripheral.name ?? "nil") matches? \(matches)")
+        self.context.logInfo("did discover \(peripheral)")
         self.peripheral = peripheral
         context.trigger()
     }
@@ -102,8 +101,6 @@ private extension SyncsDeviceSelector {
     var namePrefix: String {
         switch self {
         case .anyRVR: return "RV-"
-        case .anyMini: return "SM-"
-        case .anyBolt: return "SB-"
         }
     }
 }

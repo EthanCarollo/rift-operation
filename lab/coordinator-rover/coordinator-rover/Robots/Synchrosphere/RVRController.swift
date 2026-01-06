@@ -1,5 +1,5 @@
 //
-//  SpheroController.swift
+//  RVRController.swift
 //  coordinator-rover
 //
 //  Created by Tom Boullay on 06/01/2026.
@@ -8,7 +8,7 @@
 import Pappe
 
 /// Provides the robots functionality as activities.
-final class SpheroController {
+final class RVRController {
     
     private let context: ControllerContext
     var endpoint: Endpoint!
@@ -63,12 +63,8 @@ final class SpheroController {
                     let color: SyncsColor = val.color
                     
                     self.context.logInfo("SetMainLED \(color)")
-                    if self.context.config.deviceSelector == .anyRVR {
-                        val.id = self.endpoint.send(SetAllLEDsRequest(mapping: [SyncsRVRLEDs.all: color]))
-                    }
-                    else {
-                        val.id = self.endpoint.send(SetMainLEDRequest(color: color))
-                    }
+                    // RVR: SetAllLEDsRequest with all LEDs mapped to this color
+                    val.id = self.endpoint.send(SetAllLEDsRequest(mapping: [SyncsRVRLEDs.all: color]))
                 }
                 `await` { self.endpoint.hasResponse(for: val.id) }
             }
@@ -77,13 +73,9 @@ final class SpheroController {
                 exec {
                     let brightness: SyncsBrightness = val.brightness
                     
-                    self.context.logInfo("SetLBackLED \(brightness)")
-                    if self.context.config.deviceSelector == .anyRVR {
-                        val.id = self.endpoint.send(SetAllLEDsRequest(mapping: [.breaklight: SyncsColor(brightness: brightness)]))
-                    }
-                    else {
-                        val.id = self.endpoint.send(SetBackLEDRequest(brightness: brightness))
-                    }
+                    self.context.logInfo("SetBackLED \(brightness)")
+                    // RVR: Use breaklights for back LED concept, using brightness as color intensity
+                    val.id = self.endpoint.send(SetAllLEDsRequest(mapping: [.breaklight: SyncsColor(brightness: brightness)]))
                 }
                 `await` { self.endpoint.hasResponse(for: val.id) }
             }
@@ -196,38 +188,8 @@ final class SpheroController {
                 }
             }
 
-            activity (name.SensorStreamerMini_, [name.frequency, name.sensors], [name.sample]) { val in
-                exec {
-                    let frequency: Int = val.frequency
-                    let period: UInt16 = UInt16(1000) / UInt16(frequency)
-                    let sensors: SyncsSensors = val.sensors
-
-                    self.context.logInfo("SensorStreamer \(frequency)hz \(sensors)")
-                    val.id = self.endpoint.send(StartSensorStreamingRequest(period: period, sensors: sensors))
-                }
-                `await` { self.endpoint.hasResponse(for: val.id) }
-                `defer` { self.context.requests_.stopSensorStreaming() }
-                `repeat` {
-                    `await` {
-                        self.endpoint.hasResponse(for: RequestID(command: SensorCommand.notifySensorData, sequenceNr: sensorDataSequenceNr)) { response in
-                            do {
-                                let timestamp = self.context.clock.counter
-                                let sensors: SyncsSensors = val.sensors
-                                val.sample = try parseStreamedSampleResponse(response, timestamp: timestamp, sensors: sensors)
-                            } catch {
-                                self.context.logError("getting streaming sample failed with: \(error)V")
-                            }
-                        }
-                    }
-                }
-            }
-
             activity (Syncs.SensorStreamer, [name.frequency, name.sensors], [name.sample]) { val in
-                `if` { self.context.config.deviceSelector == .anyRVR } then: {
-                    run (name.SensorStreamerRVR_, [val.frequency, val.sensors], [val.loc.sample])
-                } else: {
-                    run (name.SensorStreamerMini_, [val.frequency, val.sensors], [val.loc.sample])
-                }
+                run (name.SensorStreamerRVR_, [val.frequency, val.sensors], [val.loc.sample])
             }
    
             activity (name.StopSensorStreamingRVR_, []) { val in
@@ -240,20 +202,8 @@ final class SpheroController {
                 `await` { self.endpoint.hasResponse(for: val.id) }
             }
             
-            activity (name.StopSensorStreamingMini_, []) { val in
-                exec {
-                    self.context.logInfo("StopSensorStreaming")
-                    val.id = self.endpoint.send(StopSensorStreamingRequest())
-                }
-                `await` { self.endpoint.hasResponse(for: val.id) }
-            }
-            
             activity (name.StopSensorStreaming_, []) { val in
-                `if` { self.context.config.deviceSelector == .anyRVR } then: {
-                    run (name.StopSensorStreamingRVR_, [])
-                } else: {
-                    run (name.StopSensorStreamingMini_, [])
-                }
+                run (name.StopSensorStreamingRVR_, [])
             }
         }
     }

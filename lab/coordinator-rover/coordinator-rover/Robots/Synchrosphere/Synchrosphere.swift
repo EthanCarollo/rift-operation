@@ -13,12 +13,6 @@ public enum SyncsDeviceSelector {
 
     /// Selects any Sphero RVR around. Does *not* prevent a robot to be selected multiple times.
     case anyRVR
-
-    /// Selects any Sphero Mini around. Does *not* prevent a robot to be selected multiple times.
-    case anyMini
-    
-    /// Selects any Spero Bolt around. Does *not* prevent a robot to be selected multiple times.
-    case anyBolt
 }
 
 /// Provides information about the progress of a controller and its controlled robot.

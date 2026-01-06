@@ -13,7 +13,6 @@ struct ContentView: View {
             Tab("Robot", systemImage: "robotic.vacuum") {
                 RobotView()
             }
-            
             Tab ("Websocket", systemImage: "wifi") {
                 WebsocketView()
             }
@@ -23,4 +22,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(WebSocketManager())
 }

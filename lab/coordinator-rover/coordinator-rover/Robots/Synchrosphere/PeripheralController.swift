@@ -168,8 +168,6 @@ private extension SyncsDeviceSelector {
     var needsTheForce: Bool {
         switch self {
         case .anyRVR: return false
-        case .anyMini: return true
-        case .anyBolt: return true
         }
     }
 }

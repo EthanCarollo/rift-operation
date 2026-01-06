@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct coordinator_roverApp: App {
+    @StateObject private var wsManager = WebSocketManager()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(wsManager)
         }
     }
 }

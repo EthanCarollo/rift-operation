@@ -16,7 +16,7 @@ final class MainController : SyncsController {
     private let timerController: TimerController
     private let centralManagerController: CentralManagerController
     private let peripheralController: PeripheralController
-    private let spheroController: SpheroController
+    private let rvrController: RVRController
 
     var context: SyncsControllerContext {
         return context_
@@ -31,21 +31,21 @@ final class MainController : SyncsController {
         timerController = TimerController(context: context_)
         centralManagerController = CentralManagerController(context: context_)
         peripheralController = PeripheralController(context: context_)
-        spheroController = SpheroController(context: context_)
+        rvrController = RVRController(context: context_)
         
         // Create code modules from controllers.
         let timerModule = timerController.makeModule(imports: [])
         let centralManagerModule = centralManagerController.makeModule(imports: [])
         let peripheralModule = peripheralController.makeModule(imports: [])
-        let spheroModule = spheroController.makeModule(imports: [timerModule])
-        let clientModule = Module(imports: [timerModule, spheroModule] + config.imports) { name in
+        let rvrModule = rvrController.makeModule(imports: [timerModule])
+        let clientModule = Module(imports: [timerModule, rvrModule] + config.imports) { name in
             return builder(name, context)
         }
         let mainControllerModule = makeModule(imports: [
             timerModule,
             centralManagerModule,
             peripheralModule,
-            spheroModule,
+            rvrModule,
             clientModule
         ])
         
@@ -107,7 +107,7 @@ final class MainController : SyncsController {
 
                                     let endpoint = self.peripheralController.endpoint
                                     self.context_.requests_.set(endpoint)
-                                    self.spheroController.endpoint = endpoint
+                                    self.rvrController.endpoint = endpoint
                                 }
                                 
                                 // Introspect peripheral.

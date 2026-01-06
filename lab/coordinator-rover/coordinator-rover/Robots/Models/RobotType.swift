@@ -9,14 +9,11 @@ import Foundation
 
 enum RobotType {
     case rover
-    case sphero
     
     func toSynchroSphere() -> SyncsDeviceSelector {
         return switch (self) {
             case .rover:
                 .anyRVR
-            case .sphero:
-                .anyBolt
         }
     }
 }

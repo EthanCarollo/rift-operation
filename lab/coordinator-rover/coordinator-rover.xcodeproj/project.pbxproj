@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		33FF44962F0DACFA00C05A6C /* Pappe in Frameworks */ = {isa = PBXBuildFile; productRef = 33FF44952F0DACFA00C05A6C /* Pappe */; };
+		33FF449D2F0DB57100C05A6C /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 33FF449C2F0DB57100C05A6C /* Starscream */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,9 +34,22 @@
 		33FF43D62F0DAA5600C05A6C /* coordinator-roverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "coordinator-roverUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		33FF449F2F0DB7B200C05A6C /* Exceptions for "coordinator-rover" folder in "coordinator-rover" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 33FF43BE2F0DAA5400C05A6C /* coordinator-rover */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		33FF43C12F0DAA5400C05A6C /* coordinator-rover */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				33FF449F2F0DB7B200C05A6C /* Exceptions for "coordinator-rover" folder in "coordinator-rover" target */,
+			);
 			path = "coordinator-rover";
 			sourceTree = "<group>";
 		};
@@ -47,6 +61,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				33FF44962F0DACFA00C05A6C /* Pappe in Frameworks */,
+				33FF449D2F0DB57100C05A6C /* Starscream in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +121,7 @@
 			name = "coordinator-rover";
 			packageProductDependencies = (
 				33FF44952F0DACFA00C05A6C /* Pappe */,
+				33FF449C2F0DB57100C05A6C /* Starscream */,
 			);
 			productName = "coordinator-rover";
 			productReference = 33FF43BF2F0DAA5400C05A6C /* coordinator-rover.app */;
@@ -185,6 +201,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				33FF44942F0DACFA00C05A6C /* XCRemoteSwiftPackageReference "Pappe" */,
+				33FF449B2F0DB57100C05A6C /* XCRemoteSwiftPackageReference "Starscream" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 33FF43C02F0DAA5400C05A6C /* Products */;
@@ -387,7 +404,7 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
@@ -399,6 +416,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "coordinator-rover/Info.plist";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses bluetooth to connect to rover";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -442,7 +460,7 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
-				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_BLUETOOTH = YES;
@@ -454,6 +472,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "coordinator-rover/Info.plist";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses bluetooth to connect to rover";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -638,6 +657,14 @@
 				minimumVersion = 0.3.1;
 			};
 		};
+		33FF449B2F0DB57100C05A6C /* XCRemoteSwiftPackageReference "Starscream" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/daltoniam/Starscream.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.8;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -645,6 +672,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 33FF44942F0DACFA00C05A6C /* XCRemoteSwiftPackageReference "Pappe" */;
 			productName = Pappe;
+		};
+		33FF449C2F0DB57100C05A6C /* Starscream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 33FF449B2F0DB57100C05A6C /* XCRemoteSwiftPackageReference "Starscream" */;
+			productName = Starscream;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
