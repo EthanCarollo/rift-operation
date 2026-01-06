@@ -25,7 +25,7 @@ class LostStateDone(LostState):
         data = payload if payload else self.workshop._last_payload
         if not data: return
 
-        if data.get("cage_is_on_monster") is True:
+        if data.get("lost_cage_is_on_monster") is True:
              self._triggered = True
              self.workshop.logger.info("Opening Rift Trap (Servo 180° for 3s)")
              self.workshop.hardware.set_servo(180)

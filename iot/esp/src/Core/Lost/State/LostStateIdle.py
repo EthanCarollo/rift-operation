@@ -31,4 +31,10 @@ class LostStateIdle(LostState):
 
     async def next_step(self):
         from src.Core.Lost.State.LostStateDistance import LostStateDistance
-        await self.workshop.swap_state(LostStateDistance(self.workshop))
+        from src.Core.Lost.State.LostStateLight import LostStateLight
+
+        if self.workshop.hardware.role == "nightmare":
+            self.workshop.logger.info("Nightmare role: skipping directly to LIGHT state")
+            await self.workshop.swap_state(LostStateLight(self.workshop))
+        else:
+            await self.workshop.swap_state(LostStateDistance(self.workshop))
