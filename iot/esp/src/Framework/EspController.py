@@ -8,9 +8,10 @@ from src.Framework.Config import Config
 from src.Framework.Json.RiftOperationJsonData import RiftOperationJsonData
 
 class EspController:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, logger_name: str = ""):
         self.config: Config = config
-        self.logger = Logger("EspController", Logger.LOG_LEVEL_INFO, esp32_mode=True, max_log_size=500)
+        self.logger_name = logger_name
+        self.logger = Logger(self.logger_name, Logger.LOG_LEVEL_INFO, esp32_mode=True, max_log_size=500)
         self.wifi_manager = WifiManager(config.wifi.ssid, config.wifi.password, self.logger)
         self.websocket_client: WebSocketClient = WebSocketClient(config.websocket, self.logger)
 
@@ -42,6 +43,8 @@ class EspController:
             self.logger.error("Failed to connect to WebSocket")
             return
 
+        await self.presence()
+
         asyncio.create_task(
             self.websocket_client.listen(self.process_message)
         )
@@ -59,7 +62,7 @@ class EspController:
 
 
     async def presence(self):
-        await self.websocket_client.send(RiftOperationJsonData(device_id= self.config.device_id).to_json())
+        await self.websocket_client.send(RiftOperationJsonData(device_id= self.logger_name).to_json())
 
     async def update(self):
         raise NotImplementedError

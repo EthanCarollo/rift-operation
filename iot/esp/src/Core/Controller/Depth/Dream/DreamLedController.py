@@ -6,7 +6,7 @@ from src.Framework.Led.LedController import LedController as FrameworkLedControl
 
 class DreamLedController(EspController):
     def __init__(self, config):
-        super().__init__(config)
+        super().__init__(config, "DreamLedController")
         self.logger.name = "DreamLedController"
         
         # Hardware Configuration (Hardcoded as per plan)

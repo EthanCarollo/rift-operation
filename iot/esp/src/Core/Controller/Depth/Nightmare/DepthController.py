@@ -10,7 +10,7 @@ from src.Core.Depth.DepthConfig import DepthConfigFactory
 class DepthController(EspController):
 
     def __init__(self, config):
-        super().__init__(config)
+        super().__init__(config, "DepthNightmareController")
         self.logger.name = "DepthController"
         self.depthConfig = DepthConfigFactory.create_default_child()
 

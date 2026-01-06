@@ -17,8 +17,8 @@ class RiftController(BaseController):
     """RIFT workshop controller"""
 
     def __init__(self, config):
-        super().__init__(config)
-        self.logger.name = "RiftController"
+        super().__init__(config, "RiftController")
+        # self.logger.name = "RiftController"
         
         # Workshop handles state machine
         self.workshop = RiftWorkshop(self)

@@ -10,6 +10,7 @@ class StrangerInactiveState(StrangerControllerState):
         self.send_state("inactive")
 
     def process_json_message(self, json):
+        self.controller.logger.debug(f"Received message: {json}")
         if json["start_system"] is not None and json["start_system"] == True:
             from src.Core.Stranger.State.StrangerActiveState import StrangerActiveState
             self.controller.swap_state(StrangerActiveState(self.controller))

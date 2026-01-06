@@ -77,7 +77,7 @@ class WebSocketClient:
                         self.logger.error(f"Error receiving message: {inner_e}")
                     raise inner_e
 
-                await asyncio.sleep_ms(10) # Small yield to prevent CPU hogging
+                await asyncio.sleep_ms(15) # Small yield to prevent CPU hogging
 
                 # Periodically collect garbage to prevent fragmentation
                 if gc.mem_free() < 12000:

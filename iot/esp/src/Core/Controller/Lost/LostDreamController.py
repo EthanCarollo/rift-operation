@@ -17,8 +17,8 @@ class LostDreamController(EspController):
     """LOST workshop controller - Dream Role"""
 
     def __init__(self, config):
-        super().__init__(config)
-        self.logger.name = "LostDreamController"
+        super().__init__(config, "LostDreamController")
+        # self.logger.name = "LostDreamController"
         # Instantiate Workshop and Hardware
         self.workshop = LostWorkshop(self)
         # Explicitly pass role="dream"

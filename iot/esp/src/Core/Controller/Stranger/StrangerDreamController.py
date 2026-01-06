@@ -6,11 +6,11 @@ from src.Core.Stranger.Rfid.StrangerRfidDelegate import StrangerRFIDDelegate
 from src.Framework.Servo.Servo import Servo
 from src.Framework.Servo.ServoDelegate import ServoDelegate
 from machine import SPI, Pin
+import ujson as json
 
 class StrangerDreamController(EspController):
     def __init__(self, config: Config):
-        super().__init__(config)
-        self.logger.name = "StrangerController"
+        super().__init__(config, "StrangerDreamController")
 
         spi = SPI(
             1,

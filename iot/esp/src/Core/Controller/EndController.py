@@ -7,8 +7,8 @@ from src.Framework.Config import Config
 
 class EndController(EspController):
     def __init__(self, config: Config):
-        super().__init__(config)
-        self.logger.name = "EndController"
+        super().__init__(config, "EndController")
+        # self.logger.name = "EndController"
 
 
     async def process_message(self, message):
