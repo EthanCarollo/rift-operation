@@ -20,14 +20,10 @@
             active-class="text-accent underline decoration-2 underline-offset-4">
             Docs
           </NuxtLink>
-          <span class="text-xs font-bold uppercase tracking-wider text-text-sec cursor-not-allowed opacity-50"
-            title="Coming Soon">
-            Dashboard
-          </span>
-          <span class="text-xs font-bold uppercase tracking-wider text-text-sec cursor-not-allowed opacity-50"
-            title="Coming Soon">
-            Settings
-          </span>
+          <NuxtLink to="/projection" class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
+            active-class="text-accent underline decoration-2 underline-offset-4">
+            Projection
+          </NuxtLink>
         </div>
       </div>
     </nav>
