@@ -18,6 +18,7 @@ class StrangerControllerState:
         self.controller.logger.debug("send state name:" + state_name)
 
         msg = RiftOperationJsonData(
+            device_id=self.controller.logger_name,
             stranger_state=state_name
         ).to_json()
 
