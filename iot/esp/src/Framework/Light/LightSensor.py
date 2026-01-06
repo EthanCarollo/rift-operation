@@ -38,6 +38,7 @@ class LightSensor:
         value = self.adc.read()
         triggered = value > self.threshold
         
+        
         try:
             self.delegate.on_light_change(value, triggered, self.name)
         except Exception as e:

@@ -21,8 +21,27 @@
       @pause="isPlaying = false"
     ></video>
 
+    <!-- Initialization Overlay (Required for Audio Autoplay) -->
+    <div v-if="!isInitialized" 
+         class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 cursor-pointer"
+         @click="initializeAudio"
+    >
+        <div class="text-center space-y-4 animate-pulse">
+            <div class="w-20 h-20 border-4 border-[#33ff00] rounded-full mx-auto flex items-center justify-center">
+                <div class="w-0 h-0 border-l-[20px] border-l-[#33ff00] border-y-[12px] border-y-transparent ml-2"></div>
+            </div>
+            <h1 class="text-2xl font-black text-[#33ff00] tracking-[0.2em] glitch-text">
+                SYSTEM INITIALIZATION
+            </h1>
+            <p class="text-xs text-white/70 tracking-widest uppercase">
+                TOUCH TERMINAL TO ACTIVATE AUDIO SUBSYSTEM
+            </p>
+        </div>
+    </div>
+
     <!-- UI Overlay (Fades out when inactive) -->
     <div 
+        v-if="isInitialized"
         class="absolute inset-0 pointer-events-none transition-opacity duration-500 flex flex-col justify-between p-8"
         :class="uiVisible ? 'opacity-100' : 'opacity-0'"
     >
@@ -90,9 +109,9 @@
             </div>
         </div>
     </div>
-
+    
     <!-- Fallback / No Signal UI -->
-    <div v-if="!currentVideo || videoError" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0a0a0a] text-[#33ff00]">
+    <div v-if="( !currentVideo || videoError ) && isInitialized" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0a0a0a] text-[#33ff00]">
       <div class="grid place-items-center gap-6">
         <div class="relative w-32 h-32 border-4 border-[#33ff00]/30 rounded-full animate-pulse flex items-center justify-center">
              <div class="w-24 h-24 border-2 border-[#33ff00]/60 rounded-full"></div>
@@ -135,6 +154,7 @@ const VIDEO_LIST = ['/video1.mp4', '/video2.mp4'];
 const { isConnected, lastPayload, connect } = useRiftSocket();
 
 // State
+const isInitialized = ref(false);
 const currentVideo = ref(null); // Start in IDLE state 
 const videoError = ref(false);
 const videoRef = ref(null);
@@ -145,6 +165,15 @@ const currentTime = ref(0);
 const duration = ref(0);
 
 let uiTimeout = null;
+
+// --- Initialize Audio Context ---
+function initializeAudio() {
+    isInitialized.value = true;
+    if (videoRef.value) {
+        // Force a play catch call to unlock audio
+        videoRef.value.play().catch(e => console.log("Init play catch", e));
+    }
+}
 
 // --- Watchers ---
 
@@ -165,12 +194,14 @@ watch(currentVideo, () => {
 
 // --- UI Logic ---
 function onUserActivity() {
+    if (!isInitialized.value) return; 
     uiVisible.value = true;
     if (uiTimeout) clearTimeout(uiTimeout);
     uiTimeout = setTimeout(() => {
         uiVisible.value = false;
     }, 3000); // Hide after 3s of inactivity
 }
+
 
 function togglePlay() {
     if (!videoRef.value) return;
