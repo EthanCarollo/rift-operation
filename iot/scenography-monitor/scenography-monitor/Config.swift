@@ -8,5 +8,5 @@
 import Foundation
 
 struct Config {
-    static let websocketUrl: String = "ws://server.riftoperation.ethan-folio.fr/ws"
+    static let defaultWebsocketUrl: String = "ws://192.168.10.7/ws"
 }

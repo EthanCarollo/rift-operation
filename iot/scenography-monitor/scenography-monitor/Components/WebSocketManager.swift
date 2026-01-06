@@ -4,17 +4,27 @@ import Combine
 class WebSocketManager: ObservableObject {
     static let shared = WebSocketManager()
     
+    private static let urlDefaultsKey = "websocketUrl"
+    
     @Published var isConnected: Bool = false
     @Published var messages: [String] = [] // Log history
     
     // Store latest full JSON for anyone interested
     @Published var latestData: [String: Any] = [:]
     
+    // Editable URL - persisted in UserDefaults
+    @Published var urlString: String {
+        didSet {
+            UserDefaults.standard.set(urlString, forKey: WebSocketManager.urlDefaultsKey)
+        }
+    }
+    
     private var webSocketTask: URLSessionWebSocketTask?
     private var reconnectTimer: Timer?
-    private let urlString = Config.websocketUrl
     
     private init() {
+        // Load saved URL or use default
+        self.urlString = UserDefaults.standard.string(forKey: WebSocketManager.urlDefaultsKey) ?? Config.defaultWebsocketUrl
         connect()
     }
     

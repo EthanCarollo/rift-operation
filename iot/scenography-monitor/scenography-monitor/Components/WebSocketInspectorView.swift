@@ -26,15 +26,41 @@ struct WebSocketInspectorView: View {
                         .buttonStyle(.plain)
                     }
                     
+                    // URL Editor
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("WebSocket URL")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.secondary)
+                        
+                        HStack(spacing: 4) {
+                            TextField("ws://...", text: $wsManager.urlString)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.system(size: 11, design: .monospaced))
+                                .accessibilityIdentifier("websocket_url_field")
+                            
+                            Button(action: {
+                                wsManager.urlString = Config.defaultWebsocketUrl
+                            }) {
+                                Image(systemName: "arrow.counterclockwise")
+                                    .font(.system(size: 10))
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Reset to default URL")
+                            .accessibilityIdentifier("reset_url_button")
+                        }
+                    }
+                    
                     // Connection Status
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Circle()
                                 .fill(wsManager.isConnected ? Color.green : Color.red)
                                 .frame(width: 8, height: 8)
+                                .accessibilityIdentifier("connection_indicator")
                             Text(wsManager.isConnected ? "CONNECTED" : "DISCONNECTED")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(wsManager.isConnected ? .green : .red)
+                                .accessibilityIdentifier("connection_status_label")
                         }
                         
                         Button(action: {
@@ -51,6 +77,7 @@ struct WebSocketInspectorView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(wsManager.isConnected ? .red : .blue)
+                        .accessibilityIdentifier("connect_button")
                     }
                     
                     Divider()
