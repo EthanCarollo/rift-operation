@@ -104,7 +104,7 @@ const content = computed(() => {
   // 2. Instructions (Show if an experience is active)
   for (const instruction of INSTRUCTIONS_CONFIG) {
     const val = status.value[instruction.field]
-    if (val) { // If state is truthy (not null/false)
+    if (val && val !== 'inactive') { // If state is truthy (not null/false) AND not explicitly 'inactive'
       if (instruction.value === 'ANY' || val === instruction.value) {
         return { 
           type: 'instruction', 
