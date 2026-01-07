@@ -17,7 +17,7 @@ export const questions: Record<string, Question> = {
   active: {
     type: 'puzzle',
     step: 1,
-    title: "Question 1:",
+    title: "Étape 1:",
     subtitle: "Pour trouver la première lettre, trouve le chapeau de l'étranger qui hante le cauchemar.",
     puzzleItems: [
       { image: '/images/stranger/hat-star.png', symbol: '➤', letter: 'B' },
@@ -28,22 +28,16 @@ export const questions: Record<string, Question> = {
   step_2: {
     type: 'text',
     step: 2,
-    text: "Pour trouver la deuxième lettre, demande directemment à Cosmo le pinguin quelle est la lettre."
+    text: "Trouvez le point faible de Dark Cosmo et dites-le lui."
   },
   step_3: {
-    type: 'puzzle',
+    type: 'text',
     step: 3,
-    title: "Question 3:",
-    subtitle: "Pour trouver la troisième lettre, trouve le tour de cou de l'étranger qui hante le cauchemar.", 
-    puzzleItems: [
-      { image: '/images/stranger/shape-tie.png', symbol: '➤', letter: 'T' }, 
-      { image: '/images/stranger/shape-bowtie.png', symbol: '➤', letter: 'U' }, // Correct for U
-      { image: '/images/stranger/shape-monocle.png', symbol: '➤', letter: 'O' },
-    ]
+    text: "Demandez gentiment la lettre à Cosmo le pingouin."
   },
   step_4: {
     type: 'text',
     step: 4,
-    text: "La quatrième lettre se trouve derrière le moniteur de l'opérateur."
+    text: "Réunissez Dark Cosmo et Cosmo ensemble."
   },
 }
