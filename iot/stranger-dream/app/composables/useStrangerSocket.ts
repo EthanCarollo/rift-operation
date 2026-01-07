@@ -20,7 +20,7 @@ export const useStrangerSocket = () => {
                 }
                 // Send presence message to websocket panel
                 socket?.send(JSON.stringify({
-                    device_id: 'stranger-dream-instruction'
+                    device_id: 'StrangerDreamInstruction'
                 }))
             }
 
