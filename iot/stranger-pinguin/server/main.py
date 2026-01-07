@@ -77,8 +77,8 @@ async def connect_to_main_server():
             print(f"🔄 [MAIN SERVER] Attempting to connect to {uri}...")
             async with websockets.connect(uri) as websocket:
                 print(f"✅ [MAIN SERVER] Connected to {uri}")
-                # Send identification if needed, or just listen
-                await websocket.send(json.dumps({"type": "identify", "client": "stranger-pinguin"}))
+                # Send presence message to websocket panel
+                await websocket.send(json.dumps({"device_id": "pinguin-server"}))
                 
                 while True:
                     try:
@@ -89,15 +89,16 @@ async def connect_to_main_server():
                             message = json.loads(message_str)
                             if isinstance(message, dict):
                                 state = message.get("stranger_state")
-                                if state == "active":
+                                if state == "step_2":
                                     IS_ACTIVE = True
                                     print("🟢 [STATE] Server ACTIVATED remotely")
-                                elif state == "inactive":
+                                    # Broadcast translated state to Swift clients
+                                    await broadcast_state("active")
+                                elif state == "step_3":
                                     IS_ACTIVE = False
                                     print("🔴 [STATE] Server DEACTIVATED remotely")
-                                    
-                                # Broadcast the new state to all connected Pinguin clients
-                                await broadcast_state(state)
+                                    # Broadcast translated state to Swift clients
+                                    await broadcast_state("inactive")
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             

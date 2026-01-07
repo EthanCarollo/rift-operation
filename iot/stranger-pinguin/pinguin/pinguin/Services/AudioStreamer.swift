@@ -250,9 +250,9 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
                         if let type = json["type"] as? String {
                             if type == "stranger_state", let state = json["state"] as? String {
                                 print("[AudioStreamer] Received STATE command: \(state)")
-                                if state == "step_2" {
+                                if state == "active" {
                                     self?.startAudioCapture()
-                                } else if state == "step_3" {
+                                } else if state == "inactive" {
                                     self?.stopAudioCapture()
                                 }
                             } else if type == "qa_answer", let answer = json["answer"] as? String {

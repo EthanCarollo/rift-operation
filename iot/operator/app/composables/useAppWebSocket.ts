@@ -24,6 +24,10 @@ export const useAppWebSocket = () => {
           clearInterval(reconnectInterval)
           reconnectInterval = null
         }
+        // Send presence message to websocket panel
+        socket?.send(JSON.stringify({
+          device_id: 'operator'
+        }))
       }
 
       socket.onmessage = (event) => {
