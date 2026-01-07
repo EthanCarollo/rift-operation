@@ -7,7 +7,7 @@ from queue import Queue, Empty
 from controllerRaspberry import SpheroController, TARGET_SPHERO_NAMES
 
 # ================= CONFIG =================
-WS_URL = "ws://server.riftoperation.ethan-folio.fr/ws"
+WS_URL = "ws://192.168.10.7:8000/ws"
 ROLE = "dream" # 'parent' or 'dream'
 DEVICE_ID = "macbook_pro_1"
 
@@ -68,6 +68,13 @@ class DepthController:
             on_shake_callback=self.on_sphero_shake
         )
 
+        # Sound Mapping
+        self.note_mapping = {
+            "SB-08C9": "DO",
+            "SB-1219": "RE",
+            "SB-2020": "MI",
+        }
+
     def on_sphero_shake(self, name, magnitude):
         # Called from Sphero Thread
         self.shake_queue.put(name)
@@ -116,6 +123,28 @@ class DepthController:
                 self.logger.info("📤 State sent to Server")
             except Exception as e:
                 self.logger.error(f"Failed to send state: {e}")
+
+    def play_note(self, note):
+        note_string = self.note_mapping.get(note)
+        if note_string:
+            note_json = {"depth_note": note_string}
+            if self.ws_app and self.ws_app.sock and self.ws_app.sock.connected:
+                try:
+                    self.ws_app.send(json.dumps(note_json))
+                    self.logger.info(f"🎵 Playing note: {note_string} ({note})")
+                except Exception as e:
+                    self.logger.error(f"Failed to send note: {e}")
+
+    def play_sound(self, name):
+        sound_json = {"depth_sound": name}
+        if self.ws_app and self.ws_app.sock and self.ws_app.sock.connected:
+            try:
+                self.ws_app.send(json.dumps(sound_json))
+                self.logger.info(f"🎵 Playing sound: {name}")
+            except Exception as e:
+                self.logger.error(f"Failed to send sound: {e}")
+
+        
 
     # --------------------------------------------------
     # Conditions
@@ -178,12 +207,15 @@ class DepthController:
             expected = sequence[index]
 
             if shaken_sphero_name == expected:
+                self.play_note(shaken_sphero_name)
                 self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} ({index + 1}/{len(sequence)})")
                 index += 1
             else:
+                self.play_sound("false")
                 self.logger.info(f"❌ Wrong Shake: {shaken_sphero_name} (Expected {expected}) -> RESET")
                 index = 0
 
+        self.play_sound("correct")
         self.logger.info("🎉 Partition Complete!")
         return True
 
