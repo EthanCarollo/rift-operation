@@ -400,7 +400,7 @@
 				DEVELOPMENT_TEAM = 38BX39NM89;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Rift Pinguin";
+				INFOPLIST_KEY_CFBundleDisplayName = "Rift Cosmo";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Pinguin a besoin de microphone";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -435,7 +435,7 @@
 				DEVELOPMENT_TEAM = 38BX39NM89;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Rift Pinguin";
+				INFOPLIST_KEY_CFBundleDisplayName = "Rift Cosmo";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Pinguin a besoin de microphone";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

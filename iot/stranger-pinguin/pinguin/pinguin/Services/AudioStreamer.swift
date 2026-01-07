@@ -11,6 +11,13 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     @Published var isServerHealthy: Bool = false
     @Published var errorMessage: String? = nil
     @Published var isPlayingAnswer: Bool = false
+    @Published var serverMode: ServerMode = .cosmo {
+        didSet {
+            if oldValue != serverMode {
+                reconnectToNewServer()
+            }
+        }
+    }
     
     private var audioPlayer: AVPlayer?
     
@@ -24,18 +31,42 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     
     override init() {
         super.init()
+    }
+    
+    convenience init(mode: ServerMode) {
+        self.init()
+        self.serverMode = mode
         startHealthCheck()
-        // Auto-connect on startup
         connect()
     }
     
     func connect() {
-        print("[AudioStreamer] Connecting to WebSocket...")
-        let url = AppConfig.websocketURL
+        print("[AudioStreamer] Connecting to WebSocket (\(serverMode.displayName) mode)...")
+        let url = AppConfig.websocketURL(for: serverMode)
         let session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue())
         socket = session.webSocketTask(with: url)
         socket?.resume()
         receiveMessage()
+    }
+    
+    private func reconnectToNewServer() {
+        print("[AudioStreamer] Switching to \(serverMode.displayName) mode...")
+        // Stop recording if active
+        if isRecording {
+            stopAudioCapture()
+        }
+        // Close existing socket
+        socket?.cancel(with: .normalClosure, reason: nil)
+        DispatchQueue.main.async {
+            self.isConnected = false
+            self.transcribedText = ""
+            self.latestAnswer = ""
+        }
+        // Reconnect to new server
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.connect()
+            self.checkHealth()
+        }
     }
     
     private func setPlaybackActive(_ active: Bool) {
@@ -57,7 +88,7 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     }
     
     private func checkHealth() {
-        let url = AppConfig.httpURL.appendingPathComponent("health")
+        let url = AppConfig.httpURL(for: serverMode).appendingPathComponent("health")
         URLSession.shared.dataTask(with: url) { [weak self] _, response, error in
             let healthy = (error == nil && (response as? HTTPURLResponse)?.statusCode == 200)
             DispatchQueue.main.async {

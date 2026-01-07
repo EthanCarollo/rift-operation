@@ -8,7 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var streamer = AudioStreamer()
+    let initialServerMode: ServerMode
+    @StateObject private var streamer: AudioStreamer
+    
+    init(initialServerMode: ServerMode) {
+        self.initialServerMode = initialServerMode
+        _streamer = StateObject(wrappedValue: AudioStreamer(mode: initialServerMode))
+    }
     
     var body: some View {
         ZStack {
@@ -23,13 +29,15 @@ struct ContentView: View {
                             isHealthy: streamer.isServerHealthy,
                             isConnected: streamer.isConnected
                         )
+                        .accessibilityIdentifier("statusIndicator")
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(streamer.isServerHealthy ? (streamer.isConnected ? "SYSTEM ACTIVE" : "STANDBY") : "OFFLINE")
                                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                                 .foregroundStyle(streamer.isServerHealthy ? (streamer.isConnected ? .green : .orange) : .red)
+                                .accessibilityIdentifier("statusLabel")
                             
-                            Text(AppConfig.serverHost)
+                            Text("\(AppConfig.serverHost):\(streamer.serverMode.port)")
                                 .font(.system(size: 9, design: .monospaced))
                                 .foregroundStyle(.gray.opacity(0.6))
                         }
@@ -55,7 +63,43 @@ struct ContentView: View {
                                     .animation(.easeInOut(duration: 0.5).repeatForever().delay(Double(i) * 0.1), value: streamer.isRecording)
                             }
                         }
+                        .accessibilityIdentifier("waveformIndicator")
                     }
+                    
+                    // Server Mode Picker
+                    Menu {
+                        ForEach(ServerMode.allCases) { mode in
+                            Button(action: {
+                                withAnimation {
+                                    streamer.serverMode = mode
+                                }
+                            }) {
+                                HStack {
+                                    Text(mode.displayName)
+                                    if streamer.serverMode == mode {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: streamer.serverMode == .darkCosmo ? "moon.fill" : "sun.max.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(streamer.serverMode == .darkCosmo ? .purple : .orange)
+                            Text(streamer.serverMode.displayName)
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(.white)
+                                .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                        )
+                    }
+                    .accessibilityIdentifier("serverModePicker")
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 12)
@@ -207,5 +251,5 @@ extension Color {
 }
 
 #Preview {
-    ContentView()
+    ContentView(initialServerMode: .cosmo)
 }
