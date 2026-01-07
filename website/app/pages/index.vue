@@ -40,7 +40,7 @@ useSeoMeta({
             </NuxtLink>
 
             <!-- Video Card -->
-            <NuxtLink to="/video"
+            <NuxtLink to="/projection"
                 class="group p-8 border border-border bg-white hover:border-accent hover:shadow-lg transition-all duration-300 rounded-lg flex flex-col items-center text-center">
                 <div
                     class="mb-6 mx-auto w-16 h-16 bg-bg-sec rounded-full flex items-center justify-center group-hover:bg-accent group-hover:text-accent-text transition-colors">

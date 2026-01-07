@@ -1,0 +1,24 @@
+{
+  "originHash" : "41bc21f099259de970d62f97d84fb5a11baf7e558a1bb0165f1289bf8ef9997e",
+  "pins" : [
+    {
+      "identity" : "pappe",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/frameworklabs/Pappe",
+      "state" : {
+        "revision" : "0ff579cdd0b5ea3c84ae5c80c7c66edf8b9d07ad",
+        "version" : "0.3.1"
+      }
+    },
+    {
+      "identity" : "starscream",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/daltoniam/Starscream.git",
+      "state" : {
+        "revision" : "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+        "version" : "4.0.8"
+      }
+    }
+  ],
+  "version" : 3
+}
