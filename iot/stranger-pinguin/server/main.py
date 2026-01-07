@@ -267,24 +267,31 @@ async def audio_websocket(websocket: WebSocket):
                     streaming_buffer += text
                     words_since_last_index += 1
                 
-                # 🧠 Reactive QA: Detect if the buffer contains a question
-                # 🧠 Reactive QA: Detect if the buffer contains a question
-                # User Request: Only trigger on "?" (ignore keywords like 'quelle')
-                contains_question = "?" in streaming_buffer
+                # 🧠 Reactive QA: Detect trigger based on server mode
+                # Cosmo: triggers on "?" (question)
+                # Dark Cosmo: triggers on "." (end of sentence/affirmation)
+                if SERVER_MODE == 'dark_cosmo':
+                    # Dark Cosmo: detect end of sentence (affirmation)
+                    contains_trigger = "." in streaming_buffer
+                    trigger_type = "affirmation"
+                else:
+                    # Cosmo: detect question mark
+                    contains_trigger = "?" in streaming_buffer
+                    trigger_type = "question"
                 
-                # If we detect a question OR the buffer is getting long
-                if (contains_question and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
-                    # 🎯 Extraction de la dernière phrase uniquement (la question)
+                # If we detect a trigger OR the buffer is getting long
+                if (contains_trigger and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
+                    # 🎯 Extraction de la dernière phrase
                     import re
                     sentences = re.split(r'[.!?]+', streaming_buffer)
                     sentences = [s.strip() for s in sentences if s.strip()]
                     
-                    question_to_ask = sentences[-1] if sentences else streaming_buffer
+                    phrase_to_match = sentences[-1] if sentences else streaming_buffer
                     
-                    print(f"🔍 Question détectée (sentence) : {question_to_ask}")
+                    print(f"🔍 {trigger_type.capitalize()} détectée : {phrase_to_match}")
                     
                     # Try to answer (threshold slightly higher for auto-triggers)
-                    qa_result = qa_service.answer(question_to_ask, min_confidence=0.4)
+                    qa_result = qa_service.answer(phrase_to_match, min_confidence=0.4)
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
