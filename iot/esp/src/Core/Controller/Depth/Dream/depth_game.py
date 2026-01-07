@@ -67,6 +67,12 @@ class DepthController:
             target_names=TARGET_SPHERO_NAMES,
             on_shake_callback=self.on_sphero_shake
         )
+        
+        self.sphero_note_mapping = {
+            "SB-08C9": "DO",
+            "SB-1219": "RE",
+            "SB-2020": "MI"
+        }
 
         # Sound Mapping
         self.note_mapping = {
@@ -200,7 +206,11 @@ class DepthController:
             # Wait for a shake (blocking with timeout to allow exit check)
             try:
                 self.logger.info(f"👉 Waiting for shake from: {sequence[index]}")
-                shaken_sphero_name = self.shake_queue.get(timeout=1.0) 
+                shaken_sphero_name = self.shake_queue.get(timeout=1.0)
+                
+                # Envoi de la note correspondante
+                
+                  
             except Empty:
                 continue
 
@@ -211,7 +221,6 @@ class DepthController:
                 self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} ({index + 1}/{len(sequence)})")
                 index += 1
             else:
-                self.play_sound("false")
                 self.logger.info(f"❌ Wrong Shake: {shaken_sphero_name} (Expected {expected}) -> RESET")
                 index = 0
 
