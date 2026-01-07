@@ -32,7 +32,7 @@ stt_service = KyutaiSttService()
 qa_service = PinguinQaService()
 
 # Global State
-IS_ACTIVE = True
+IS_ACTIVE = False
 connected_clients: list[WebSocket] = []
 
 async def broadcast_state(state: str):
