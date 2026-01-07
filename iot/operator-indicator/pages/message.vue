@@ -11,23 +11,27 @@ const STEPS_CONFIG = [
   { key: 'operator_launch_close_rift_step_1', label: 'FERMETURE DE LA FAILLE - ÉTAPE 1', percent: 33 },
 ]
 
-// Instructions for active states. 
-// Checks if 'value' matches the state value. Use 'ANY' to match any non-null value.
-const INSTRUCTIONS_CONFIG = [
-  { 
-    field: 'stranger_state', 
-    value: 'ANY', 
-    title: 'EXPÉRIENCE STRANGER',
-    text: 'Activez les protocoles de communication. Suivez les signaux lumineux pour établir le contact avec l\'entité.' 
+// SEQUENTIAL FLOW CONFIGURATION (Order: Strange -> Depth -> Lost)
+// We check this in REVERSE order in the logic to properly handle overrides.
+const EXPERIENCE_FLOW = [
+  {
+    field: 'lost_state',
+    title: 'PROTOCOLE LOST',
+    activeText: 'Confinez la créature dans la cellule pour sécuriser le fragment instable.',
+    inactiveText: 'TOUS LES FRAGMENTS SONT SÉCURISÉS. POINT D\'EXTRACTION ACTIVÉ.'
   },
-  { 
-    field: 'depth_state', 
-    value: 'ANY', 
-    title: 'EXPÉRIENCE PROFONDEUR',
-    text: 'Immersion en cours. Surveillez les niveaux de pression et maintenez la stabilité du sous-marin.' 
+  {
+    field: 'depth_state',
+    title: 'PROTOCOLE PROFONDEUR',
+    activeText: 'Reproduisez la séquence acoustique pour déverrouiller l\'accès au fragment.',
+    inactiveText: 'FRAGMENT RÉCUPÉRÉ. PROCHAIN OBJECTIF : ZONE LOST.'
   },
-  // Add more specific states if needed, e.g.:
-  // { field: 'depth_state', value: 'nightmare', title: 'ALERTE PROFONDEUR', text: 'Situation critique détectée...' }
+  {
+    field: 'stranger_state',
+    title: 'PROTOCOLE STRANGER',
+    activeText: 'Analysez les signaux pour identifier l\'entité et révéler le fragment.',
+    inactiveText: 'FRAGMENT RÉCUPÉRÉ. PROCHAIN OBJECTIF : ZONE PROFONDEUR.'
+  }
 ]
 // ---------------------
 
@@ -91,34 +95,59 @@ const progress = computed(() => {
 const content = computed(() => {
   if (!status.value) return { type: 'loading', text: 'Connexion...' }
 
-  // 1. Critical Overrides (Fullscreen Alerts)
+  // 1. Critical Overrides (Alerts that MUST interrupt the user immediately)
   if (status.value.reset_system) return { type: 'alert', text: 'RÉINITIALISATION DU SYSTÈME' }
   if (status.value.end_system) return { type: 'alert', text: 'FIN DE LA SESSION' }
+  
+  // Specific LOST sub-states that are critical alerts
   if (status.value.lost_state) {
-    if (status.value.lost_cage_is_on_monster) return { type: 'alert', text: 'CAGE SUR MONSTRE DÉTECTÉE' }
-    if (status.value.lost_light_is_triggered) return { type: 'alert', text: 'LUMIÈRE DÉCLENCHÉE' }
-    if (status.value.lost_drawing_light_recognized) return { type: 'alert', text: 'DESSIN RECONNU' }
-    return { type: 'alert', text: 'ÉTAT PERDU ACTIF' }
+     if (status.value.lost_cage_is_on_monster) return { type: 'alert', text: 'CAGE SUR MONSTRE DÉTECTÉE' }
+     if (status.value.lost_light_is_triggered) return { type: 'alert', text: 'LUMIÈRE DÉCLENCHÉE' }
+     // 'lost_drawing_light_recognized' might be kept as alert or just part of success flow? 
+     // Keeping it as alert for feedback visibility:
+     if (status.value.lost_drawing_light_recognized) return { type: 'alert', text: 'DESSIN RECONNU' }
   }
 
-  // 2. Instructions (Show if an experience is active)
-  for (const instruction of INSTRUCTIONS_CONFIG) {
-    const val = status.value[instruction.field]
-    if (val && val !== 'inactive') { // If state is truthy (not null/false) AND not explicitly 'inactive'
-      if (instruction.value === 'ANY' || val === instruction.value) {
-        return { 
-          type: 'instruction', 
-          title: instruction.title, 
-          text: instruction.text,
+  // 2. Experience Flow (Instructions & Transitions)
+  // We check flow in the order defined in EXPERIENCE_FLOW array ? 
+  // No, we want priority: If Lost is active, we show Lost. If Lost is Inactive, we show Lost Inactive.
+  // We should check the "latest" stage first.
+  
+  if (status.value.start_system) {
+    // Check in order defined above (Lost -> Depth -> Strange)
+    // Note: EXPERIENCE_FLOW is defined Lost first (index 0) to Strange (index 2).
+    
+    for (const exp of EXPERIENCE_FLOW) {
+      const val = status.value[exp.field]
+      
+      // If active (truthy and not 'inactive')
+      if (val && val !== 'inactive') {
+        return {
+          type: 'instruction',
+          title: exp.title,
+          text: exp.activeText,
           detail: typeof val === 'string' ? val.toUpperCase() : ''
         }
       }
+      
+      // If explicitly inactive
+      if (val === 'inactive') {
+        return {
+          type: 'instruction',
+          title: 'OBJECTIF SUIVANT', // Or keep the Experience Title if prefered
+          text: exp.inactiveText,
+          detail: 'TERMINÉ'
+        }
+      }
     }
-  }
 
-  // 3. Default (Just show Waiting or Welcome)
-  if (progress.value) {
-    return { type: 'empty' } // Progress bar is shown at top, nothing specific below
+    // Default Fallback (System started, but no experience has explicitly started or ended)
+    return {
+      type: 'instruction',
+      title: 'INITIALISATION',
+      text: 'SYSTÈME OPÉRATIONNEL. RENDEZ-VOUS AU SECTEUR STRANGER.',
+      detail: 'EN ATTENTE'
+    }
   }
 
   return { type: 'text', text: 'EN ATTENTE...' }
