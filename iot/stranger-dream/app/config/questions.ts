@@ -18,23 +18,23 @@ export const questions: Record<string, Question> = {
     type: 'puzzle',
     step: 1,
     title: "Question 1:",
-    subtitle: "Pour trouver la première lettre, trouve le chapeau de l'étranger.",
+    subtitle: "Pour trouver la première lettre, trouve le chapeau de l'étranger qui hante le cauchemar.",
     puzzleItems: [
       { image: '/images/stranger/hat-star.png', symbol: '➤', letter: 'B' },
-      { image: '/images/stranger/hat-stripe.png', symbol: '➤', letter: 'P' },
-      { image: '/images/stranger/hat-stripes.png', symbol: '➤', letter: 'i' },
+      { image: '/images/stranger/hat-stripe.png', symbol: '➤', letter: 'i' },
+      { image: '/images/stranger/hat-stripes.png', symbol: '➤', letter: 'P' },
     ]
   },
   step_2: {
     type: 'text',
     step: 2,
-    text: "Pour trouver la deuxième lettre, demande à Cosmo."
+    text: "Pour trouver la deuxième lettre, demande directemment à Cosmo le pinguin quelle est la lettre."
   },
   step_3: {
     type: 'puzzle',
     step: 3,
     title: "Question 3:",
-    subtitle: "Pour trouver la troisième lettre, trouve la forme correcte.", 
+    subtitle: "Pour trouver la troisième lettre, trouve le tour de cou de l'étranger qui hante le cauchemar.", 
     puzzleItems: [
       { image: '/images/stranger/shape-tie.png', symbol: '➤', letter: 'T' }, 
       { image: '/images/stranger/shape-bowtie.png', symbol: '➤', letter: 'U' }, // Correct for U
@@ -44,6 +44,6 @@ export const questions: Record<string, Question> = {
   step_4: {
     type: 'text',
     step: 4,
-    text: "Pour trouver la quatrième lettre, regarde derrière le moniteur de l'opérateur."
+    text: "La quatrième lettre se trouve derrière le moniteur de l'opérateur."
   },
 }
