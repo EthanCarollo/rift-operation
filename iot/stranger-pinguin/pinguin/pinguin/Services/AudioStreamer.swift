@@ -29,6 +29,10 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     private let audioLock = NSLock()
     private var _playbackActive: Bool = false
     
+    // Thread-safety for audio setup (prevents race condition on double startAudioCapture)
+    private let setupLock = NSLock()
+    private var _isSettingUpAudio: Bool = false
+    
     override init() {
         super.init()
     }
@@ -101,7 +105,16 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     }
     
     func startAudioCapture() {
-        if isRecording { return }
+        // Thread-safe check to prevent double setup
+        setupLock.lock()
+        if isRecording || _isSettingUpAudio {
+            setupLock.unlock()
+            print("[AudioStreamer] Already recording or setting up, ignoring startAudioCapture")
+            return 
+        }
+        _isSettingUpAudio = true
+        setupLock.unlock()
+        
         print("[AudioStreamer] Starting audio capture...")
         setupAudio()
     }
@@ -115,11 +128,27 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         DispatchQueue.main.async {
             self.isRecording = false
         }
+        
+        // Reset setup flag
+        setupLock.lock()
+        _isSettingUpAudio = false
+        setupLock.unlock()
+        
         setPlaybackActive(false) // Safety reset
     }
     
     private func setupAudio() {
         print("[AudioStreamer] setupAudio() called")
+        
+        // Safety: Remove any existing tap before installing a new one
+        // This prevents crash "required condition is false: nullptr == Tap()"
+        engine.inputNode.removeTap(onBus: 0)
+        
+        // Also stop engine if it was running
+        if engine.isRunning {
+            engine.stop()
+        }
+        
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
@@ -228,6 +257,15 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
     private var sendCount = 0
     
     private func sendAudio(buffer: AVAudioPCMBuffer) {
+        // Check if socket exists and we're connected
+        guard let socket = socket, isConnected else {
+            if sendCount <= 5 || sendCount % 100 == 0 {
+                print("[AudioStreamer] Cannot send: socket=\(socket != nil), connected=\(isConnected)")
+            }
+            sendCount += 1
+            return
+        }
+        
         guard let floatChannelData = buffer.floatChannelData else {
             print("[AudioStreamer] No float channel data!")
             return
@@ -257,7 +295,7 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         if currentlyPlaying { return }
         
         let message = URLSessionWebSocketTask.Message.data(data)
-        socket?.send(message) { error in
+        socket.send(message) { error in
             if let error = error {
                 print("[AudioStreamer] Send error: \(error)")
             }

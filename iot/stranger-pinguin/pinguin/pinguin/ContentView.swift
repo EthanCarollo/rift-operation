@@ -37,7 +37,7 @@ struct ContentView: View {
                                 .foregroundStyle(streamer.isServerHealthy ? (streamer.isConnected ? .green : .orange) : .red)
                                 .accessibilityIdentifier("statusLabel")
                             
-                            Text("\(AppConfig.serverHost):\(streamer.serverMode.port)")
+                            Text("\(AppConfig.serverHost):\(String(streamer.serverMode.port))")
                                 .font(.system(size: 9, design: .monospaced))
                                 .foregroundStyle(.gray.opacity(0.6))
                         }

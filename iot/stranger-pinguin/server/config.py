@@ -16,3 +16,12 @@ DARK_COSMO_AUDIO_MAP = "dark_audio_map.json"
 # Server Mode Device IDs
 COSMO_DEVICE_ID = "cosmo-server"
 DARK_COSMO_DEVICE_ID = "dark-cosmo-server"
+
+# Step Triggers (when to activate/deactivate)
+# Cosmo: activates on step_3, deactivates on step_4
+COSMO_ACTIVATE_STEP = "step_3"
+COSMO_DEACTIVATE_STEP = "step_4"
+
+# Dark Cosmo: activates on step_2, deactivates on step_3
+DARK_COSMO_ACTIVATE_STEP = "step_2"
+DARK_COSMO_DEACTIVATE_STEP = "step_3"

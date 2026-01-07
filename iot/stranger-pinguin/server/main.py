@@ -17,7 +17,9 @@ from config import (
     WS_SERVER_URI,
     COSMO_PORT, DARK_COSMO_PORT,
     COSMO_AUDIO_MAP, DARK_COSMO_AUDIO_MAP,
-    COSMO_DEVICE_ID, DARK_COSMO_DEVICE_ID
+    COSMO_DEVICE_ID, DARK_COSMO_DEVICE_ID,
+    COSMO_ACTIVATE_STEP, COSMO_DEACTIVATE_STEP,
+    DARK_COSMO_ACTIVATE_STEP, DARK_COSMO_DEACTIVATE_STEP
 )
 
 # Parse CLI arguments
@@ -32,13 +34,18 @@ if SERVER_MODE != 'both':
     SERVER_PORT = COSMO_PORT if SERVER_MODE == 'cosmo' else DARK_COSMO_PORT
     AUDIO_MAP_PATH = COSMO_AUDIO_MAP if SERVER_MODE == 'cosmo' else DARK_COSMO_AUDIO_MAP
     DEVICE_ID = COSMO_DEVICE_ID if SERVER_MODE == 'cosmo' else DARK_COSMO_DEVICE_ID
+    ACTIVATE_STEP = COSMO_ACTIVATE_STEP if SERVER_MODE == 'cosmo' else DARK_COSMO_ACTIVATE_STEP
+    DEACTIVATE_STEP = COSMO_DEACTIVATE_STEP if SERVER_MODE == 'cosmo' else DARK_COSMO_DEACTIVATE_STEP
     print(f"🚀 Starting server in {SERVER_MODE.upper()} mode on port {SERVER_PORT}")
     print(f"📂 Using audio map: {AUDIO_MAP_PATH}")
+    print(f"🟢 Activates on: {ACTIVATE_STEP}, Deactivates on: {DEACTIVATE_STEP}")
 else:
     # Will be set per-process when running both
     SERVER_PORT = None
     AUDIO_MAP_PATH = COSMO_AUDIO_MAP
     DEVICE_ID = COSMO_DEVICE_ID
+    ACTIVATE_STEP = COSMO_ACTIVATE_STEP
+    DEACTIVATE_STEP = COSMO_DEACTIVATE_STEP
 
 
 def get_local_ip():
@@ -116,14 +123,14 @@ async def connect_to_main_server():
                             message = json.loads(message_str)
                             if isinstance(message, dict):
                                 state = message.get("stranger_state")
-                                if state == "step_2":
+                                if state == ACTIVATE_STEP:
                                     IS_ACTIVE = True
-                                    print("🟢 [STATE] Server ACTIVATED remotely")
+                                    print(f"🟢 [STATE] Server ACTIVATED on {ACTIVATE_STEP}")
                                     # Broadcast translated state to Swift clients
                                     await broadcast_state("active")
-                                elif state == "step_3":
+                                elif state == DEACTIVATE_STEP:
                                     IS_ACTIVE = False
-                                    print("🔴 [STATE] Server DEACTIVATED remotely")
+                                    print(f"🔴 [STATE] Server DEACTIVATED on {DEACTIVATE_STEP}")
                                     # Broadcast translated state to Swift clients
                                     await broadcast_state("inactive")
                         except json.JSONDecodeError:
