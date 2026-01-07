@@ -725,6 +725,7 @@ class SoundManager: NSObject, ObservableObject {
                         self.activeInstanceIds.remove(instance.id)
                         self.playbackProgress.removeValue(forKey: instance.id)
                         print("Playback finished naturally for \(instance.filename)")
+                        print("Warning: Player node is NOT detached automatically. Leak potential.")
                     }
                 }
             }
@@ -759,6 +760,7 @@ class SoundManager: NSObject, ObservableObject {
                 self.activeInstanceIds.insert(instance.id)
                 self.loadingInstanceIds.remove(instance.id)
                 self.updatePlayerVolume(busId)
+                print("[SoundManager] Started Playing \(instance.filename). Total Active Key Count: \(self.players.count)")
             }
             
             print("Playing \(instance.id) (\(instance.filename)) on Bus \(busId) [Loop: \(instance.loopEnabled)]")

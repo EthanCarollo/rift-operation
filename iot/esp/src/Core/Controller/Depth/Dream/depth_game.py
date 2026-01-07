@@ -221,6 +221,7 @@ class DepthController:
                 self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} ({index + 1}/{len(sequence)})")
                 index += 1
             else:
+                self.play_sound("false")
                 self.logger.info(f"❌ Wrong Shake: {shaken_sphero_name} (Expected {expected}) -> RESET")
                 index = 0
 
