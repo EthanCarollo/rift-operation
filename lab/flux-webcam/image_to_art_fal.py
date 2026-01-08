@@ -11,7 +11,7 @@ load_dotenv()
 # Configuration
 FAL_API_KEY = os.getenv("FAL_KEY")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-FAL_API_URL = "https://queue.fal.run/fal-ai/qwen-image-edit/image-to-image"
+FAL_API_URL = "https://queue.fal.run/fal-ai/flux-kontext/dev"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 INPUT_IMAGE = "original.png"
 
