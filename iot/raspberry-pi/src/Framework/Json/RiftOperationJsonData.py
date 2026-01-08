@@ -40,6 +40,8 @@ class RiftOperationJsonData:
                 battle_cage_dream=None,
                 battle_video_play=None,
                 battle_music_play=None,
+                battle_drawing_nightmare_image=None,
+                battle_drawing_dream_image=None,
 
                 end_system=None,
                 reset_system=None):
@@ -85,6 +87,8 @@ class RiftOperationJsonData:
         self.battle_cage_dream = battle_cage_dream
         self.battle_video_play = battle_video_play
         self.battle_music_play = battle_music_play
+        self.battle_drawing_nightmare_image = battle_drawing_nightmare_image
+        self.battle_drawing_dream_image = battle_drawing_dream_image
         
         self.end_system = end_system
         self.reset_system = reset_system
