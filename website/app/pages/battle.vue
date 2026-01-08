@@ -290,7 +290,7 @@ watch(lastPayload, (payload) => {
     childCounterValid.value = payload.battle_counter_valid_child;
   }
 
-  // Update drawing data
+  // Update drawing data (legacy key)
   if (payload.battle_drawing_data) {
     drawingData.value = payload.battle_drawing_data;
     // Trigger attack animation when drawing is sent
@@ -298,6 +298,18 @@ watch(lastPayload, (payload) => {
       isAttacking.value = true;
       setTimeout(() => { isAttacking.value = false; }, 1000);
     }
+  }
+
+  // NEW: Handle Nightmare camera image
+  if (payload.battle_drawing_nightmare_image) {
+    drawingData.value = payload.battle_drawing_nightmare_image;
+    console.log('[Battle] Nightmare image received');
+  }
+
+  // NEW: Handle Dream camera image
+  if (payload.battle_drawing_dream_image) {
+    drawingData.value = payload.battle_drawing_dream_image;
+    console.log('[Battle] Dream image received');
   }
 
   // Video override
