@@ -36,6 +36,8 @@
     "battle_cage_dream": null,
     "battle_video_play": null,
     "battle_music_play": null,
+    "battle_drawing_dream_image": null,
+    "battle_drawing_nightmare_image": null,
     "end_system": null,
     "reset_system": null
 }

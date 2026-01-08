@@ -34,6 +34,8 @@ class RiftOperationJsonData:
                 lost_video_play=None,
 
                 battle_state=None,
+                battle_drawing_nightmare_image=None,
+                battle_drawing_dream_image=None,
                 battle_drawing_dream_recognised=None,
                 battle_drawing_nightmare_recognised=None,
                 battle_hit_confirmed=None,
@@ -80,6 +82,8 @@ class RiftOperationJsonData:
         self.lost_video_play = lost_video_play
 
         self.battle_state = battle_state
+        self.battle_drawing_nightmare_image = battle_drawing_nightmare_image
+        self.battle_drawing_dream_image = battle_drawing_dream_image
         self.battle_drawing_dream_recognised = battle_drawing_dream_recognised
         self.battle_drawing_nightmare_recognised = battle_drawing_nightmare_recognised
         self.battle_hit_confirmed = battle_hit_confirmed

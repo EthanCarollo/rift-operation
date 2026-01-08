@@ -171,6 +171,36 @@ class DepthController:
     # --------------------------------------------------
     # Gameplay
     # --------------------------------------------------
+    
+    def wait_for_start_shake(self):
+        """Attend un shake quelconque pour lancer la partition (ne compte pas comme note)"""
+        self.logger.info("⏳ Waiting for any shake to START the game...")
+        
+        # Clear queue
+        while not self.shake_queue.empty():
+            try:
+                self.shake_queue.get_nowait()
+            except Empty:
+                break
+        
+        # Wait for any shake
+        while True:
+            if self.state.get("reset_system"):
+                return False
+            if not self.running:
+                return False
+            
+            try:
+                shaken_sphero = self.shake_queue.get(timeout=1.0)
+                self.logger.info(f"🚀 Start shake received from {shaken_sphero} - GAME BEGINS!")
+                # Send a special "start" signal (not a note)
+                start_json = {"depth_game_started": True}
+                if self.ws_app and self.ws_app.sock and self.ws_app.sock.connected:
+                    self.ws_app.send(json.dumps(start_json))
+                return True
+            except Empty:
+                continue
+    
     def play_partition(self):
         """Joue la partie de la partition qui nous revient (ping-pong)"""
         partition = self.state.get("depth_partition", [])
@@ -215,17 +245,23 @@ class DepthController:
             # Convertir le sphero secoué en note
             shaken_note = self.sphero_to_note.get(shaken_sphero_name)
             
+            self.logger.info(f"🎯 Sphero secoué: {shaken_sphero_name} -> Note: {shaken_note} | Note attendue: {current_note}")
+            
+            # Always send the note that was actually played
+            self.play_note(shaken_note)
+            
             if shaken_note == current_note:
-                self.play_note(current_note)
                 self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} = note {shaken_note} ({position + 1}/{len(partition)})")
                 position += 1
                 self.state["depth_partition_position"] = position
             else:
+                # Wrong shake - note already sent, now play false sound and RETRY
+                time.sleep(1.0)
                 self.play_sound("false")
-                self.logger.info(f"❌ Wrong Shake: {shaken_sphero_name} (Expected note {current_note}) -> RETRY")
+                self.logger.info(f"❌ Wrong Shake: Sphero {shaken_sphero_name} (note {shaken_note}) != attendu note {current_note} -> RETRY to first note")
                 position = 0
                 self.state["depth_partition_position"] = position
-                # On recommence, donc on ne change pas de joueur
+                # Continue playing from first note (don't return, just loop back)
 
         # Partition terminée !
         self.play_sound("correct")
@@ -290,13 +326,21 @@ class DepthController:
         self.is_playing = True
         self.logger.info(f"🚀 {self.role.upper()} Playing!")
 
-        # Play the actual game (blocking logic is fine here as WS is in thread)
-        success = self.play_partition()
+        # 1. Wait for a shake to START the partition (only once at beginning)
+        started = self.wait_for_start_shake()
+        if not started:
+            self.is_playing = False
+            return
         
-        if success and self.depth_finished():
-            self.logger.info("🏁 DEPTH FINISHED!")
-            self.state["depth_state"] = "complete"
-            self.send_state()
+        # 2. Play the actual partition (handles RETRY internally by looping back to first note)
+        result = self.play_partition()
+        
+        if result == True:
+            # Success - check if finished
+            if self.depth_finished():
+                self.logger.info("🏁 DEPTH FINISHED!")
+                self.state["depth_state"] = "complete"
+                self.send_state()
 
         self.is_playing = False
 

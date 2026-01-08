@@ -39,7 +39,7 @@
     </div>
 
     <!-- Battle UI Overlay -->
-    <div v-if="battleState !== 'IDLE'" class="absolute inset-0 z-20 flex flex-col pointer-events-none">
+    <div class="absolute inset-0 z-20 flex flex-col pointer-events-none">
       
       <!-- Top: Agent Zone (Drawing Display) -->
       <div class="flex-1 flex items-center justify-center p-8">
