@@ -2,16 +2,17 @@
   <div 
     class="fixed inset-0 bg-black flex items-center justify-center overflow-hidden font-mono select-none"
     @mousemove="onUserActivity"
-    @click="onUserActivity"
+    @click="handleClick"
   >
     <!-- Main Video Player -->
     <video
-      v-show="currentVideo && !videoError"
+      v-show="currentVideo && !videoError && projectionState !== 'BLACK'"
       ref="videoRef"
       class="w-full h-full object-cover"
       :src="currentVideo"
       autoplay
       loop
+      muted
       playsinline
       @error="handleVideoError"
       @loadeddata="onVideoLoaded"
@@ -21,27 +22,12 @@
       @pause="isPlaying = false"
     ></video>
 
-    <!-- Initialization Overlay (Required for Audio Autoplay) -->
-    <div v-if="!isInitialized" 
-         class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 cursor-pointer"
-         @click="initializeAudio"
-    >
-        <div class="text-center space-y-4 animate-pulse">
-            <div class="w-20 h-20 border-4 border-[#33ff00] rounded-full mx-auto flex items-center justify-center">
-                <div class="w-0 h-0 border-l-[20px] border-l-[#33ff00] border-y-[12px] border-y-transparent ml-2"></div>
-            </div>
-            <h1 class="text-2xl font-black text-[#33ff00] tracking-[0.2em] glitch-text">
-                SYSTEM INITIALIZATION
-            </h1>
-            <p class="text-xs text-white/70 tracking-widest uppercase">
-                TOUCH TERMINAL TO ACTIVATE AUDIO SUBSYSTEM
-            </p>
-        </div>
-    </div>
+    <!-- Pure Black Screen (rift_part_count = 2) -->
+    <div v-if="projectionState === 'BLACK'" class="absolute inset-0 bg-black z-20"></div>
 
     <!-- UI Overlay (Fades out when inactive) -->
     <div 
-        v-if="isInitialized"
+        v-if="currentVideo && projectionState !== 'BLACK' && projectionState !== 'IDLE'"
         class="absolute inset-0 pointer-events-none transition-opacity duration-500 flex flex-col justify-between p-8"
         :class="uiVisible ? 'opacity-100' : 'opacity-0'"
     >
@@ -110,8 +96,8 @@
         </div>
     </div>
     
-    <!-- Fallback / No Signal UI -->
-    <div v-if="( !currentVideo || videoError ) && isInitialized" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0a0a0a] text-[#33ff00]">
+    <!-- IDLE State UI (Waiting for start_system) -->
+    <div v-if="projectionState === 'IDLE'" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0a0a0a] text-[#33ff00]">
       <div class="grid place-items-center gap-6">
         <div class="relative w-32 h-32 border-4 border-[#33ff00]/30 rounded-full animate-pulse flex items-center justify-center">
              <div class="w-24 h-24 border-2 border-[#33ff00]/60 rounded-full"></div>
@@ -147,15 +133,16 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 // Disable default layout (hide nav bar for fullscreen video)
 definePageMeta({ layout: false });
 
-const VIDEO_LIST = ['/video1.mp4', '/video2.mp4'];
+const VIDEO_LIST = ['/video-stranger.mp4', '/video1.mp4', '/video2.mp4'];
 
 // Use Shared Composable
-// Assumed auto-import or available globally in Nuxt context
 const { isConnected, lastPayload, connect } = useRiftSocket();
 
+// Projection State Machine: IDLE -> STRANGER -> BLACK -> IMAGINATION
+const projectionState = ref('IDLE'); // 'IDLE' | 'STRANGER' | 'BLACK' | 'IMAGINATION'
+
 // State
-const isInitialized = ref(false);
-const currentVideo = ref(null); // Start in IDLE state 
+const currentVideo = ref(null);
 const videoError = ref(false);
 const videoRef = ref(null);
 const uiVisible = ref(true);
@@ -163,28 +150,59 @@ const isPlaying = ref(false);
 const progress = ref(0);
 const currentTime = ref(0);
 const duration = ref(0);
+const audioUnlocked = ref(false);
 
 let uiTimeout = null;
 
-// --- Initialize Audio Context ---
-function initializeAudio() {
-    isInitialized.value = true;
-    if (videoRef.value) {
-        // Force a play catch call to unlock audio
-        videoRef.value.play().catch(e => console.log("Init play catch", e));
+// --- Handle Click (Unlock Audio) ---
+function handleClick() {
+    onUserActivity();
+    if (!audioUnlocked.value && videoRef.value) {
+        videoRef.value.play().catch(e => console.log("Audio unlock attempt", e));
+        audioUnlocked.value = true;
     }
 }
 
 // --- Watchers ---
 
-// Watch global payload for video commands
+// Main Payload Watcher - State Machine Logic
 watch(lastPayload, (newPayload) => {
-    console.log('[Video] lastPayload changed:', newPayload);
-    if (newPayload?.lost_video_play) {
-        console.log(`[Video] Received command: ${newPayload.lost_video_play}`);
+    if (!newPayload) return;
+    console.log('[Projection] Payload received:', newPayload);
+
+    // Priority 1: Check for start_system (triggers STRANGER video)
+    if (newPayload.start_system === true && projectionState.value === 'IDLE') {
+        console.log('[Projection] start_system=true -> Playing video-stranger.mp4');
+        projectionState.value = 'STRANGER';
+        changeVideo('/video-stranger.mp4');
+        return;
+    }
+
+    // Priority 2: Check for rift_part_count == 2 (triggers BLACK screen)
+    if (newPayload.rift_part_count === 2 && projectionState.value === 'STRANGER') {
+        console.log('[Projection] rift_part_count=2 -> BLACK screen');
+        projectionState.value = 'BLACK';
+        currentVideo.value = null;
+        return;
+    }
+
+    // Priority 3: Check for lost_video_play (triggers IMAGINATION videos)
+    if (newPayload.lost_video_play && (projectionState.value === 'BLACK' || projectionState.value === 'IMAGINATION')) {
+        console.log(`[Projection] lost_video_play=${newPayload.lost_video_play} -> Playing`);
+        projectionState.value = 'IMAGINATION';
         const filename = newPayload.lost_video_play.startsWith('/') ? newPayload.lost_video_play : `/${newPayload.lost_video_play}`;
         changeVideo(filename);
+        return;
     }
+
+    // Also handle rift_part_count == 4 as signal to go to BLACK (for later transition to IMAGINATION)
+    if (newPayload.rift_part_count === 4 && (projectionState.value === 'STRANGER' || projectionState.value === 'BLACK')) {
+        console.log('[Projection] rift_part_count=4 -> Waiting for lost_video_play');
+        projectionState.value = 'BLACK';
+        currentVideo.value = null;
+        return;
+    }
+
 }, { deep: true, immediate: true });
 
 // Reset error when source changes
@@ -194,14 +212,12 @@ watch(currentVideo, () => {
 
 // --- UI Logic ---
 function onUserActivity() {
-    if (!isInitialized.value) return; 
     uiVisible.value = true;
     if (uiTimeout) clearTimeout(uiTimeout);
     uiTimeout = setTimeout(() => {
         uiVisible.value = false;
-    }, 3000); // Hide after 3s of inactivity
+    }, 3000);
 }
-
 
 function togglePlay() {
     if (!videoRef.value) return;
@@ -251,7 +267,7 @@ function formatTime(s) {
 }
 
 function handleVideoError(e) {
-    console.warn(`[Video] Failed to load source: ${currentVideo.value}`, e);
+    console.warn(`[Projection] Failed to load source: ${currentVideo.value}`, e);
     videoError.value = true;
 }
 
@@ -262,7 +278,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (uiTimeout) clearTimeout(uiTimeout);
-  // We don't disconnect socket here as it might be used by other components now
 });
 </script>
 
