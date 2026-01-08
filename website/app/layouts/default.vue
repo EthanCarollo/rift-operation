@@ -12,6 +12,20 @@
 
         <!-- Links -->
         <div class="flex items-center gap-6">
+          <NuxtLink to="/battle" class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
+            active-class="text-accent underline decoration-2 underline-offset-4">
+            Battle
+          </NuxtLink>
+          <NuxtLink to="/depth-diapo"
+            class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
+            active-class="text-accent underline decoration-2 underline-offset-4">
+            Diapo
+          </NuxtLink>
+          <NuxtLink to="/projection"
+            class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
+            active-class="text-accent underline decoration-2 underline-offset-4">
+            Projection
+          </NuxtLink>
           <NuxtLink to="/studio" class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
             active-class="text-accent underline decoration-2 underline-offset-4">
             Studio
@@ -19,10 +33,6 @@
           <NuxtLink to="/docs" class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
             active-class="text-accent underline decoration-2 underline-offset-4">
             Docs
-          </NuxtLink>
-          <NuxtLink to="/projection" class="text-xs font-bold uppercase tracking-wider hover:text-accent transition-colors"
-            active-class="text-accent underline decoration-2 underline-offset-4">
-            Projection
           </NuxtLink>
         </div>
       </div>
