@@ -8,9 +8,9 @@ from src.Framework.Servo.ServoDelegate import ServoDelegate
 from machine import SPI, Pin
 import ujson as json
 
-class StrangerDreamController(EspController):
+class StrangerNightmareController(EspController):
     def __init__(self, config: Config):
-        super().__init__(config, "StrangerDreamController")
+        super().__init__(config, "StrangerNightmareController")
 
         spi = SPI(
             1,

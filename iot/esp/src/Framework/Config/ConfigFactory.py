@@ -121,6 +121,15 @@ class ConfigFactory:
             debug_mode=True,
             heartbeat_interval=15
         )
+    @staticmethod
+    def create_cudy_stranger_cosmo_config():
+        return Config(
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
+            device_id="STRANGER-DREAM-COSMO-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
     
     @staticmethod
     def create_ethan_house_config():
