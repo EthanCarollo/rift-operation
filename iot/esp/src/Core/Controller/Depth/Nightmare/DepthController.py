@@ -141,6 +141,8 @@ class DepthController(EspController):
                 
             await self.play_leds(note)
             
+            await self.play_note(note)
+            
             # Petit délai entre les notes pour bien distinguer
             await asyncio.sleep(0.2)
         

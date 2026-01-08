@@ -164,9 +164,6 @@ class DepthController:
         if not started and now - self.last_log_time > 5:
             self.logger.info(f"⏳ Waiting for start conditions... (RiftPartCount: {rift_part_count})")
             self.last_log_time = now
-        
-        if self.state["depth_state"] == "active":
-            self.state["depth_state"] = "active"
             
         return started
 
@@ -304,7 +301,6 @@ class DepthController:
 
             if self.depth_finished():
                 self.logger.info("🏁 DEPTH FINISHED!")
-                self.state["depth_state"] = "inactive"
                 self.send_state()
 
         self.is_playing = False
