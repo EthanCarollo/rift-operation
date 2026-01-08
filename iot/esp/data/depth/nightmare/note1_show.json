@@ -6,11 +6,7 @@
             "colors": [
                 {
                     "color": "0,0,0",
-                    "position": 34
-                },
-                {
-                    "color": "0,0,0",
-                    "position": 50
+                    "position": 0
                 },
                 {
                     "color": "0,0,0",
@@ -22,8 +18,8 @@
             "time": 800,
             "colors": [
                 {
-                    "color": "255,255,255",
-                    "position": 34
+                    "color": "255,5,207",
+                    "position": 15
                 },
                 {
                     "color": "0,0,0",
@@ -39,8 +35,8 @@
             "time": 400,
             "colors": [
                 {
-                    "color": "255,255,255",
-                    "position": 34
+                    "color": "255,0,205",
+                    "position": 15
                 },
                 {
                     "color": "0,0,0",

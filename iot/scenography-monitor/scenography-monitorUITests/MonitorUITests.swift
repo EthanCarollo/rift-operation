@@ -73,7 +73,7 @@ final class MonitorUITests: XCTestCase {
         resetButton.click()
         
         // Verify default URL is restored
-        let defaultUrl = "ws://192.168.10.7/ws"
+        let defaultUrl = "ws://192.168.10.7:8000/ws"
         XCTAssertEqual(urlField.value as? String, defaultUrl, "URL should be reset to default")
     }
     

@@ -27,11 +27,11 @@
                 },
                 {
                     "color": "0,0,0",
-                    "position": 50
+                    "position": 61
                 },
                 {
-                    "color": "255,255,255",
-                    "position": 66
+                    "color": "21,0,89",
+                    "position": 86
                 }
             ]
         },
@@ -43,12 +43,12 @@
                     "position": 34
                 },
                 {
-                    "color": "255,255,255",
-                    "position": 66
+                    "color": "21,0,89",
+                    "position": 86
                 },
                 {
                     "color": "0,0,0",
-                    "position": 50
+                    "position": 62
                 }
             ]
         },

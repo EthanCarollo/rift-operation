@@ -18,6 +18,10 @@ export const useStrangerSocket = () => {
                     clearTimeout(reconnectTimer)
                     reconnectTimer = null
                 }
+                // Send presence message to websocket panel
+                socket?.send(JSON.stringify({
+                    device_id: 'StrangerDreamInstruction'
+                }))
             }
 
             socket.onclose = () => {

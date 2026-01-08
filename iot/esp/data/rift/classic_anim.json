@@ -1,0 +1,39 @@
+{
+    "name": "My Animation",
+    "frames": [
+        {
+            "time": 1000,
+            "colors": [
+                {
+                    "color": "0,0,0",
+                    "position": 0
+                },
+                {
+                    "color": "166,0,255",
+                    "position": 49
+                },
+                {
+                    "color": "238,5,255",
+                    "position": 100
+                }
+            ]
+        },
+        {
+            "time": 1000,
+            "colors": [
+                {
+                    "color": "174,0,255",
+                    "position": 0
+                },
+                {
+                    "color": "251,0,255",
+                    "position": 50
+                },
+                {
+                    "color": "0,0,50",
+                    "position": 100
+                }
+            ]
+        }
+    ]
+}

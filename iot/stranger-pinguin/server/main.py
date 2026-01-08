@@ -11,7 +11,41 @@ import base64
 import asyncio
 import websockets
 import json
-from config import WS_SERVER_URI
+import argparse
+import multiprocessing
+from config import (
+    WS_SERVER_URI,
+    COSMO_PORT, DARK_COSMO_PORT,
+    COSMO_AUDIO_MAP, DARK_COSMO_AUDIO_MAP,
+    COSMO_DEVICE_ID, DARK_COSMO_DEVICE_ID,
+    COSMO_ACTIVATE_STEP, COSMO_DEACTIVATE_STEP,
+    DARK_COSMO_ACTIVATE_STEP, DARK_COSMO_DEACTIVATE_STEP
+)
+
+# Parse CLI arguments
+parser = argparse.ArgumentParser(description='Pinguin Server')
+parser.add_argument('--mode', choices=['cosmo', 'dark_cosmo', 'both'], default='both',
+                    help='Server mode: cosmo (port 8000), dark_cosmo (port 8001), or both (default)')
+args = parser.parse_args()
+
+# Configure based on mode (for single server mode)
+SERVER_MODE = args.mode
+if SERVER_MODE != 'both':
+    SERVER_PORT = COSMO_PORT if SERVER_MODE == 'cosmo' else DARK_COSMO_PORT
+    AUDIO_MAP_PATH = COSMO_AUDIO_MAP if SERVER_MODE == 'cosmo' else DARK_COSMO_AUDIO_MAP
+    DEVICE_ID = COSMO_DEVICE_ID if SERVER_MODE == 'cosmo' else DARK_COSMO_DEVICE_ID
+    ACTIVATE_STEP = COSMO_ACTIVATE_STEP if SERVER_MODE == 'cosmo' else DARK_COSMO_ACTIVATE_STEP
+    DEACTIVATE_STEP = COSMO_DEACTIVATE_STEP if SERVER_MODE == 'cosmo' else DARK_COSMO_DEACTIVATE_STEP
+    print(f"🚀 Starting server in {SERVER_MODE.upper()} mode on port {SERVER_PORT}")
+    print(f"📂 Using audio map: {AUDIO_MAP_PATH}")
+    print(f"🟢 Activates on: {ACTIVATE_STEP}, Deactivates on: {DEACTIVATE_STEP}")
+else:
+    # Will be set per-process when running both
+    SERVER_PORT = None
+    AUDIO_MAP_PATH = COSMO_AUDIO_MAP
+    DEVICE_ID = COSMO_DEVICE_ID
+    ACTIVATE_STEP = COSMO_ACTIVATE_STEP
+    DEACTIVATE_STEP = COSMO_DEACTIVATE_STEP
 
 
 def get_local_ip():
@@ -29,10 +63,10 @@ local_ip = get_local_ip()
 print(f"Local network address: http://{local_ip}:8000")
 
 stt_service = KyutaiSttService()
-qa_service = PinguinQaService()
+qa_service = PinguinQaService(audio_map_path=AUDIO_MAP_PATH)
 
 # Global State
-IS_ACTIVE = True
+IS_ACTIVE = False
 connected_clients: list[WebSocket] = []
 
 async def broadcast_state(state: str):
@@ -77,8 +111,8 @@ async def connect_to_main_server():
             print(f"🔄 [MAIN SERVER] Attempting to connect to {uri}...")
             async with websockets.connect(uri) as websocket:
                 print(f"✅ [MAIN SERVER] Connected to {uri}")
-                # Send identification if needed, or just listen
-                await websocket.send(json.dumps({"type": "identify", "client": "stranger-pinguin"}))
+                # Send presence message to websocket panel with mode-specific device ID
+                await websocket.send(json.dumps({"device_id": DEVICE_ID}))
                 
                 while True:
                     try:
@@ -89,15 +123,16 @@ async def connect_to_main_server():
                             message = json.loads(message_str)
                             if isinstance(message, dict):
                                 state = message.get("stranger_state")
-                                if state == "active":
+                                if state == ACTIVATE_STEP:
                                     IS_ACTIVE = True
-                                    print("🟢 [STATE] Server ACTIVATED remotely")
-                                elif state == "inactive":
+                                    print(f"🟢 [STATE] Server ACTIVATED on {ACTIVATE_STEP}")
+                                    # Broadcast translated state to Swift clients
+                                    await broadcast_state("active")
+                                elif state == DEACTIVATE_STEP:
                                     IS_ACTIVE = False
-                                    print("🔴 [STATE] Server DEACTIVATED remotely")
-                                    
-                                # Broadcast the new state to all connected Pinguin clients
-                                await broadcast_state(state)
+                                    print(f"🔴 [STATE] Server DEACTIVATED on {DEACTIVATE_STEP}")
+                                    # Broadcast translated state to Swift clients
+                                    await broadcast_state("inactive")
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             
@@ -232,24 +267,31 @@ async def audio_websocket(websocket: WebSocket):
                     streaming_buffer += text
                     words_since_last_index += 1
                 
-                # 🧠 Reactive QA: Detect if the buffer contains a question
-                # 🧠 Reactive QA: Detect if the buffer contains a question
-                # User Request: Only trigger on "?" (ignore keywords like 'quelle')
-                contains_question = "?" in streaming_buffer
+                # 🧠 Reactive QA: Detect trigger based on server mode
+                # Cosmo: triggers on "?" (question)
+                # Dark Cosmo: triggers on "." (end of sentence/affirmation)
+                if SERVER_MODE == 'dark_cosmo':
+                    # Dark Cosmo: detect end of sentence (affirmation)
+                    contains_trigger = "." in streaming_buffer
+                    trigger_type = "affirmation"
+                else:
+                    # Cosmo: detect question mark
+                    contains_trigger = "?" in streaming_buffer
+                    trigger_type = "question"
                 
-                # If we detect a question OR the buffer is getting long
-                if (contains_question and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
-                    # 🎯 Extraction de la dernière phrase uniquement (la question)
+                # If we detect a trigger OR the buffer is getting long
+                if (contains_trigger and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
+                    # 🎯 Extraction de la dernière phrase
                     import re
                     sentences = re.split(r'[.!?]+', streaming_buffer)
                     sentences = [s.strip() for s in sentences if s.strip()]
                     
-                    question_to_ask = sentences[-1] if sentences else streaming_buffer
+                    phrase_to_match = sentences[-1] if sentences else streaming_buffer
                     
-                    print(f"🔍 Question détectée (sentence) : {question_to_ask}")
+                    print(f"🔍 {trigger_type.capitalize()} détectée : {phrase_to_match}")
                     
                     # Try to answer (threshold slightly higher for auto-triggers)
-                    qa_result = qa_service.answer(question_to_ask, min_confidence=0.4)
+                    qa_result = qa_service.answer(phrase_to_match, min_confidence=0.4)
                     
                     if qa_result['confidence'] > 0.4:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
@@ -297,6 +339,16 @@ async def audio_websocket(websocket: WebSocket):
             pass
 
 
+def run_server(mode: str):
+    """Run a single server in specified mode."""
+    import uvicorn
+    import subprocess
+    import sys
+    
+    # Launch as subprocess with specific mode
+    subprocess.run([sys.executable, __file__, '--mode', mode])
+
+
 if __name__ == "__main__":
     import uvicorn
     import socket
@@ -311,5 +363,40 @@ if __name__ == "__main__":
     finally:
         s.close()
     
-    print(f"Local network address: http://{local_ip}:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    if SERVER_MODE == 'both':
+        print(f"")
+        print(f"🚀 Starting DUAL SERVER mode")
+        print(f"   ☀️  Cosmo:      http://{local_ip}:{COSMO_PORT}")
+        print(f"   🌙 Dark Cosmo: http://{local_ip}:{DARK_COSMO_PORT}")
+        print(f"")
+        
+        # Start both servers in separate processes
+        cosmo_process = multiprocessing.Process(
+            target=run_server,
+            args=('cosmo',),
+            name='cosmo-server'
+        )
+        dark_cosmo_process = multiprocessing.Process(
+            target=run_server,
+            args=('dark_cosmo',),
+            name='dark-cosmo-server'
+        )
+        
+        try:
+            cosmo_process.start()
+            dark_cosmo_process.start()
+            
+            # Wait for both processes
+            cosmo_process.join()
+            dark_cosmo_process.join()
+        except KeyboardInterrupt:
+            print("\n🛑 Shutting down both servers...")
+            cosmo_process.terminate()
+            dark_cosmo_process.terminate()
+            cosmo_process.join()
+            dark_cosmo_process.join()
+            print("✅ Both servers stopped.")
+    else:
+        # Single server mode
+        print(f"Local network address: http://{local_ip}:{SERVER_PORT}")
+        uvicorn.run(app, host="0.0.0.0", port=SERVER_PORT)

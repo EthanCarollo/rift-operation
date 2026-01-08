@@ -9,9 +9,18 @@ import SwiftUI
 
 @main
 struct pinguinApp: App {
+    @State private var selectedServerMode: ServerMode? = nil
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if let mode = selectedServerMode {
+                ContentView(initialServerMode: mode)
+                    .transition(.opacity)
+            } else {
+                ServerSelectionView(selectedMode: $selectedServerMode)
+                    .transition(.opacity)
+            }
         }
     }
 }
+
