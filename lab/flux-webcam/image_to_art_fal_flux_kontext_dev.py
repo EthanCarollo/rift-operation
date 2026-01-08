@@ -41,9 +41,22 @@ def transform_with_fal(image_bytes: bytes, prompt: str = "Transform this drawing
     if not FAL_API_KEY:
         raise ValueError("FAL_KEY not found in environment variables")
     
-    # Convert image to base64 data URI
-    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    image_data_uri = f"data:image/png;base64,{image_base64}"
+    # Compress image for faster upload (resize to 420p, JPEG quality 85)
+    from PIL import Image
+    from io import BytesIO
+    
+    img = Image.open(BytesIO(image_bytes))
+    img = img.resize((560, 420), Image.LANCZOS)
+    
+    compressed_buffer = BytesIO()
+    img.save(compressed_buffer, format='JPEG', quality=85)
+    compressed_bytes = compressed_buffer.getvalue()
+    
+    print(f"   📦 Compressed: {len(image_bytes)/1024:.1f}KB → {len(compressed_bytes)/1024:.1f}KB")
+    
+    # Convert compressed image to base64 data URI
+    image_base64 = base64.b64encode(compressed_bytes).decode('utf-8')
+    image_data_uri = f"data:image/jpeg;base64,{image_base64}"
     
     headers = {
         "Authorization": f"Key {FAL_API_KEY}",
