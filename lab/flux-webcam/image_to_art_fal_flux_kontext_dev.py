@@ -55,7 +55,7 @@ def transform_with_fal(image_bytes: bytes, prompt: str = "Transform this drawing
         "prompt": prompt,
         "image_url": image_data_uri,
         "num_inference_steps": 10,
-        "guidance_scale": 3,
+        "guidance_scale": 2.5,
         "num_images": 1,
         "acceleration": "high",
     }
