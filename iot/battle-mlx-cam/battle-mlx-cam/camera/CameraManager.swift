@@ -24,12 +24,37 @@ class CameraManager: NSObject, ObservableObject {
     
     override init() {
         super.init()
-        discoverCameras()
+        requestCameraAccess()
+    }
+    
+    func requestCameraAccess() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            print("[CameraManager] Camera access authorized")
+            discoverCameras()
+        case .notDetermined:
+            print("[CameraManager] Requesting camera access...")
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        print("[CameraManager] Camera access granted")
+                        self?.discoverCameras()
+                    } else {
+                        print("[CameraManager] Camera access denied")
+                    }
+                }
+            }
+        case .denied, .restricted:
+            print("[CameraManager] Camera access denied or restricted")
+            print("[CameraManager] Go to System Settings > Privacy & Security > Camera to enable")
+        @unknown default:
+            break
+        }
     }
     
     func discoverCameras() {
         let discoverySession = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInWideAngleCamera, .externalUnknown],
+            deviceTypes: [.builtInWideAngleCamera, .external],
             mediaType: .video,
             position: .unspecified
         )

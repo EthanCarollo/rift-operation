@@ -61,6 +61,25 @@ class WebSocketManager: ObservableObject, WebSocketDelegate {
         sendPayload(payload)
     }
     
+    func sendTransformedImage(_ dataUrl: String, role: String) {
+        guard isConnected else { return }
+        
+        var payload = lastState
+        payload["device_id"] = "battle-camera-mac"
+        
+        // Send as recognition + the image data
+        if role == "dream" {
+            payload["battle_drawing_dream_recognised"] = true
+            payload["battle_drawing_dream_image"] = dataUrl
+        } else {
+            payload["battle_drawing_nightmare_recognised"] = true
+            payload["battle_drawing_nightmare_image"] = dataUrl
+        }
+        
+        sendPayload(payload)
+        appendMessage("📤 Sent transformed \(role) image")
+    }
+    
     private func sendPayload(_ payload: [String: Any]) {
         guard let data = try? JSONSerialization.data(withJSONObject: payload),
               let string = String(data: data, encoding: .utf8) else {

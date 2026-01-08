@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  battle-mlx-cam
 //
-//  Main view with tab navigation
+//  Main view with modern tab navigation
 //
 
 import SwiftUI
@@ -15,14 +15,12 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Tab 1: Camera
             CameraView(cameraManager: cameraManager, wsManager: wsManager)
                 .tabItem {
                     Label("Camera", systemImage: "camera.fill")
                 }
                 .tag(0)
             
-            // Tab 2: Network
             WebSocketView(wsManager: wsManager)
                 .tabItem {
                     Label("Network", systemImage: "network")

@@ -2,7 +2,7 @@
 //  WebSocketView.swift
 //  battle-mlx-cam
 //
-//  Network status and logs view
+//  Modern iOS26 style network view
 //
 
 import SwiftUI
@@ -12,186 +12,184 @@ struct WebSocketView: View {
     
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
+            // Gradient background
+            LinearGradient(
+                colors: [Color(white: 0.05), Color(white: 0.1)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: 0) {
+            VStack(spacing: 20) {
                 // Header
                 HStack {
-                    Text("Network")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                    Label("Network", systemImage: "network")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(.white)
+                    
                     Spacer()
-                    StatusBadge(isConnected: wsManager.isConnected)
+                    
+                    // Status Badge
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(wsManager.isConnected ? .green : .red)
+                            .frame(width: 10, height: 10)
+                        Text(wsManager.isConnected ? "Connected" : "Disconnected")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(wsManager.isConnected ? .green : .red)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
                 }
                 .padding(.horizontal)
-                .padding(.top, 20)
-                .padding(.bottom, 20)
                 
-                // Server Info
-                VStack(alignment: .leading, spacing: 12) {
-                    InfoRow(icon: "server.rack", title: "Server", value: "server.riftoperation.ethan-folio.fr")
-                    Divider().background(Color.white.opacity(0.1))
-                    InfoRow(icon: "network", title: "Path", value: "/ws")
-                    Divider().background(Color.white.opacity(0.1))
-                    InfoRow(icon: "laptopcomputer", title: "Device ID", value: "battle-camera-mac")
-                    Divider().background(Color.white.opacity(0.1))
-                    InfoRow(icon: "gamecontroller", title: "Battle State", value: wsManager.battleState.uppercased())
+                // Server Info Card
+                GlassCard {
+                    VStack(spacing: 16) {
+                        ServerInfoRow(icon: "server.rack", label: "Server", value: "server.riftoperation.ethan-folio.fr")
+                        Divider().background(.white.opacity(0.1))
+                        ServerInfoRow(icon: "point.3.connected.trianglepath.dotted", label: "Path", value: "/ws")
+                        Divider().background(.white.opacity(0.1))
+                        ServerInfoRow(icon: "laptopcomputer", label: "Device", value: "battle-camera-mac")
+                        Divider().background(.white.opacity(0.1))
+                        ServerInfoRow(icon: "gamecontroller.fill", label: "Battle State", value: wsManager.battleState.uppercased())
+                    }
                 }
-                .padding()
-                .background(Color(white: 0.1))
-                .cornerRadius(16)
                 .padding(.horizontal)
-                .padding(.bottom, 20)
                 
                 // Controls
-                HStack(spacing: 15) {
-                    ActionButton(title: "Connect", icon: "link", color: .green, isDisabled: wsManager.isConnected) {
-                        wsManager.connect()
+                HStack(spacing: 12) {
+                    Button(action: { wsManager.connect() }) {
+                        Label("Connect", systemImage: "link")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
                     }
-                    ActionButton(title: "Disconnect", icon: "link.badge.plus", color: .red, isDisabled: !wsManager.isConnected) {
-                        wsManager.disconnect()
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
+                    .disabled(wsManager.isConnected)
+                    
+                    Button(action: { wsManager.disconnect() }) {
+                        Label("Disconnect", systemImage: "link.badge.plus")
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    .disabled(!wsManager.isConnected)
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 20)
                 
                 // Logs
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("Live Logs")
+                        Label("Live Logs", systemImage: "list.bullet.rectangle")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
+                        
                         Spacer()
+                        
                         if !wsManager.messages.isEmpty {
                             Button(action: { wsManager.messages.removeAll() }) {
                                 Image(systemName: "trash")
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 10)
                     
                     ScrollView {
-                        LazyVStack(spacing: 12) {
+                        LazyVStack(spacing: 8) {
                             ForEach(wsManager.messages, id: \.self) { msg in
-                                LogRow(message: msg)
+                                LogRowModern(message: msg)
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.bottom, 20)
                     }
                 }
+                .frame(maxHeight: .infinity)
             }
+            .padding(.vertical)
         }
     }
 }
 
 // MARK: - Components
 
-struct StatusBadge: View {
-    let isConnected: Bool
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(isConnected ? Color.green : Color.red)
-                .frame(width: 8, height: 8)
-            Text(isConnected ? "Connected" : "Disconnected")
-                .font(.subheadline.bold())
-                .foregroundColor(isConnected ? .green : .red)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color(white: 0.1))
-        .clipShape(Capsule())
-    }
-}
-
-struct InfoRow: View {
+struct ServerInfoRow: View {
     let icon: String
-    let title: String
+    let label: String
     let value: String
     
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.gray)
+                .foregroundStyle(.secondary)
                 .frame(width: 24)
-            Text(title)
-                .foregroundColor(.gray)
+            
+            Text(label)
+                .foregroundStyle(.secondary)
+            
             Spacer()
+            
             Text(value)
                 .font(.system(.callout, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
         }
     }
 }
 
-struct ActionButton: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let isDisabled: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                Text(title)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(isDisabled ? Color(white: 0.15) : color)
-            .foregroundColor(isDisabled ? .gray : .white)
-            .cornerRadius(12)
-        }
-        .disabled(isDisabled)
-        .buttonStyle(.plain)
-    }
-}
-
-struct LogRow: View {
+struct LogRowModern: View {
     let message: String
     
     var isSending: Bool {
-        message.contains("Sending")
+        message.contains("Sending") || message.contains("📤")
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(isSending ? "OUTGOING" : "INCOMING")
-                    .font(.caption2.bold())
-                    .foregroundColor(isSending ? .blue : .orange)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background((isSending ? Color.blue : Color.orange).opacity(0.2))
-                    .cornerRadius(4)
-                
-                Spacer()
-                
-                if let idx = message.firstIndex(of: "]"), let start = message.firstIndex(of: "[") {
-                    Text(message[message.index(after: start)..<idx])
+        HStack(alignment: .top, spacing: 12) {
+            // Icon
+            Image(systemName: isSending ? "arrow.up.circle.fill" : "arrow.down.circle.fill")
+                .foregroundStyle(isSending ? .blue : .orange)
+                .font(.title3)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                // Timestamp
+                if let time = extractTime(from: message) {
+                    Text(time)
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.tertiary)
                 }
+                
+                // Content
+                Text(extractContent(from: message))
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
             }
             
-            Text(extractContent(from: message))
-                .font(.system(.caption, design: .monospaced))
-                .foregroundColor(.white.opacity(0.9))
-                .lineLimit(nil)
+            Spacer()
         }
         .padding(12)
-        .background(Color(white: 0.1))
-        .cornerRadius(12)
-        .overlay(
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay {
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSending ? Color.blue.opacity(0.3) : Color.orange.opacity(0.3), lineWidth: 1)
-        )
+                .strokeBorder(
+                    isSending ? Color.blue.opacity(0.3) : Color.orange.opacity(0.3),
+                    lineWidth: 1
+                )
+        }
+    }
+    
+    func extractTime(from msg: String) -> String? {
+        if let start = msg.firstIndex(of: "["),
+           let end = msg.firstIndex(of: "]") {
+            return String(msg[msg.index(after: start)..<end])
+        }
+        return nil
     }
     
     func extractContent(from msg: String) -> String {
