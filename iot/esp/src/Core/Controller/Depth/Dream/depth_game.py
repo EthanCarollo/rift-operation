@@ -8,38 +8,8 @@ from controllerRaspberry import SpheroController, TARGET_SPHERO_NAMES
 
 # ================= CONFIG =================
 WS_URL = "ws://192.168.10.7:8000/ws"
-ROLE = "dream" # 'parent' or 'dream'
+ROLE = "dream"
 DEVICE_ID = "macbook_pro_1"
-
-# Mock Config Factory since we don't have the files
-class DepthConfigFactory:
-    @staticmethod
-    def create_default_parent():
-        return type('Config', (), {
-            'role': ROLE,
-            'partitions': {
-                # Map steps to sequences of Sphero Names
-                # Example sequences. Adjust based on real game logic.
-                # 1 : SB-08C9, 2 : SB-1219, 3 : SB-2020
-                1: [
-                    "SB-08C9", "SB-1219", "SB-2020", "SB-08C9",
-                    "SB-08C9", "SB-1219", "SB-2020", "SB-08C9",
-                ],
-                2: [
-                    "SB-08C9", "SB-08C9", "SB-2020", "SB-2020",
-                    "SB-1219", "SB-2020", "SB-1219", "SB-08C9",
-                    "SB-08C9", "SB-2020", "SB-2020", "SB-1219",
-                    "SB-2020"
-                ],
-                3: [
-                    "SB-08C9", "SB-08C9", "SB-08C9", "SB-1219",
-                    "SB-2020", "SB-1219", "SB-08C9", "SB-2020",
-                    "SB-1219", "SB-1219", "SB-08C9"
-                ]
-            },
-            'button_pins': {}, 
-            'led_pins': {}     
-        })()
 
 # ==========================================
 
@@ -48,9 +18,7 @@ class DepthController:
         self.logger = logging.getLogger("DepthController")
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
         
-        self.depthConfig = DepthConfigFactory.create_default_parent()
-        self.role = self.depthConfig.role
-        self.partitions = self.depthConfig.partitions
+        self.role = ROLE
         self.state = {}
         self.is_playing = False
         self.device_id = DEVICE_ID
@@ -68,22 +36,52 @@ class DepthController:
             on_shake_callback=self.on_sphero_shake
         )
         
-        self.sphero_note_mapping = {
-            "SB-08C9": "DO",
-            "SB-1219": "RE",
-            "SB-2020": "MI"
+        # Mapping Sphero -> Note (1-3 pour dream)
+        self.sphero_to_note = {
+            "SB-08C9": 1,  # DO
+            "SB-1219": 2,  # RE
+            "SB-2020": 3   # MI
         }
-
-        # Sound Mapping
-        self.note_mapping = {
-            "SB-08C9": "DO",
-            "SB-1219": "RE",
-            "SB-2020": "MI",
+        
+        # Mapping Note -> Sound name
+        self.note_to_sound = {
+            1: "DO",
+            2: "RE",
+            3: "MI",
         }
 
     def on_sphero_shake(self, name, magnitude):
         # Called from Sphero Thread
         self.shake_queue.put(name)
+
+    # --------------------------------------------------
+    # Helper Functions
+    # --------------------------------------------------
+    
+    def get_role_for_note(self, note):
+        """Détermine qui doit jouer cette note"""
+        if 1 <= note <= 3:
+            return "dream"
+        elif 4 <= note <= 6:
+            return "nightmare"
+        return None
+    
+    def is_my_turn(self):
+        """Vérifie si c'est notre tour de jouer"""
+        current_player = self.state.get("depth_current_player")
+        partition = self.state.get("depth_partition", [])
+        position = self.state.get("depth_partition_position", 0)
+        
+        if current_player != self.role:
+            return False
+        
+        if position >= len(partition):
+            return False
+        
+        current_note = partition[position]
+        expected_role = self.get_role_for_note(current_note)
+        
+        return expected_role == self.role
 
     # --------------------------------------------------
     # WebSocket Callbacks
@@ -131,13 +129,13 @@ class DepthController:
                 self.logger.error(f"Failed to send state: {e}")
 
     def play_note(self, note):
-        note_string = self.note_mapping.get(note)
+        note_string = self.note_to_sound.get(note)
         if note_string:
             note_json = {"depth_note": note_string}
             if self.ws_app and self.ws_app.sock and self.ws_app.sock.connected:
                 try:
                     self.ws_app.send(json.dumps(note_json))
-                    self.logger.info(f"🎵 Playing note: {note_string} ({note})")
+                    self.logger.info(f"🎵 Playing note: {note_string} (note {note})")
                 except Exception as e:
                     self.logger.error(f"Failed to send note: {e}")
 
@@ -149,8 +147,6 @@ class DepthController:
                 self.logger.info(f"🎵 Playing sound: {name}")
             except Exception as e:
                 self.logger.error(f"Failed to send sound: {e}")
-
-        
 
     # --------------------------------------------------
     # Conditions
@@ -168,23 +164,19 @@ class DepthController:
         return started
 
     def depth_finished(self):
-        return (
-            self.state.get("depth_step_3_nightmare_sucess") == True
-            and self.state.get("depth_step_3_dream_sucess") == True
-        )
-
-    def current_step(self):
-        for step in (1, 2, 3):
-            key = f"depth_step_{step}_{self.role}_sucess"
-            if self.state.get(key) is not True:
-                return step
-        return None
+        partition = self.state.get("depth_partition", [])
+        position = self.state.get("depth_partition_position", 0)
+        return position >= len(partition)
 
     # --------------------------------------------------
     # Gameplay
     # --------------------------------------------------
-    def play_partition(self, sequence):
-        self.logger.info(f"🎮 Starting partition: {sequence}")
+    def play_partition(self):
+        """Joue la partie de la partition qui nous revient (ping-pong)"""
+        partition = self.state.get("depth_partition", [])
+        position = self.state.get("depth_partition_position", 0)
+        
+        self.logger.info(f"🎮 Starting my turn at position {position}")
         
         # Clear queue
         while not self.shake_queue.empty():
@@ -193,8 +185,18 @@ class DepthController:
             except Empty:
                 break
 
-        index = 0
-        while index < len(sequence):
+        while position < len(partition):
+            current_note = partition[position]
+            expected_role = self.get_role_for_note(current_note)
+            
+            # Si ce n'est plus notre tour, on arrête et on passe la main
+            if expected_role != self.role:
+                self.logger.info(f"🔄 Changement de rôle -> {expected_role}")
+                self.state["depth_current_player"] = expected_role
+                self.state["depth_partition_position"] = position
+                self.send_state()
+                return True
+            
             # 🛑 Check Reset
             if self.state.get("reset_system"):
                 self.logger.info("🔄 Reset triggered during game!")
@@ -205,27 +207,30 @@ class DepthController:
 
             # Wait for a shake (blocking with timeout to allow exit check)
             try:
-                self.logger.info(f"👉 Waiting for shake from: {sequence[index]}")
+                self.logger.info(f"👉 Waiting for Sphero shake for note {current_note} (position {position})")
                 shaken_sphero_name = self.shake_queue.get(timeout=1.0)
-                
-                # Envoi de la note correspondante
-                
-                  
             except Empty:
                 continue
 
-            expected = sequence[index]
-
-            if shaken_sphero_name == expected:
-                self.play_note(shaken_sphero_name)
-                self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} ({index + 1}/{len(sequence)})")
-                index += 1
+            # Convertir le sphero secoué en note
+            shaken_note = self.sphero_to_note.get(shaken_sphero_name)
+            
+            if shaken_note == current_note:
+                self.play_note(current_note)
+                self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} = note {shaken_note} ({position + 1}/{len(partition)})")
+                position += 1
+                self.state["depth_partition_position"] = position
             else:
                 self.play_sound("false")
-                self.logger.info(f"❌ Wrong Shake: {shaken_sphero_name} (Expected {expected}) -> RESET")
-                index = 0
+                self.logger.info(f"❌ Wrong Shake: {shaken_sphero_name} (Expected note {current_note}) -> RETRY")
+                position = 0
+                self.state["depth_partition_position"] = position
+                # On recommence, donc on ne change pas de joueur
 
+        # Partition terminée !
         self.play_sound("correct")
+        self.state["depth_partition_position"] = position
+        self.send_state()
         self.logger.info("🎉 Partition Complete!")
         return True
 
@@ -268,40 +273,30 @@ class DepthController:
         if self.is_playing:
             return
 
-        step = self.current_step()
-        if step is None or step > 3:
+        # Check if game is finished
+        if self.depth_finished():
             return
 
-        # Synchronization Logic
-        if self.role == "dream" and step > 1:
-            parent_prev_key = f"depth_step_{step - 1}_nightmare_sucess"
-            if self.state.get(parent_prev_key) is not True:
-                # Periodic log for step wait?
-                # self.logger.info(f"⏳ Waiting for Parent Step {step-1}")
-                return
-
-        partition = self.partitions.get(step)
-        if not partition:
+        # Check if it's our turn
+        if not self.is_my_turn():
+            # Periodic log
+            now = time.time()
+            if now - self.last_log_time > 3:
+                current_player = self.state.get("depth_current_player", "?")
+                self.logger.info(f"⏳ Waiting for our turn... (current player: {current_player})")
+                self.last_log_time = now
             return
 
         self.is_playing = True
-        self.logger.info(f"🚀 {self.role.upper()} Playing Step {step}")
+        self.logger.info(f"🚀 {self.role.upper()} Playing!")
 
         # Play the actual game (blocking logic is fine here as WS is in thread)
-        success = self.play_partition(partition)
+        success = self.play_partition()
         
-        if success:
-            key = f"depth_step_{step}_{self.role}_sucess"
-            self.state[key] = True
-            
-            # Update depth_state for LED controller
-            self.state["depth_state"] = f"step_{step}_{self.role}_success"
-            
+        if success and self.depth_finished():
+            self.logger.info("🏁 DEPTH FINISHED!")
+            self.state["depth_state"] = "complete"
             self.send_state()
-
-            if self.depth_finished():
-                self.logger.info("🏁 DEPTH FINISHED!")
-                self.send_state()
 
         self.is_playing = False
 

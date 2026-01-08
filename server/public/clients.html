@@ -323,7 +323,8 @@
                                             placeholder="NULL">
                                     </div>
                                     <div class="control-group" data-type="bool">
-                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Start System</label>
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Start
+                                            System</label>
                                         <input type="hidden" name="start_system" value="null">
                                         <div class="tri-state-container">
                                             <div class="tri-state-btn" data-value="null" data-active="true">N</div>
@@ -425,80 +426,58 @@
                             <!-- 3. DEPTH -->
                             <section class="section-box">
                                 <span class="section-title">02_Depth_Sequence</span>
-                                <div class="grid grid-cols-2 gap-8">
-                                    <!-- Nightmare Group -->
-                                    <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2"
-                                            style="border-color: var(--border);">Nightmare Steps</h3>
+                                <div class="space-y-6">
+                                    <!-- Depth State -->
+                                    <div class="control-group" data-type="text">
+                                        <label class="block text-xs font-bold mb-2 uppercase">Depth State</label>
+                                        <input type="text" name="depth_state" class="raw-input" placeholder="NULL">
+                                    </div>
+
+                                    <!-- Partition Controls -->
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        <!-- Partition Array -->
+                                        <div class="control-group" data-type="array">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Partition
+                                                (Array)</label>
+                                            <input type="text" name="depth_partition" class="raw-input"
+                                                placeholder="[1, 3, 6, 5, 2, 5]"
+                                                title="Notes 1-3 = Dream, Notes 4-6 = Nightmare">
+                                            <p class="text-[10px] mt-1" style="color: var(--text-sec);">1-3: Dream |
+                                                4-6: Nightmare</p>
+                                        </div>
+
+                                        <!-- Position -->
+                                        <div class="control-group" data-type="int">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Position</label>
+                                            <input type="number" name="depth_partition_position" class="raw-input"
+                                                placeholder="0" min="0">
+                                            <p class="text-[10px] mt-1" style="color: var(--text-sec);">Current index in
+                                                partition</p>
+                                        </div>
+
+                                        <!-- Current Player -->
                                         <div class="control-group" data-type="text">
-                                            <label class="block text-[10px] font-bold mb-1 uppercase">Depth
-                                                State</label>
-                                            <input type="text" name="depth_state" class="raw-input" placeholder="NULL">
-                                        </div>
-                                        <!-- Step 1 -->
-                                        <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                            <label class="text-[10px] uppercase">Step 1 Success</label>
-                                            <input type="hidden" name="depth_step_1_nightmare_sucess" value="null">
-                                            <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                                <div class="tri-state-btn" data-value="false">F</div>
-                                                <div class="tri-state-btn" data-value="true">T</div>
-                                            </div>
-                                        </div>
-                                        <!-- Step 2 -->
-                                        <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                            <label class="text-[10px] uppercase">Step 2 Success</label>
-                                            <input type="hidden" name="depth_step_2_nightmare_sucess" value="null">
-                                            <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                                <div class="tri-state-btn" data-value="false">F</div>
-                                                <div class="tri-state-btn" data-value="true">T</div>
-                                            </div>
-                                        </div>
-                                        <!-- Step 3 -->
-                                        <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                            <label class="text-[10px] uppercase">Step 3 Success</label>
-                                            <input type="hidden" name="depth_step_3_nightmare_sucess" value="null">
-                                            <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                                <div class="tri-state-btn" data-value="false">F</div>
-                                                <div class="tri-state-btn" data-value="true">T</div>
+                                            <label class="block text-xs font-bold mb-2 uppercase">Current Player</label>
+                                            <div class="flex gap-2">
+                                                <input type="hidden" name="depth_current_player" value="null">
+                                                <div class="tri-state-container flex-1">
+                                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL
+                                                    </div>
+                                                    <div class="tri-state-btn" data-value="dream">DREAM</div>
+                                                    <div class="tri-state-btn" data-value="nightmare">NIGHTMARE</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Dream Group -->
-                                    <div class="space-y-4">
-                                        <h3 class="text-xs uppercase font-bold border-b pb-1 mb-2"
-                                            style="border-color: var(--border);">Dream Steps</h3>
-                                        <!-- Step 1 -->
-                                        <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                            <label class="text-[10px] uppercase">Step 1 Success</label>
-                                            <input type="hidden" name="depth_step_1_dream_sucess" value="null">
-                                            <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                                <div class="tri-state-btn" data-value="false">F</div>
-                                                <div class="tri-state-btn" data-value="true">T</div>
+                                    <!-- Visual Info -->
+                                    <div class="border-t pt-4" style="border-color: var(--border);">
+                                        <div class="grid grid-cols-2 gap-4 text-[10px]" style="color: var(--text-sec);">
+                                            <div>
+                                                <span class="font-bold">DREAM (1-3)</span>: Spheros (DO, RE, MI)
                                             </div>
-                                        </div>
-                                        <!-- Step 2 -->
-                                        <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                            <label class="text-[10px] uppercase">Step 2 Success</label>
-                                            <input type="hidden" name="depth_step_2_dream_sucess" value="null">
-                                            <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                                <div class="tri-state-btn" data-value="false">F</div>
-                                                <div class="tri-state-btn" data-value="true">T</div>
-                                            </div>
-                                        </div>
-                                        <!-- Step 3 -->
-                                        <div class="control-group grid grid-cols-2 items-center" data-type="bool">
-                                            <label class="text-[10px] uppercase">Step 3 Success</label>
-                                            <input type="hidden" name="depth_step_3_dream_sucess" value="null">
-                                            <div class="tri-state-container">
-                                                <div class="tri-state-btn" data-value="null" data-active="true">N</div>
-                                                <div class="tri-state-btn" data-value="false">F</div>
-                                                <div class="tri-state-btn" data-value="true">T</div>
+                                            <div>
+                                                <span class="font-bold">NIGHTMARE (4-6)</span>: Boutons (FA, SOL, LA)
                                             </div>
                                         </div>
                                     </div>
@@ -626,15 +605,26 @@
                             <span class="section-title">02_Depth</span>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button onclick="sendFastCmd({
-                                    depth_step_1_nightmare_sucess: true,
-                                    depth_step_2_nightmare_sucess: true,
-                                    depth_step_3_nightmare_sucess: true,
-                                    depth_step_1_dream_sucess: true,
-                                    depth_step_2_dream_sucess: true,
-                                    depth_step_3_dream_sucess: true
+                                    depth_partition: [1, 3, 6, 5, 2, 5],
+                                    depth_partition_position: 0,
+                                    depth_current_player: 'dream'
                                 })" class="fast-cmd-btn">
-                                    <span class="fast-cmd-title">ALL SUCCESS</span>
-                                    <span class="fast-cmd-desc">Parents & Children 1-3 Success</span>
+                                    <span class="fast-cmd-title">INIT PARTITION</span>
+                                    <span class="fast-cmd-desc">Start with [1,3,6,5,2,5]</span>
+                                </button>
+                                <button onclick="sendFastCmd({
+                                    depth_partition_position: 0,
+                                    depth_current_player: 'dream'
+                                })" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">RESET POSITION</span>
+                                    <span class="fast-cmd-desc">Back to start</span>
+                                </button>
+                                <button onclick="sendFastCmd({
+                                    depth_state: 'complete',
+                                    depth_partition_position: 999
+                                })" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">SKIP DEPTH</span>
+                                    <span class="fast-cmd-desc">Mark as complete</span>
                                 </button>
                             </div>
                         </section>
@@ -815,15 +805,34 @@
                 payload[input.name] = val === '' ? null : parseInt(val);
             });
             // Text
-            form.querySelectorAll('.control-group[data-type="text"] input').forEach(input => {
+            form.querySelectorAll('.control-group[data-type="text"] input:not([type="hidden"])').forEach(input => {
                 const val = input.value.trim();
                 payload[input.name] = val === '' ? null : val;
             });
-            // Bools
+            // Bools (from tri-state containers)
             form.querySelectorAll('.control-group[data-type="bool"] input[type="hidden"]').forEach(input => {
                 if (input.value === 'null') payload[input.name] = null;
                 else if (input.value === 'true') payload[input.name] = true;
                 else if (input.value === 'false') payload[input.name] = false;
+                else payload[input.name] = input.value; // For string values like 'dream', 'nightmare'
+            });
+            // Text with tri-state (like current_player)
+            form.querySelectorAll('.control-group[data-type="text"] input[type="hidden"]').forEach(input => {
+                if (input.value === 'null') payload[input.name] = null;
+                else payload[input.name] = input.value;
+            });
+            // Arrays (parse as JSON)
+            form.querySelectorAll('.control-group[data-type="array"] input').forEach(input => {
+                const val = input.value.trim();
+                if (val === '') {
+                    payload[input.name] = null;
+                } else {
+                    try {
+                        payload[input.name] = JSON.parse(val);
+                    } catch (e) {
+                        payload[input.name] = val; // Keep as string if parse fails
+                    }
+                }
             });
             return payload;
         }
