@@ -7,9 +7,9 @@ from queue import Queue, Empty
 from controllerRaspberry import SpheroController, TARGET_SPHERO_NAMES
 
 # ================= CONFIG =================
-WS_URL = "ws://192.168.10.4:8000/ws"
+WS_URL = "ws://192.168.10.7:8000/ws"
 ROLE = "dream"
-DEVICE_ID = "macbook_pro_1"
+DEVICE_ID = "DreamDepthMacbook"
 
 # ==========================================
 
@@ -69,8 +69,8 @@ class DepthController:
     def is_my_turn(self):
         """Vérifie si c'est notre tour de jouer"""
         current_player = self.state.get("depth_current_player")
-        partition = self.state.get("depth_partition", [])
-        position = self.state.get("depth_partition_position", 0)
+        partition = self.state.get("depth_partition") or []
+        position = self.state.get("depth_partition_position") or 0
         
         if current_player != self.role:
             return False
@@ -164,8 +164,8 @@ class DepthController:
         return started
 
     def depth_finished(self):
-        partition = self.state.get("depth_partition", [])
-        position = self.state.get("depth_partition_position", 0)
+        partition = self.state.get("depth_partition") or []
+        position = self.state.get("depth_partition_position") or 0
         return position >= len(partition)
 
     # --------------------------------------------------
@@ -203,8 +203,8 @@ class DepthController:
     
     def play_partition(self):
         """Joue la partie de la partition qui nous revient (ping-pong)"""
-        partition = self.state.get("depth_partition", [])
-        position = self.state.get("depth_partition_position", 0)
+        partition = self.state.get("depth_partition") or []
+        position = self.state.get("depth_partition_position") or 0
         
         self.logger.info(f"🎮 Starting my turn at position {position}")
         

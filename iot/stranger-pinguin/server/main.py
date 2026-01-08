@@ -19,7 +19,8 @@ from config import (
     COSMO_AUDIO_MAP, DARK_COSMO_AUDIO_MAP,
     COSMO_DEVICE_ID, DARK_COSMO_DEVICE_ID,
     COSMO_ACTIVATE_STEP, COSMO_DEACTIVATE_STEP,
-    DARK_COSMO_ACTIVATE_STEP, DARK_COSMO_DEACTIVATE_STEP
+    DARK_COSMO_ACTIVATE_STEP, DARK_COSMO_DEACTIVATE_STEP,
+    DARK_COSMO_DETECTED_AUDIO
 )
 
 # Parse CLI arguments
@@ -91,6 +92,62 @@ async def broadcast_state(state: str):
         if client in connected_clients:
             connected_clients.remove(client)
 
+async def broadcast_dark_cosmo_audio():
+    """Broadcasts audio to Swift clients when dark cosmo is detected (Cosmo mode only)."""
+    print(f"🌙 [DARK COSMO] Broadcasting audio to {len(connected_clients)} clients")
+    if not connected_clients:
+        return
+    
+    # Load audio config from JSON
+    audio_file = None
+    try:
+        with open(DARK_COSMO_DETECTED_AUDIO, 'r') as f:
+            config = json.load(f)
+            audio_file = config.get('audio_file')
+    except Exception as e:
+        print(f"❌ [DARK COSMO] Failed to load audio config: {e}")
+        return
+    
+    if not audio_file:
+        print("❌ [DARK COSMO] No audio_file specified in config")
+        return
+    
+    # Load and encode the audio file
+    audio_base64 = None
+    try:
+        audio_path = os.path.join("audio", audio_file)
+        print(f"📂 [DARK COSMO] Loading audio: {audio_path}")
+        if os.path.exists(audio_path):
+            with open(audio_path, "rb") as f:
+                file_content = f.read()
+                audio_base64 = base64.b64encode(file_content).decode('utf-8')
+                print(f"✅ [DARK COSMO] Audio encoded ({len(audio_base64)} chars)")
+        else:
+            print(f"❌ [DARK COSMO] Audio file missing: {audio_path}")
+            return
+    except Exception as e:
+        print(f"❌ [DARK COSMO] Error encoding audio: {e}")
+        return
+    
+    # Broadcast to all clients
+    message = json.dumps({
+        "type": "dark_cosmo_detected",
+        "audio_base64": audio_base64,
+        "audio_file": audio_file
+    })
+    
+    to_remove = []
+    for client in connected_clients:
+        try:
+            await client.send_text(message)
+        except Exception as e:
+            print(f"❌ [DARK COSMO] Failed to broadcast to client: {e}")
+            to_remove.append(client)
+            
+    for client in to_remove:
+        if client in connected_clients:
+            connected_clients.remove(client)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     stt_service.load_model()
@@ -133,6 +190,12 @@ async def connect_to_main_server():
                                     print(f"🔴 [STATE] Server DEACTIVATED on {DEACTIVATE_STEP}")
                                     # Broadcast translated state to Swift clients
                                     await broadcast_state("inactive")
+                                
+                                # Handle is_dark_cosmo_here (only for Cosmo, not Dark Cosmo)
+                                is_dark_cosmo_here = message.get("is_dark_cosmo_here")
+                                if is_dark_cosmo_here == True and SERVER_MODE == 'cosmo':
+                                    print(f"🌙 [DARK COSMO] Detected! Broadcasting audio to Cosmo clients...")
+                                    await broadcast_dark_cosmo_audio()
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             

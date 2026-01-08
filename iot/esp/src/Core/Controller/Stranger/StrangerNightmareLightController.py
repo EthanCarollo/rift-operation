@@ -9,7 +9,7 @@ except ImportError:
     import asyncio
     asyncio.sleep_ms = lambda ms: asyncio.sleep(ms/1000)
 
-class StrangerDreamLightController(EspController):
+class StrangerNightmareLightController(EspController):
     def __init__(self, config):
         super().__init__(config, "StrangerLightController")
         self.logger.name = "StrangerLightController"
