@@ -14,96 +14,113 @@ class DepthController(EspController):
         self.logger.name = "DepthController"
         self.depthConfig = DepthConfigFactory.create_default_child()
 
-        self.role = self.depthConfig.depth.role  # "nightmare" ou "dream"
-        self.partitions = self.depthConfig.depth.partitions
-
+        self.role = "nightmare"
+        
         self.state = {}               # état global reçu du serveur
         self.is_playing = False
         self.device_id = config.device_id
 
-        # Boutons
+        # Boutons - mapping vers les notes 4, 5, 6
+        self.button_pins = self.depthConfig.depth.button_pins
         self.buttons = {
             name: Pin(pin, Pin.IN, Pin.PULL_UP)
-            for name, pin in self.depthConfig.depth.button_pins.items()
+            for name, pin in self.button_pins.items()
+        }
+        
+        # Mapping bouton -> note (4-6 pour nightmare)
+        self.button_to_note = {
+            1: 4,  # Bouton 1 -> FA
+            2: 5,  # Bouton 2 -> SOL
+            3: 6   # Bouton 3 -> LA
+        }
+        
+        # Mapping note -> son
+        self.note_to_sound = {
+            4: "FA",
+            5: "SOL",
+            6: "LA",
         }
 
-        # LEDs uniquement pour le parent
-        self.leds = None
-        if self.role == "nightmare":
-            self.leds = {
-                name: Pin(pin, Pin.OUT)
-                for name, pin in self.depthConfig.depth.led_pins.items()
-            }
-
-        # LED strip (animations JSON) uniquement pour nightmare
+        # LED strip (animations JSON)
         self.led_strip = None
         self.led_controller = None
         self.led_anim_mapping = {
-            1: "data/depth/nightmare/note1_show.json",
-            2: "data/depth/nightmare/note2_show.json",
-            3: "data/depth/nightmare/note3_show.json",
+            4: "data/depth/nightmare/note1_show.json",
+            5: "data/depth/nightmare/note2_show.json",
+            6: "data/depth/nightmare/note3_show.json",
         }
+
+        try:
+            # Configuration unique de la bande LED
+            desired_pin = 15
+            desired_count = 19
+            
+            strip_pin = getattr(self.depthConfig.depth, "led_strip_pin", desired_pin)
+            strip_count = getattr(self.depthConfig.depth, "led_strip_count", desired_count)
+
+            self.led_strip = LedStrip(strip_pin, strip_count)
+            self.led_strip.clear()
+
+            self.led_controller = FrameworkLedController(self.led_strip)
+            
+            self.logger.info(
+                f"💡 LED strip initialisée (pin={strip_pin}, count={strip_count})"
+            )
+        except Exception as e:
+            self.logger.warning(f"⚠️ LED strip non initialisée : {e}")
+
+    # --------------------------------------------------
+    # Helper Functions
+    # --------------------------------------------------
+    
+    def get_role_for_note(self, note):
+        """Détermine qui doit jouer cette note"""
+        if 1 <= note <= 3:
+            return "dream"
+        elif 4 <= note <= 6:
+            return "nightmare"
+        return None
+    
+    def is_my_turn(self):
+        """Vérifie si c'est notre tour de jouer"""
+        current_player = self.state.get("depth_current_player")
+        partition = self.state.get("depth_partition", [])
+        position = self.state.get("depth_partition_position", 0)
         
-        self.note_mapping = {
-            1: "DO",
-            2: "RE",
-            3: "MI",
-        }
-
-        if self.role == "nightmare":
-            try:
-                # Configuration unique de la bande LED
-                desired_pin = 15
-                desired_count = 19
-                
-                # On peut toujours permettre l'override via la config si besoin, mais on force par défaut
-                strip_pin = getattr(self.depthConfig.depth, "led_strip_pin", desired_pin)
-                strip_count = getattr(self.depthConfig.depth, "led_strip_count", desired_count)
-
-                self.led_strip = LedStrip(strip_pin, strip_count)
-                self.led_strip.clear()
-
-                self.led_controller = FrameworkLedController(self.led_strip)
-                # self.led_controller.start_thread() # Optionnel selon usage
-                
-                self.logger.info(
-                    f"💡 LED strip initialisée (pin={strip_pin}, count={strip_count})"
-                )
-            except Exception as e:
-                self.logger.warning(f"⚠️ LED strip non initialisée : {e}")
+        if current_player != self.role:
+            return False
+        
+        if position >= len(partition):
+            return False
+        
+        current_note = partition[position]
+        expected_role = self.get_role_for_note(current_note)
+        
+        return expected_role == self.role
 
     # --------------------------------------------------
     # Conditions métier
     # --------------------------------------------------
 
     def depth_started(self):
-        return (
-            self.state.get("rift_part_count") == 2
-        )
+        return self.state.get("rift_part_count") == 2
 
     def depth_finished(self):
-        return (
-            self.state.get("depth_step_3_nightmare_sucess") == True
-            and self.state.get("depth_step_3_dream_sucess") == True
-        )
-
-    def current_step(self):
-        for step in (1, 2, 3):
-            key = f"depth_step_{step}_{self.role}_sucess"
-            if self.state.get(key) is not True:
-                return step
-        return None
+        partition = self.state.get("depth_partition", [])
+        position = self.state.get("depth_partition_position", 0)
+        return position >= len(partition)
 
     # --------------------------------------------------
     # Inputs
     # --------------------------------------------------
 
     async def read_button(self):
+        """Lit le bouton pressé et retourne le numéro du bouton (1, 2, ou 3)"""
         for name, button in self.buttons.items():
             if button.value() == 0:
                 self.logger.info(f"🔘 Bouton détecté : {name}")
                 await asyncio.sleep(0.2)
-                return name
+                return name  # Retourne le nom/numéro du bouton
         return None
 
     async def play_leds(self, note):
@@ -114,7 +131,7 @@ class DepthController(EspController):
         if self.led_controller:
             anim_file = self.led_anim_mapping.get(note)
             if anim_file:
-                self.logger.info(f"💡 IDs Anim Note {note} : {anim_file}")
+                self.logger.info(f"💡 LED Anim Note {note} : {anim_file}")
                 
                 self.led_controller.play_from_json(anim_file, loop=False)
                 
@@ -126,94 +143,90 @@ class DepthController(EspController):
                     self.led_controller.update()
                     await asyncio.sleep(0.02)
                 return
-
-        # Fallback si pas de strip ou pas d'anim : la méthode s'arrête là
-
-    async def play_led_intro(self, step, sequence):
-        """Joue la séquence complète (partition) note par note."""
-        if self.state.get("reset_system"):
-            return False
-
-        # On itère sur la séquence pour jouer chaque note
-        for note in sequence:
-            if self.state.get("reset_system"):
-                return False
-                
-            await self.play_leds(note)
-            
-            await self.play_note(note)
-            
-            # Petit délai entre les notes pour bien distinguer
-            await asyncio.sleep(0.2)
         
-        return not self.state.get("reset_system")
-    
     async def play_note(self, note):
-        note_string = self.note_mapping.get(note, "DO")
+        note_string = self.note_to_sound.get(note, "FA")
         
-        note_json = {}
+        note_json = {"depth_note": note_string}
         
-        note_json["depth_note"] = note_string
-        
-        await self.websocket_client.send(
-            json.dumps(note_json)
-        )
+        await self.websocket_client.send(json.dumps(note_json))
         
     async def play_sound(self, name):
-        sound_json = {}
+        sound_json = {"depth_sound": name}
         
-        sound_json["depth_sound"] = name
-        
-        await self.websocket_client.send(
-            json.dumps(sound_json)
-        )
-        
-        
+        await self.websocket_client.send(json.dumps(sound_json))
 
     # --------------------------------------------------
     # Gameplay
     # --------------------------------------------------
 
-    async def play_partition(self, step, sequence):
-        if self.role == "nightmare":
-            leds_ok = await self.play_led_intro(step, sequence)
-            if not leds_ok:
-                self.logger.info("🔄 Reset demandé pendant l'animation LEDs")
-                return False
+    async def play_partition(self):
+        """Joue la partie de la partition qui nous revient (ping-pong)"""
+        partition = self.state.get("depth_partition", [])
+        position = self.state.get("depth_partition_position", 0)
+        
+        self.logger.info(f"🎮 Starting my turn at position {position}")
 
-        index = 0
-        self.logger.info(f"🎮 Démarrage partition : {sequence}")
-
-        while index < len(sequence):
+        while position < len(partition):
+            current_note = partition[position]
+            expected_role = self.get_role_for_note(current_note)
+            
+            # Si ce n'est plus notre tour, on arrête et on passe la main
+            if expected_role != self.role:
+                self.logger.info(f"🔄 Changement de rôle -> {expected_role}")
+                self.state["depth_current_player"] = expected_role
+                self.state["depth_partition_position"] = position
+                await self.websocket_client.send(json.dumps(self.state))
+                return True
             
             # 🛑 Check Reset
             if self.state.get("reset_system"):
                 self.logger.info("🔄 Reset demandé - Arrêt partition")
                 return False
 
-            btn = await self.read_button()
+            # 💡 Allumer la LED pour indiquer quel bouton appuyer
+            self.logger.info(f"💡 Indique bouton pour note {current_note}")
+            await self.play_leds(current_note)
             
-            if not btn:
-                await asyncio.sleep(0.05)
-                continue
+            # Attendre que le joueur appuie sur le bon bouton
+            waiting_for_input = True
+            while waiting_for_input:
+                # 🛑 Check Reset pendant l'attente
+                if self.state.get("reset_system"):
+                    self.logger.info("🔄 Reset demandé - Arrêt partition")
+                    return False
+                
+                btn = await self.read_button()
+                
+                if not btn:
+                    await asyncio.sleep(0.05)
+                    continue
 
-            attendu = sequence[index]
+                # Convertir le bouton en note
+                pressed_note = self.button_to_note.get(btn)
+                
+                if pressed_note == current_note:
+                    await self.play_note(current_note)
+                    self.logger.info(
+                        f"✅ Bon bouton : {btn} = note {pressed_note} ({position + 1}/{len(partition)})"
+                    )
+                    position += 1
+                    self.state["depth_partition_position"] = position
+                    waiting_for_input = False  # Passer à la note suivante
+                else:
+                    await self.play_sound("false")
+                    self.logger.info(
+                        f"❌ Mauvais bouton : {btn} (attendu note {current_note}) → RETRY"
+                    )
+                    position = 0
+                    self.state["depth_partition_position"] = position
+                    waiting_for_input = False  # Sortir pour recommencer la boucle
 
-            if btn == attendu:
-                await self.play_note(btn)
-                self.logger.info(
-                    f"✅ Bon bouton : {btn} ({index + 1}/{len(sequence)})"
-                )
-                index += 1
-            else:
-                await self.play_sound("false")
-                self.logger.info(
-                    f"❌ Mauvais bouton : {btn} (attendu {attendu}) → reset"
-                )
-                index = 0
-
+        # Partition terminée !
         await self.play_sound("correct")
-        self.logger.info("🎉 Partition réussie !")
+        self.state["depth_partition_position"] = position
+        await self.websocket_client.send(json.dumps(self.state))
+        self.logger.info("🎉 Partition Complete!")
         return True
 
     # --------------------------------------------------
@@ -236,9 +249,6 @@ class DepthController(EspController):
         
         # 0. Check Reset System
         if self.state.get("reset_system") is True:
-            # On ne fait rien, on attend que le reset passe à False
-            # (Le serveur devrait le repasser à null/false après avoir reset ?)
-            # Ou alors on réinitialise l'état local si besoin
             if self.is_playing:
                 self.is_playing = False
                 self.logger.info("🔄 Reset actif - Système en pause")
@@ -253,58 +263,24 @@ class DepthController(EspController):
         if self.is_playing:
             return
 
-        step = self.current_step()
-        if step is None:
+        # Check if game is finished
+        if self.depth_finished():
             return
 
-        # 🔒 Nightmare attend le dream (step en cours)
-        if self.role == "nightmare":
-            child_key = f"depth_step_{step}_dream_sucess"
-            if self.state.get(child_key) is not True:
-                # Log moins fréquent
-                # self.logger.info(f"⏳ Nightmare attend dream (step {step})") 
-                await asyncio.sleep(1)
-                return
-
-        # 🔒 Dream attend le nightmare (step précédent)
-        if self.role == "dream" and step > 1:
-            parent_prev_key = f"depth_step_{step - 1}_nightmare_sucess"
-            if self.state.get(parent_prev_key) is not True:
-                # self.logger.info(f"⏳ Dream attend nightmare (step {step - 1})")
-                await asyncio.sleep(1)
-                return
-
-        partition = self.partitions.get(step)
-        if not partition:
+        # Check if it's our turn
+        if not self.is_my_turn():
+            await asyncio.sleep(0.5)
             return
 
         self.is_playing = True
-        self.logger.info(f"🚀 {self.role.upper()} joue step {step}")
+        self.logger.info(f"🚀 {self.role.upper()} joue!")
 
         # On attend la fin de la partition
-        success = await self.play_partition(step, partition)
+        success = await self.play_partition()
 
-        # Si succès et PAS de reset
-        if success:
-            key = f"depth_step_{step}_{self.role}_sucess"
-            self.state[key] = True
-
-            self.logger.info(
-                f"📤 Envoi JSON global mis à jour ({key}=true)"
-            )
-
-            await self.websocket_client.send(
-                json.dumps(self.state)
-            )
-
-            if self.depth_finished():
-                self.logger.info("🏁 Depth terminée")
-                await self.websocket_client.send(
-                    json.dumps(self.state)
-                )
+        if success and self.depth_finished():
+            self.logger.info("🏁 Depth terminée!")
+            self.state["depth_state"] = "complete"
+            await self.websocket_client.send(json.dumps(self.state))
 
         self.is_playing = False
-
-
-
-
