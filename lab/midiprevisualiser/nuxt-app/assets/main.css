@@ -1,0 +1,138 @@
+/* =========================================
+   MIDI Visualizer - Global Styles
+   Modern dark theme with neon accents
+   ========================================= */
+
+:root {
+  /* Color palette */
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a25;
+  --bg-grid: #0f0f18;
+  
+  /* Neon accent colors for MIDI channels */
+  --channel-0: #ff3366;
+  --channel-1: #33ff99;
+  --channel-2: #3399ff;
+  --channel-3: #ff9933;
+  --channel-4: #cc33ff;
+  --channel-5: #ffff33;
+  --channel-6: #33ffff;
+  --channel-7: #ff6633;
+  --channel-8: #66ff33;
+  --channel-9: #ff33cc;
+  --channel-10: #33ccff;
+  --channel-11: #ffcc33;
+  --channel-12: #9933ff;
+  --channel-13: #33ff66;
+  --channel-14: #ff3399;
+  --channel-15: #99ff33;
+  
+  /* UI colors */
+  --text-primary: #ffffff;
+  --text-secondary: #888899;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --glow-color: rgba(51, 153, 255, 0.4);
+  
+  /* Grid */
+  --grid-line: rgba(255, 255, 255, 0.04);
+  --grid-bar: rgba(255, 255, 255, 0.1);
+  
+  /* Spacing */
+  --piano-key-width: 48px;
+  --note-height: 14px;
+  --header-height: 60px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #__nuxt {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Glassmorphism panel base */
+.glass-panel {
+  background: rgba(18, 18, 26, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.btn:hover {
+  background: #252535;
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3399ff, #33ccff);
+  color: #000;
+  box-shadow: 0 4px 20px var(--glow-color);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 30px var(--glow-color);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2a3a;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
