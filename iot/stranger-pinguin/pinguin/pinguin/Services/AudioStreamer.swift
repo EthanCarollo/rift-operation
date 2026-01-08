@@ -152,11 +152,20 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            // Set preferred sample rate and buffer for better compatibility with older devices
+            try session.setPreferredSampleRate(48000)
+            try session.setPreferredIOBufferDuration(0.1)
             try session.setActive(true)
             print("[AudioStreamer] Audio session configured for PlayAndRecord (Speaker/Bluetooth)")
+            print("[AudioStreamer] Actual sample rate: \(session.sampleRate), IO buffer: \(session.ioBufferDuration)")
         } catch {
             print("[AudioStreamer] Failed to setup audio session: \(error)")
             DispatchQueue.main.async { self.errorMessage = "Audio session error: \(error.localizedDescription)" }
+            
+            // Reset setup flag on error
+            setupLock.lock()
+            _isSettingUpAudio = false
+            setupLock.unlock()
             return
         }
         
@@ -192,7 +201,10 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         print("[AudioStreamer] Installing tap on input node with hardware format...")
         // Use hardware format for tap - this is the key fix!
         inputNode.installTap(onBus: 0, bufferSize: 4800, format: hardwareFormat) { [weak self] (buffer, time) in
-            guard let self = self else { return }
+            guard let self = self else {
+                print("[AudioStreamer] TAP: self is nil, returning")
+                return
+            }
             
             // Calculate output frame count based on sample rate ratio
             let ratio = targetFormat.sampleRate / hardwareFormat.sampleRate
@@ -243,11 +255,21 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
         do {
             try engine.start()
             print("[AudioStreamer] Engine started successfully!")
+            
+            // Reset setup flag AFTER engine starts
+            setupLock.lock()
+            _isSettingUpAudio = false
+            setupLock.unlock()
+            
             DispatchQueue.main.async {
                 self.isRecording = true
             }
         } catch {
             print("[AudioStreamer] ERROR: Engine start error: \(error)")
+            // Reset setup flag on error too
+            setupLock.lock()
+            _isSettingUpAudio = false
+            setupLock.unlock()
             DispatchQueue.main.async {
                 self.errorMessage = "Could not start audio engine"
             }
@@ -334,6 +356,16 @@ class AudioStreamer: NSObject, ObservableObject, URLSessionWebSocketDelegate, AV
                                     if let audioBase64 = json["audio_base64"] as? String,
                                        let audioData = Data(base64Encoded: audioBase64) {
                                         let filename = json["audio_file"] as? String ?? "unknown"
+                                        self?.playAudioData(data: audioData, filename: filename)
+                                    }
+                                }
+                            } else if type == "dark_cosmo_detected" {
+                                print("[AudioStreamer] 🌙 Dark Cosmo detected! Playing notification audio...")
+                                DispatchQueue.main.async {
+                                    // Handle Audio Playback (Base64)
+                                    if let audioBase64 = json["audio_base64"] as? String,
+                                       let audioData = Data(base64Encoded: audioBase64) {
+                                        let filename = json["audio_file"] as? String ?? "dark_cosmo_audio"
                                         self?.playAudioData(data: audioData, filename: filename)
                                     }
                                 }

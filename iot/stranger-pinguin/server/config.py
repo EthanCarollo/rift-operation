@@ -25,3 +25,6 @@ COSMO_DEACTIVATE_STEP = "step_4"
 # Dark Cosmo: activates on step_2, deactivates on step_3
 DARK_COSMO_ACTIVATE_STEP = "step_2"
 DARK_COSMO_DEACTIVATE_STEP = "step_3"
+
+# Dark Cosmo Detection Audio (played on Cosmo when is_dark_cosmo_here == true)
+DARK_COSMO_DETECTED_AUDIO = "dark_cosmo_detected.json"
