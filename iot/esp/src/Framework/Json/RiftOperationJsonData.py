@@ -13,6 +13,7 @@ class RiftOperationJsonData:
                 
                 stranger_state=None,
                 stranger_recognized_name=None,
+                is_dark_cosmo_here=None,
                 
                 pinguin_micro=None, 
                 pinguin_audio=None,
@@ -58,6 +59,7 @@ class RiftOperationJsonData:
         
         self.stranger_state = stranger_state
         self.stranger_recognized_name = stranger_recognized_name
+        self.is_dark_cosmo_here = is_dark_cosmo_here
         
         self.pinguin_micro = pinguin_micro
         self.pinguin_audio = pinguin_audio
