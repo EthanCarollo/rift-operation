@@ -17,27 +17,27 @@ const EXPERIENCE_FLOW = [
   {
     field: 'lost_state',
     title: 'PROTOCOLE LOST',
-    activeText: 'Confinez la créature dans la cellule pour sécuriser le fragment instable.',
-    inactiveText: 'TOUS LES FRAGMENTS SONT SÉCURISÉS. POINT D\'EXTRACTION ACTIVÉ.'
+    activeText: 'Confinez la créature dans la cellule pour récupérer le morceau de faille.',
+    inactiveText: 'LE MORCEAU DE FAILLE SE TROUVE DANS LE SAPIN.'
   },
   {
     field: 'depth_state',
     title: 'PROTOCOLE PROFONDEUR',
-    activeText: 'Reproduisez la séquence acoustique pour déverrouiller l\'accès au fragment.',
-    inactiveText: 'FRAGMENT RÉCUPÉRÉ. PROCHAIN OBJECTIF : ZONE LOST.'
+    activeText: 'Reproduisez la séquence acoustique et récupérer le morceau de faille.',
+    inactiveText: 'LE MORCEAU DE FAILLE SE TROUVE DANS LA TRAPPE DU SOUS-MARIN.'
   },
   {
     field: 'stranger_state',
     title: 'PROTOCOLE STRANGER',
-    activeText: 'Analysez les signaux pour identifier l\'entité et révéler le fragment.',
-    inactiveText: 'FRAGMENT RÉCUPÉRÉ. PROCHAIN OBJECTIF : ZONE PROFONDEUR.'
+    activeText: 'Trouver le nom de la personne et récupérer le morceau de faille.',
+    inactiveText: 'LE MORCEAU DE FAILLE SE TROUVE DANS LE TIROIR DU MEUBLE TV.'
   }
 ]
 // ---------------------
 
 const connectWebSocket = () => {
   try {
-    socket = new WebSocket('ws://192.168.10.7:8000/ws')
+    socket = new WebSocket('ws://192.168.10.4:8000/ws')
 
     socket.onopen = () => {
       isConnected.value = true
