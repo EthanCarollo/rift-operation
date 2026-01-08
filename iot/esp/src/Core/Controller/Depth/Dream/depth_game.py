@@ -7,7 +7,7 @@ from queue import Queue, Empty
 from controllerRaspberry import SpheroController, TARGET_SPHERO_NAMES
 
 # ================= CONFIG =================
-WS_URL = "ws://192.168.10.7:8000/ws"
+WS_URL = "ws://192.168.10.4:8000/ws"
 ROLE = "dream"
 DEVICE_ID = "macbook_pro_1"
 

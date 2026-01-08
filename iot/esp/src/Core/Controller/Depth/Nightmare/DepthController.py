@@ -184,32 +184,43 @@ class DepthController(EspController):
                 self.logger.info("🔄 Reset demandé - Arrêt partition")
                 return False
 
-            # Lire le bouton
-            btn = await self.read_button()
+            # 💡 Allumer la LED pour indiquer quel bouton appuyer
+            self.logger.info(f"💡 Indique bouton pour note {current_note}")
+            await self.play_leds(current_note)
             
-            if not btn:
-                await asyncio.sleep(0.05)
-                continue
+            # Attendre que le joueur appuie sur le bon bouton
+            waiting_for_input = True
+            while waiting_for_input:
+                # 🛑 Check Reset pendant l'attente
+                if self.state.get("reset_system"):
+                    self.logger.info("🔄 Reset demandé - Arrêt partition")
+                    return False
+                
+                btn = await self.read_button()
+                
+                if not btn:
+                    await asyncio.sleep(0.05)
+                    continue
 
-            # Convertir le bouton en note
-            pressed_note = self.button_to_note.get(btn)
-            
-            if pressed_note == current_note:
-                await self.play_leds(current_note)
-                await self.play_note(current_note)
-                self.logger.info(
-                    f"✅ Bon bouton : {btn} = note {pressed_note} ({position + 1}/{len(partition)})"
-                )
-                position += 1
-                self.state["depth_partition_position"] = position
-            else:
-                await self.play_sound("false")
-                self.logger.info(
-                    f"❌ Mauvais bouton : {btn} (attendu note {current_note}) → RETRY"
-                )
-                position = 0
-                self.state["depth_partition_position"] = position
-                # On recommence, donc on ne change pas de joueur
+                # Convertir le bouton en note
+                pressed_note = self.button_to_note.get(btn)
+                
+                if pressed_note == current_note:
+                    await self.play_note(current_note)
+                    self.logger.info(
+                        f"✅ Bon bouton : {btn} = note {pressed_note} ({position + 1}/{len(partition)})"
+                    )
+                    position += 1
+                    self.state["depth_partition_position"] = position
+                    waiting_for_input = False  # Passer à la note suivante
+                else:
+                    await self.play_sound("false")
+                    self.logger.info(
+                        f"❌ Mauvais bouton : {btn} (attendu note {current_note}) → RETRY"
+                    )
+                    position = 0
+                    self.state["depth_partition_position"] = position
+                    waiting_for_input = False  # Sortir pour recommencer la boucle
 
         # Partition terminée !
         await self.play_sound("correct")

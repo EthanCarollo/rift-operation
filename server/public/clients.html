@@ -846,9 +846,12 @@
         form.addEventListener('input', updatePreview);
 
         // --- Tri-State Logic ---
-        document.querySelectorAll('.control-group[data-type="bool"]').forEach(group => {
+        // Apply to ALL control-groups that contain a tri-state-container
+        document.querySelectorAll('.control-group').forEach(group => {
             const input = group.querySelector('input[type="hidden"]');
             const btns = group.querySelectorAll('.tri-state-btn');
+
+            if (!input || btns.length === 0) return;
 
             btns.forEach(btn => {
                 btn.addEventListener('click', () => {
