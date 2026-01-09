@@ -112,8 +112,35 @@ BACK_DIR = os.path.join(BASE_DIR, "back")
 FRONT_DIR = os.path.join(BASE_DIR, "front")
 CONDA_ENV_NAME = "rift-operation"
 
+def check_dependencies():
+    """Check if brew and conda are installed, provide installation instructions if not."""
+    
+    # Check for brew
+    brew_check = subprocess.run(["which", "brew"], capture_output=True, text=True)
+    if brew_check.returncode != 0:
+        log("❌ Homebrew is not installed!", Colors.FAIL)
+        log("   Run this command to install Homebrew:", Colors.WARNING)
+        log('   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', Colors.CYAN)
+        return False
+    
+    # Check for conda
+    conda_check = subprocess.run(["which", "conda"], capture_output=True, text=True)
+    if conda_check.returncode != 0:
+        log("❌ Conda is not installed!", Colors.FAIL)
+        log("   Run this command to install Anaconda via Homebrew:", Colors.WARNING)
+        log("   brew install --cask anaconda", Colors.CYAN)
+        log("   Then add conda to your PATH and restart your terminal.", Colors.WARNING)
+        return False
+    
+    return True
+
 def setup_environment():
     """Setup conda environment and install dependencies."""
+    
+    # 0. Check dependencies first
+    if not check_dependencies():
+        log("⚠️ Please install the missing dependencies and try again.", Colors.FAIL)
+        sys.exit(1)
     
     # 1. Check if conda env exists, create if not
     log("🔍 Checking conda environment...", Colors.CYAN)
