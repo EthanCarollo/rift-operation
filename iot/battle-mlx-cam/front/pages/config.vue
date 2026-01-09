@@ -121,8 +121,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { io } from 'socket.io-client';
 
-// Backend URL (can be configured)
-const BACKEND_URL = 'http://localhost:5000';
+// Backend URL - change this to match your server IP
+const BACKEND_URL = 'http://192.168.10.7:5000';
 
 // State
 const connected = ref(false);
