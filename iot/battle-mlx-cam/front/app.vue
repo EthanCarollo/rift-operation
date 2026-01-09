@@ -52,8 +52,7 @@
             BUT status needs to be rotated too so user can read it. 
             So everything goes inside the rotation wrapper. -->
 
-            <div id="battle-container" :style="rotationStyle"
-                class="absolute origin-center transition-all duration-700 ease-in-out bg-black">
+            <div id="battle-container" class="absolute inset-0 w-full h-full bg-black">
 
                 <!-- Video Layer -->
                 <video v-show="currentVideo && !videoError && battleState !== 'IDLE'" ref="videoRef"
@@ -139,40 +138,14 @@ function handleKeydown(e) {
 }
 
 // --- COMPUTED ---
-const isVertical = computed(() => {
-    return selectedRole.value === 'dream' || selectedRole.value === 'nightmare';
-});
+// isVertical is false since screens are already in portrait orientation
+const isVertical = computed(() => false);
 
-const rotationStyle = computed(() => {
-    if (selectedRole.value === 'dream') {
-        // Rotate 90deg (Clockwise)
-        return {
-            width: '100vh',
-            height: '100vw',
-            transform: 'translate(-50%, -50%) rotate(90deg)',
-            left: '50%',
-            top: '50%'
-        };
-    }
-    if (selectedRole.value === 'nightmare') {
-        // Rotate -90deg (Counter Clockwise)
-        return {
-            width: '100vh',
-            height: '100vw',
-            transform: 'translate(-50%, -50%) rotate(-90deg)',
-            left: '50%',
-            top: '50%'
-        };
-    }
-    // Default (Dev mode)
-    return {
-        width: '100%',
-        height: '100%',
-        transform: 'none',
-        left: '0',
-        top: '0'
-    };
-});
+// No rotation needed - screens are already vertical
+const rotationStyle = computed(() => ({
+    width: '100%',
+    height: '100%'
+}));
 
 const isEndState = computed(() => {
     return battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';

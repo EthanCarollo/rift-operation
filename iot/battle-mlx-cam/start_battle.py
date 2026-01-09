@@ -126,66 +126,47 @@ def start_frontend():
     return subprocess.Popen(cmd, cwd=FRONT_DIR, preexec_fn=os.setsid)
 
 def open_browser(dream_screen=None, nightmare_screen=None):
-    log("🌐 Opening Chrome windows...", Colors.HEADER)
+    log("🌐 Opening Chrome windows in kiosk mode...", Colors.HEADER)
     
     url_dream = "http://localhost:3010/?role=dream"
     url_nightmare = "http://localhost:3010/?role=nightmare"
-
-    def launch_chrome_fullscreen(url, screen, role_name):
-        """Launch Chrome and position using AppleScript for reliability."""
+    
+    chrome_exe = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    
+    def launch_kiosk(url, screen, role_name):
+        """Launch Chrome in kiosk mode on specific screen."""
         if not screen:
-            # Fallback: just open
-            subprocess.Popen(["open", "-na", "Google Chrome", "--args", "--new-window", url])
+            subprocess.Popen(["open", "-na", "Google Chrome", "--args", "--kiosk", url])
             return
         
-        # Get screen bounds (AppKit coordinates: bottom-left origin)
-        # For AppleScript, we need top-left. macOS menubar is ~25px.
-        # AppleScript bounds are {left, top, right, bottom}
+        # Chrome kiosk mode with window position
+        # Use unique user-data-dir to allow multiple instances
+        user_data = f"/tmp/chrome_battle_{role_name.lower()}"
         
-        # AppKit: y=0 is bottom of main screen
-        # To convert to AppleScript/top-left coords:
-        # target_top = main_screen_height - (appkit_y + screen_height)
-        
+        # Calculate position for this screen
         main_h = NSScreen.screens()[0].frame().size.height
+        target_x = int(screen['x'])
+        target_y = int(main_h - screen['y'] - screen['h'])
         
-        # Screen bounds in AppKit
-        sx = screen['x']
-        sy = screen['y']
-        sw = screen['w']
-        sh = screen['h']
+        log(f"   {role_name}: Position ({target_x}, {target_y}), Size {screen['w']}x{screen['h']}", Colors.CYAN)
         
-        # Convert to top-left coordinate system
-        # The top of this screen in top-left coords:
-        target_top = int(main_h - sy - sh)
-        target_left = int(sx)
-        target_right = int(sx + sw)
-        target_bottom = int(main_h - sy)
+        cmd = [
+            chrome_exe,
+            f"--user-data-dir={user_data}",
+            f"--window-position={target_x},{target_y}",
+            f"--window-size={screen['w']},{screen['h']}",
+            "--kiosk",
+            "--no-first-run",
+            "--no-default-browser-check",
+            url
+        ]
         
-        log(f"   {role_name}: Bounds = {{{target_left}, {target_top}, {target_right}, {target_bottom}}}", Colors.CYAN)
-        
-        # AppleScript to open URL in new window and set bounds
-        applescript = f'''
-        tell application "Google Chrome"
-            activate
-            set newWindow to make new window
-            set URL of active tab of newWindow to "{url}"
-            set bounds of newWindow to {{{target_left}, {target_top}, {target_right}, {target_bottom}}}
-        end tell
-        '''
-        
-        try:
-            subprocess.run(["osascript", "-e", applescript], check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            log(f"⚠️ AppleScript failed: {e.stderr.decode()}", Colors.WARNING)
-            # Fallback
-            subprocess.Popen(["open", "-na", "Google Chrome", "--args", "--new-window", url])
-
-    # Launch Dream first
-    launch_chrome_fullscreen(url_dream, dream_screen, "DREAM")
-    time.sleep(0.5)
+        subprocess.Popen(cmd)
     
-    # Launch Nightmare
-    launch_chrome_fullscreen(url_nightmare, nightmare_screen, "NIGHTMARE")
+    # Launch both windows
+    launch_kiosk(url_dream, dream_screen, "DREAM")
+    time.sleep(0.5)
+    launch_kiosk(url_nightmare, nightmare_screen, "NIGHTMARE")
         
     log("✅ Browser windows launched", Colors.GREEN)
 
@@ -233,26 +214,17 @@ def main():
             except:
                 pass
         
-        # Close Chrome windows opened by the script
-        log("🌐 Closing Chrome battle windows...", Colors.CYAN)
+        # Close ALL Chrome windows by quitting Chrome
+        log("🌐 Quitting Chrome...", Colors.CYAN)
         close_chrome_script = '''
         tell application "Google Chrome"
-            set windowsToClose to {}
-            repeat with w in windows
-                set tabURL to URL of active tab of w
-                if tabURL contains "localhost:3010" then
-                    set end of windowsToClose to w
-                end if
-            end repeat
-            repeat with w in windowsToClose
-                close w
-            end repeat
+            quit
         end tell
         '''
         try:
-            subprocess.run(["osascript", "-e", close_chrome_script], capture_output=True, timeout=5)
-        except:
-            pass
+            subprocess.run(["osascript", "-e", close_chrome_script], capture_output=True, timeout=5, text=True)
+        except Exception as e:
+            log(f"⚠️ Failed to quit Chrome: {e}", Colors.WARNING)
             
         log("💀 Backend and Frontend stopped.", Colors.FAIL)
 
