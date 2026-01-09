@@ -1,3 +1,4 @@
+import gc
 import ujson as json
 from src.Framework.EspController import EspController
 from src.Framework.Led.LedStrip import LedStrip
@@ -10,32 +11,52 @@ except ImportError:
     import asyncio
     asyncio.sleep_ms = lambda ms: asyncio.sleep(ms/1000)
 
-"""
-Here we will need to put new led light for this kind of shit
-"""
+
 class RiftLedController(EspController):
     def __init__(self, config: Config):
         super().__init__(config, "RiftLedController")
 
         self.led_pin = 14
-        self.led_count = 48
+        self.led_count = 88
 
         self.led_strip = LedStrip(self.led_pin, self.led_count)
         self.led_strip.clear()
         self.led_controller = LedController(self.led_strip)
+        self.led_controller.start_thread()
 
         self.led_controller.play_from_json("data/rift/classic_anim.json")
-
+        gc.collect()
+        
+        self.blink_playing = False
 
     async def process_message(self, message):
         try:
+            gc.collect()
             data = json.loads(message)
-            self.logger.info(f"Received message: {data}")
-            # Handle it
+            
+            rift_part_count = data.get("rift_part_count")
+            data = None
+            gc.collect()
+            
+            if rift_part_count is not None:
+                self.logger.info(f"🎬 Blink! (rift={rift_part_count})")
+                gc.collect()
+                self.led_controller.play_from_json("data/rift/blink_anim.json", loop=False)
+                self.blink_playing = True
+                gc.collect()
+                
         except Exception as e:
-            # Temporary disable that
-            pass
+            self.logger.error(f"Msg error: {e}")
+            gc.collect()
 
     async def update(self):
         self.led_controller.update()
+        
+        if self.blink_playing and not self.led_controller.is_playing:
+            self.logger.info("✨ Blink done")
+            gc.collect()
+            self.led_controller.play_from_json("data/rift/classic_anim.json")
+            self.blink_playing = False
+            gc.collect()
+        
         asyncio.sleep_ms(50)
