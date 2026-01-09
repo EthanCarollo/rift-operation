@@ -1,27 +1,20 @@
-"""Background removal using rembg (u2net) or macOS Vision."""
+"""Background removal using macOS Vision (default) or rembg (fallback)."""
 
 import time
 
 def remove_background(image_bytes: bytes) -> tuple[bytes, float]:
     """
-    Remove background using rembg (best quality) or fallback to Vision.
+    Remove background.
+    Priority:
+    1. macOS Vision (Fast, native, no download)
+    2. rembg (Slower, requires model download)
     
     Returns:
         Tuple of (image_with_transparent_bg, elapsed_time)
     """
     start = time.time()
     
-    # Method 1: Try rembg (Robost, high quality for all objects)
-    try:
-        from rembg import remove
-        output = remove(image_bytes)
-        return output, time.time() - start
-    except ImportError:
-        pass
-    except Exception as e:
-        print(f"⚠️ rembg failed: {e}")
-
-    # Method 2: Fallback to macOS Vision (Fast, native, but picky)
+    # Method 1: macOS Vision
     try:
         from AppKit import NSBitmapImageRep, NSPNGFileType
         from Quartz import (
@@ -36,13 +29,11 @@ def remove_background(image_bytes: bytes) -> tuple[bytes, float]:
         image_source = CGImageSourceCreateWithData(cf_data, None)
         
         if not image_source:
-             print("⚠️ Vision: Failed to create image source")
-             return image_bytes, time.time() - start
+             raise Exception("Vision: Failed to create image source")
         
         cg_image = CGImageSourceCreateImageAtIndex(image_source, 0, None)
         if not cg_image:
-            print("⚠️ Vision: Failed to create CGImage")
-            return image_bytes, time.time() - start
+            raise Exception("Vision: Failed to create CGImage")
         
         # Create segmentation request
         request = Vision.VNGenerateForegroundInstanceMaskRequest.alloc().init()
@@ -50,12 +41,11 @@ def remove_background(image_bytes: bytes) -> tuple[bytes, float]:
         
         success, error = handler.performRequests_error_([request], None)
         if not success:
-            print(f"⚠️ Vision: Request failed - {error}")
-            return image_bytes, time.time() - start
+            raise Exception(f"Vision request failed: {error}")
         
         results = request.results()
         if not results or len(results) == 0:
-            print("⚠️ Vision: No subject detected")
+            # No subject? Return original
             return image_bytes, time.time() - start
         
         # Generate mask
@@ -65,8 +55,7 @@ def remove_background(image_bytes: bytes) -> tuple[bytes, float]:
         )
         
         if error:
-            print(f"⚠️ Vision: Mask generation failed - {error}")
-            return image_bytes, time.time() - start
+            raise Exception(f"Vision mask generation failed: {error}")
         
         # Apply mask
         mask_ci = CIImage.imageWithCVPixelBuffer_(mask_buffer)
@@ -89,9 +78,18 @@ def remove_background(image_bytes: bytes) -> tuple[bytes, float]:
         
         return bytes(png_data), time.time() - start
 
+    except Exception as e:
+        # print(f"⚠️ Vision failed, trying rembg: {e}")
+        pass
+
+    # Method 2: rembg (Fallback)
+    try:
+        from rembg import remove
+        output = remove(image_bytes)
+        return output, time.time() - start
     except ImportError:
         pass
     except Exception as e:
-        print(f"⚠️ Vision failed: {e}")
+        print(f"⚠️ rembg failed: {e}")
         
     return image_bytes, time.time() - start

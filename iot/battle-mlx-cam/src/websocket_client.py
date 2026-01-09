@@ -5,10 +5,8 @@ import json
 import threading
 import websocket
 
-
 # Server URL
 WS_URL = "ws://server.riftoperation.ethan-folio.fr/ws"
-
 
 class RiftWebSocket:
     """WebSocket client for Rift Operation battle server."""

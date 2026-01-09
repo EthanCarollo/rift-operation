@@ -8,7 +8,7 @@ from io import BytesIO
 
 from src import Camera, list_cameras, transform_image, remove_background, get_api_key
 from src.gui.components import CameraPreview, LogPanel
-from src.config import PROMPT_MAPPING, KNN_DISTANCE_THRESHOLD, NON_RECOGNITION_LABELS
+from src.config import PROMPT_MAPPING, KNN_DISTANCE_THRESHOLD, NON_RECOGNITION_LABELS, ATTACK_TO_COUNTER_LABEL
 
 class BattlePanel:
     """Manages one side (Dream/Nightmare)."""
@@ -73,12 +73,15 @@ class BattleView(ctk.CTkFrame):
         super().__init__(parent, fg_color="#0a0a14")
         self.ws = ws
         self.knn = knn
+        self.knn = knn
         self.open_training = open_training_callback
         self.running = False
+        self.current_attack = None
         
         self._build_ui()
         self._detect_cameras()
         self._start_preview_loop()
+        self._start_state_monitor()
         
     def _build_ui(self):
         # Top
@@ -111,13 +114,18 @@ class BattleView(ctk.CTkFrame):
         # Controls
         controls = ctk.CTkFrame(self, height=60, fg_color="#1a1a2e")
         controls.pack(fill="x")
-        self.start_btn = ctk.CTkButton(controls, text="▶ START ALL", font=ctk.CTkFont(size=16, weight="bold"), 
-                                       fg_color="#22c55e", width=180, height=40, command=self.start)
-        self.start_btn.pack(side="left", padx=20, pady=10)
         
-        self.stop_btn = ctk.CTkButton(controls, text="⏹ STOP", font=ctk.CTkFont(size=16, weight="bold"), 
-                                      fg_color="#ef4444", width=180, height=40, state="disabled", command=self.stop)
-        self.stop_btn.pack(side="left", padx=20)
+        # Status Label instead of buttons
+        self.status_label = ctk.CTkLabel(controls, text="⏳ WAITING FOR BATTLE STATE...", font=ctk.CTkFont(size=16, weight="bold"), text_color="#888")
+        self.status_label.pack(pady=15)
+        
+        # self.start_btn = ctk.CTkButton(controls, text="▶ START ALL", font=ctk.CTkFont(size=16, weight="bold"), 
+        #                                fg_color="#22c55e", width=180, height=40, command=self.start)
+        # self.start_btn.pack(side="left", padx=20, pady=10)
+        
+        # self.stop_btn = ctk.CTkButton(controls, text="⏹ STOP", font=ctk.CTkFont(size=16, weight="bold"), 
+        #                               fg_color="#ef4444", width=180, height=40, state="disabled", command=self.stop)
+        # self.stop_btn.pack(side="left", padx=20)
 
     def log(self, msg, level="info", role=""):
         self.logger.log(msg, level, role)
@@ -138,16 +146,43 @@ class BattleView(ctk.CTkFrame):
             self.log("FAL_KEY missing", "error")
             return
         self.running = True
-        self.start_btn.configure(state="disabled")
-        self.stop_btn.configure(state="normal")
-        self.log("Started", "success")
+        self.running = True
+        # self.start_btn.configure(state="disabled")
+        # self.stop_btn.configure(state="normal")
+        self.log(f"Started (Attack: {self.current_attack})", "success")
         self._loop()
 
     def stop(self):
         self.running = False
-        self.start_btn.configure(state="normal")
-        self.stop_btn.configure(state="disabled")
+        # self.start_btn.configure(state="normal")
+        # self.stop_btn.configure(state="disabled")
         self.log("Stopped", "info")
+
+    def _start_state_monitor(self):
+        """Monitor server state to auto start/stop."""
+        if self.ws.last_state:
+            state = self.ws.last_state.get("battle_state", "IDLE")
+            attack = self.ws.last_state.get("battle_boss_attack")
+            
+            # Update current attack
+            if attack != self.current_attack:
+                self.current_attack = attack
+                self.log(f"Boss Attack: {attack}", "info")
+            
+            # Auto Start/Stop
+            if state == "FIGHTING" and not self.running:
+                self.status_label.configure(text=f"⚔️ FIGHTING ({attack})", text_color="#22c55e")
+                self.start()
+            elif state in ["WEAKENED", "CAPTURED", "IDLE"] and self.running:
+                self.status_label.configure(text=f"⏸ {state}", text_color="#ef4444")
+                self.stop()
+            elif not self.running:
+                self.status_label.configure(text=f"⏳ {state}", text_color="#888")
+            else:
+                # Update label while running
+                self.status_label.configure(text=f"⚔️ FIGHTING ({attack})", text_color="#22c55e")
+                
+        self.after(500, self._start_state_monitor)
 
     def _loop(self):
         if not self.running: return
@@ -166,10 +201,23 @@ class BattleView(ctk.CTkFrame):
             is_rec = False
             
             # Use thresholds from config
+            target_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
+            
             if label not in ["Error"] and dist < KNN_DISTANCE_THRESHOLD:
-                is_rec = (label not in NON_RECOGNITION_LABELS)
+                # Logic: Recognized ONLY if it matches the counter for current attack
+                if target_label:
+                    is_rec = (label == target_label)
+                else:
+                    is_rec = False # No attack = no recognition needed
                 
-                self.after(0, lambda: p.rec_label.configure(text=f"👁️ {label.upper()} ({dist:.1f})", text_color="#22c55e" if is_rec else "#888"))
+                # Visual feedback
+                color = "#22c55e" if is_rec else "#888"
+                status_text = f"👁️ {label.upper()}"
+                if target_label and label != target_label:
+                    status_text += f" (Need: {target_label})"
+                    color = "#ef4444"
+                
+                self.after(0, lambda: p.rec_label.configure(text=f"{status_text} ({dist:.1f})", text_color=color))
                 
                 if is_rec:
                     # Get prompt from config
