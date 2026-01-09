@@ -18,7 +18,7 @@ class RiftLedController(EspController):
         super().__init__(config, "RiftLedController")
 
         self.led_pin = 14
-        self.led_count = 48
+        self.led_count = 88
 
         self.led_strip = LedStrip(self.led_pin, self.led_count)
         self.led_strip.clear()

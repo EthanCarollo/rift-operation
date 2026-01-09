@@ -84,8 +84,8 @@ class DepthController(EspController):
     def is_my_turn(self):
         """Vérifie si c'est notre tour de jouer"""
         current_player = self.state.get("depth_current_player")
-        partition = self.state.get("depth_partition", [])
-        position = self.state.get("depth_partition_position", 0)
+        partition = self.state.get("depth_partition") or []
+        position = self.state.get("depth_partition_position") or 0
         
         if current_player != self.role:
             return False
@@ -106,8 +106,8 @@ class DepthController(EspController):
         return self.state.get("rift_part_count") == 2
 
     def depth_finished(self):
-        partition = self.state.get("depth_partition", [])
-        position = self.state.get("depth_partition_position", 0)
+        partition = self.state.get("depth_partition") or []
+        position = self.state.get("depth_partition_position") or 0
         return position >= len(partition)
 
     # --------------------------------------------------
@@ -162,8 +162,8 @@ class DepthController(EspController):
 
     async def play_partition(self):
         """Joue la partie de la partition qui nous revient (ping-pong)"""
-        partition = self.state.get("depth_partition", [])
-        position = self.state.get("depth_partition_position", 0)
+        partition = self.state.get("depth_partition") or []
+        position = self.state.get("depth_partition_position") or 0
         
         self.logger.info(f"🎮 Starting my turn at position {position}")
 
