@@ -122,7 +122,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { io } from 'socket.io-client';
 
 // Backend URL - computed on client side only (window not available during SSR)
-const backendUrl = ref('');
+const backendUrl = ref('http://localhost:5010');
 
 // Will be set in onMounted when window is available
 
@@ -215,7 +215,7 @@ async function fetchCameras() {
 
 onMounted(async () => {
     // Set backend URL on client side (window not available during SSR)
-    backendUrl.value = `http://${window.location.hostname}:5000`;
+    backendUrl.value = `http://${window.location.hostname}:5010`;
     console.log('[Config] Backend URL:', backendUrl.value);
 
     connect();

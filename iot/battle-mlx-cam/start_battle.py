@@ -112,6 +112,31 @@ BACK_DIR = os.path.join(BASE_DIR, "back")
 FRONT_DIR = os.path.join(BASE_DIR, "front")
 CONDA_ENV_NAME = "rift-operation"
 
+# Required ports
+BACKEND_PORT = 5010
+FRONTEND_PORT = 3010
+
+def kill_port_processes():
+    """Kill any processes running on required ports."""
+    ports = [BACKEND_PORT, FRONTEND_PORT]
+    
+    for port in ports:
+        try:
+            # Find process using the port via lsof
+            result = subprocess.run(
+                ["lsof", "-ti", f":{port}"],
+                capture_output=True, text=True
+            )
+            if result.stdout.strip():
+                pids = result.stdout.strip().split('\n')
+                for pid in pids:
+                    if pid:
+                        log(f"🔪 Killing process {pid} on port {port}...", Colors.WARNING)
+                        subprocess.run(["kill", "-9", pid], capture_output=True)
+                log(f"✅ Port {port} cleared", Colors.GREEN)
+        except Exception as e:
+            log(f"⚠️ Could not clear port {port}: {e}", Colors.WARNING)
+
 def check_dependencies():
     """Check if brew and conda are installed, provide installation instructions if not."""
     
@@ -137,7 +162,10 @@ def check_dependencies():
 def setup_environment():
     """Setup conda environment and install dependencies."""
     
-    # 0. Check dependencies first
+    # 0. Kill any processes on required ports
+    kill_port_processes()
+    
+    # 0b. Check dependencies first
     if not check_dependencies():
         log("⚠️ Please install the missing dependencies and try again.", Colors.FAIL)
         sys.exit(1)
@@ -171,8 +199,8 @@ def setup_environment():
     log("✅ Frontend built", Colors.GREEN)
 
 def start_backend():
-    log("🚀 Starting Backend on port 5000...", Colors.BLUE)
-    cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "main.py"]
+    log("🚀 Starting Backend (headless) on port 5010...", Colors.BLUE)
+    cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "main_headless.py"]
     return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid)
 
 def start_frontend():
