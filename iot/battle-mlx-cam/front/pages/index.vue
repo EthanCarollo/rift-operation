@@ -1,5 +1,6 @@
 <template>
-    <div class="fixed inset-0 bg-black flex flex-col overflow-hidden font-mono select-none" @click="unlockAudio">
+    <div class="fixed inset-0 bg-black flex flex-col overflow-hidden font-mono select-none"
+        :class="{ 'cursor-none': selectedRole }" @click="unlockAudio">
 
         <!-- 1. ROLL SELECTION SCREEN (Initial State) -->
         <div v-if="!selectedRole" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a]">
