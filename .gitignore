@@ -38,3 +38,7 @@ iot/esp/src/Core/Controller/Depth/Dream/dream_env
 lab/flux-webcam/.env
 lab/flux-webcam-live/.env
 venv
+.env
+.DS_Store
+venv
+iot/battle-mlx-cam/front/public/battle-workshop/video-battle-fighting.mp4
