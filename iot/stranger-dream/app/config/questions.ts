@@ -38,6 +38,6 @@ export const questions: Record<string, Question> = {
   step_4: {
     type: 'text',
     step: 4,
-    text: "Réunissez Dark Cosmo et Cosmo ensemble."
+    text: "Ramenez Dark Cosmo à la lumière dans son foyer."
   },
 }
