@@ -1,25 +1,25 @@
+let globalSocket: WebSocket | null = null;
+let globalReconnectTimer: any = null;
+const WS_URL = 'ws://server.riftoperation.ethan-folio.fr/ws';
+
 export const useRiftSocket = () => {
     const isConnected = useState('rift-socket-connected', () => false);
     const lastPayload = useState('rift-socket-payload', () => null);
-    // Internal socket reference (not reactive)
-    let socket: WebSocket | null = null;
-    let reconnectTimer: any = null;
-    const WS_URL = 'ws://server.riftoperation.ethan-folio.fr/ws';
 
     const connect = () => {
         if (Date.now() - 0 < 0) return;
-        if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+        if (globalSocket && (globalSocket.readyState === WebSocket.OPEN || globalSocket.readyState === WebSocket.CONNECTING)) {
             return;
         }
 
         console.log(`[RiftSocket] Connecting to ${WS_URL}...`);
-        socket = new WebSocket(WS_URL);
-        socket.onopen = () => {
+        globalSocket = new WebSocket(WS_URL);
+        globalSocket.onopen = () => {
             console.log('[RiftSocket] Connected');
             isConnected.value = true;
         };
 
-        socket.onmessage = (event) => {
+        globalSocket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 lastPayload.value = data;
@@ -28,40 +28,51 @@ export const useRiftSocket = () => {
             }
         };
 
-        socket.onclose = () => {
+        globalSocket.onclose = () => {
             console.log('[RiftSocket] Disconnected');
             isConnected.value = false;
-            socket = null;
+            globalSocket = null;
             // Auto reconnect
             scheduleReconnect();
         };
 
-        socket.onerror = (err) => {
+        globalSocket.onerror = (err) => {
             console.error('[RiftSocket] Error:', err);
-            if (socket) socket.close();
+            if (globalSocket) globalSocket.close();
         };
     };
 
     const scheduleReconnect = () => {
-        if (reconnectTimer) clearTimeout(reconnectTimer);
-        reconnectTimer = setTimeout(() => {
+        if (globalReconnectTimer) clearTimeout(globalReconnectTimer);
+        globalReconnectTimer = setTimeout(() => {
             connect();
         }, 3000);
     };
 
     const disconnect = () => {
-        if (reconnectTimer) clearTimeout(reconnectTimer);
-        if (socket) {
-            socket.close();
-            socket = null;
+        if (globalReconnectTimer) clearTimeout(globalReconnectTimer);
+        if (globalSocket) {
+            globalSocket.close();
+            globalSocket = null;
         }
         isConnected.value = false;
+    };
+
+    const send = (payload: any) => {
+        console.log('[RiftSocket] Attempting to send:', payload);
+        if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
+            globalSocket.send(JSON.stringify(payload));
+            console.log('[RiftSocket] Sent successfully');
+        } else {
+            console.warn('[RiftSocket] Cannot send, socket not open. State:', globalSocket?.readyState);
+        }
     };
 
     return {
         isConnected,
         lastPayload,
         connect,
-        disconnect
+        disconnect,
+        send
     };
 };

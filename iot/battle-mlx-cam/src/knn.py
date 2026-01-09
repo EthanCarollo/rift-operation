@@ -6,6 +6,16 @@ import json
 import numpy as np
 import time
 from PIL import Image
+import ssl
+
+# Fix for MacOS SSL certificate verification error when downloading models
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
 
 # Global imports (lazy loaded to avoid slowing down startup if missing)
 torch = None
@@ -14,11 +24,13 @@ models = None
 
 class KNNService:
     def __init__(self, dataset_name="default_dataset"):
-        self.model_dir = os.path.join(os.path.dirname(__file__), "../model")
-        os.makedirs(self.model_dir, exist_ok=True)
+        from pathlib import Path
+        self.root_dir = Path(__file__).parent.parent
+        self.model_dir = self.root_dir / "model"
+        self.model_dir.mkdir(exist_ok=True)
         
         self.dataset_name = dataset_name
-        self.samples_file = os.path.join(self.model_dir, f"{dataset_name}.json")
+        self.samples_file = self.model_dir / f"{dataset_name}.json"
         
         self.training_samples = []  # List of {'label': str, 'vector': []}
         self.model = None
@@ -52,15 +64,25 @@ class KNNService:
     def set_dataset(self, name):
         """Switch dataset."""
         self.dataset_name = name
-        self.samples_file = os.path.join(self.model_dir, f"{name}.json")
-        self.load_samples()
+        self.samples_file = self.model_dir / f"{name}.json"
+        
+        # Ensure file exists if it's new
+        if not self.samples_file.exists():
+            self.training_samples = []
+            self._save_samples()
+        else:
+            self.load_samples()
+
+    def create_dataset(self, name):
+        """Create and switch to new dataset."""
+        self.set_dataset(name)
 
     def list_datasets(self):
         """List available datasets."""
         files = [f.replace(".json", "") for f in os.listdir(self.model_dir) if f.endswith(".json")]
         return files or ["default_dataset"]
 
-    def add_sample(self, image_bytes, label):
+    def add_sample(self, image_bytes, label, save=True):
         """Extract features and save sample."""
         self._ensure_deps()
         
@@ -72,10 +94,15 @@ class KNNService:
                 "id": str(time.time())
             }
             self.training_samples.append(sample)
-            self._save_samples()
+            if save:
+                self._save_samples()
             print(f"[KNN] Added sample '{label}' to {self.dataset_name} (Total: {len(self.training_samples)})")
             return True
         return False
+        
+    def save(self):
+        """Force save to disk."""
+        self._save_samples()
 
     def predict(self, image_bytes):
         """Find nearest neighbor."""
