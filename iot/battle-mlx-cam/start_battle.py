@@ -171,7 +171,7 @@ def setup_environment():
     log("✅ Frontend built", Colors.GREEN)
 
 def start_backend():
-    log("🚀 Starting Backend...", Colors.BLUE)
+    log("🚀 Starting Backend on port 5000...", Colors.BLUE)
     cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "main.py"]
     return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid)
 
@@ -217,7 +217,8 @@ def open_browser(dream_screen=None, nightmare_screen=None):
             url
         ]
         
-        subprocess.Popen(cmd)
+        # Suppress Chrome stderr/stdout to avoid log spam
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
     # Launch both windows
     launch_kiosk(url_dream, dream_screen, "DREAM")
