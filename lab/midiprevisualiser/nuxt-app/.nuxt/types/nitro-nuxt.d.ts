@@ -1,7 +1,7 @@
 
 /// <reference path="app.config.d.ts" />
 /// <reference path="runtime-config.d.ts" />
-/// <reference types="/Users/ethew/Documents/Github/iotm1/lab/midiprevisualiser/nuxt-app/node_modules/@nuxt/nitro-server/dist/index.mjs" />
+/// <reference types="/Users/anthonypelaz/Documents/Github/iotm1/lab/midiprevisualiser/nuxt-app/node_modules/@nuxt/nitro-server/dist/index.mjs" />
 /// <reference path="middleware.d.ts" />
 /// <reference path="./schema.d.ts" />
 

@@ -37,7 +37,7 @@ const EXPERIENCE_FLOW = [
 
 const connectWebSocket = () => {
   try {
-    socket = new WebSocket('ws://192.168.10.4:8000/ws')
+    socket = new WebSocket('ws://192.168.10.7:8000/ws')
 
     socket.onopen = () => {
       isConnected.value = true

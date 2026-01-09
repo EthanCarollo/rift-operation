@@ -7,7 +7,7 @@ from queue import Queue, Empty
 from controllerRaspberry import SpheroController, TARGET_SPHERO_NAMES
 
 # ================= CONFIG =================
-WS_URL = "ws://192.168.10.4:8000/ws"
+WS_URL = "ws://192.168.10.7:8000/ws"
 ROLE = "dream"
 DEVICE_ID = "macbook_pro_1"
 
@@ -19,10 +19,15 @@ class DepthController:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
         
         self.role = ROLE
-        self.state = {}
+        self.state = {
+            "depth_current_player": "dream",
+            "depth_partition": [1, 2, 3, 4, 5, 6, 5, 4, 5, 1, 3, 2, 2, 3, 1, 2, 5, 6, 4, 5],
+            "depth_partition_position": 0
+        }
         self.is_playing = False
         self.device_id = DEVICE_ID
         self.last_log_time = 0
+        self.partition_started = False  # Only gate the very first note
         
         # Helper for thread safety with WS
         self.ws_app = None
@@ -89,8 +94,11 @@ class DepthController:
     def on_message(self, ws, message):
         try:
             data = json.loads(message)
-            self.state = data
-            self.logger.info(f"📡 State updated: {json.dumps(data)}")
+            # Only update values that are not None (preserve defaults)
+            for key, value in data.items():
+                if value is not None:
+                    self.state[key] = value
+            self.logger.info(f"📡 State updated: {json.dumps(self.state)}")
         except json.JSONDecodeError:
             self.logger.error(f"Invalid JSON received: {message}")
 
@@ -147,6 +155,16 @@ class DepthController:
                 self.logger.info(f"🎵 Playing sound: {name}")
             except Exception as e:
                 self.logger.error(f"Failed to send sound: {e}")
+    
+    def play_note_sound(self, note):
+        note_string = self.note_to_sound.get(note)
+        sound_json = {"depth_sound": note_string}
+        if self.ws_app and self.ws_app.sock and self.ws_app.sock.connected:
+            try:
+                self.ws_app.send(json.dumps(sound_json))
+                self.logger.info(f"🎵 Playing sound: {note}")
+            except Exception as e:
+                self.logger.error(f"Failed to send sound: {e}")
 
     # --------------------------------------------------
     # Conditions
@@ -197,6 +215,7 @@ class DepthController:
                 start_json = {"depth_game_started": True}
                 if self.ws_app and self.ws_app.sock and self.ws_app.sock.connected:
                     self.ws_app.send(json.dumps(start_json))
+                self.partition_started = True
                 return True
             except Empty:
                 continue
@@ -249,6 +268,7 @@ class DepthController:
             
             # Always send the note that was actually played
             self.play_note(shaken_note)
+            self.play_note_sound(shaken_note)
             
             if shaken_note == current_note:
                 self.logger.info(f"✅ Correct Shake: {shaken_sphero_name} = note {shaken_note} ({position + 1}/{len(partition)})")
@@ -298,6 +318,8 @@ class DepthController:
         if self.state.get("reset_system") is True:
             if self.is_playing:
                 self.is_playing = False
+            if self.partition_started:
+                self.partition_started = False
                 self.logger.info("🔄 Reset active - Pausing system")
             time.sleep(1)
             return
@@ -326,11 +348,12 @@ class DepthController:
         self.is_playing = True
         self.logger.info(f"🚀 {self.role.upper()} Playing!")
 
-        # 1. Wait for a shake to START the partition (only once at beginning)
-        started = self.wait_for_start_shake()
-        if not started:
-            self.is_playing = False
-            return
+        # 1. Wait for a shake to START the partition (only once at very beginning)
+        if not self.partition_started and self.state.get("depth_partition_position", 0) == 0:
+            started = self.wait_for_start_shake()
+            if not started:
+                self.is_playing = False
+                return
         
         # 2. Play the actual partition (handles RETRY internally by looping back to first note)
         result = self.play_partition()
