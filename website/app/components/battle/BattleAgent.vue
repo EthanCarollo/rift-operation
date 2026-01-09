@@ -1,5 +1,6 @@
 <template>
-  <div class="absolute bottom-12 left-0 right-0 flex items-end justify-center px-12 gap-8 pointer-events-none z-30">
+  <div class="absolute inset-x-0 mx-auto transition-all duration-500 z-30 pointer-events-none"
+    :class="isVertical ? 'bottom-20 flex flex-col items-center justify-end gap-12' : 'bottom-12 flex flex-row items-end justify-center px-12 gap-8'">
     <!-- LEFT: Dream Status & Button (PINK) -->
     <div class="flex flex-col items-center gap-4 transition-all duration-500 pointer-events-auto">
       <button :disabled="!dreamValid || isAttacking" @click.stop="$emit('attack')"
@@ -19,11 +20,14 @@
 
     <!-- CENTER: Agent Zone (Images) -->
     <div
-      class="relative w-[400px] aspect-video bg-black/20 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden backdrop-blur-sm transition-all duration-700 ease-in-out z-30 pointer-events-auto"
-      :class="{
-        'scale-105 border-yellow-400/50 shadow-[0_0_30px_rgba(250,204,21,0.2)]': dreamValid && nightmareValid,
-        '!fixed !top-1/2 !left-1/2 !-translate-x-1/2 !-translate-y-1/2 !scale-[3] !opacity-0 !duration-500': isAttacking
-      }">
+      class="relative bg-black/20 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden backdrop-blur-sm transition-all duration-700 ease-in-out z-30 pointer-events-auto"
+      :class="[
+        isVertical ? 'order-first w-[80vw] aspect-square mb-4' : 'w-[400px] aspect-video',
+        {
+          'scale-105 border-yellow-400/50 shadow-[0_0_30px_rgba(250,204,21,0.2)]': dreamValid && nightmareValid,
+          '!fixed !top-1/2 !left-1/2 !-translate-x-1/2 !-translate-y-1/2 !scale-[3] !opacity-0 !duration-500': isAttacking
+        }
+      ]">
       <template v-if="drawingData">
         <img :src="drawingData" class="w-full h-full object-contain" />
       </template>
@@ -57,7 +61,11 @@ defineProps({
   dreamValid: Boolean,
   nightmareValid: Boolean,
   isAttacking: Boolean,
-  drawingData: String
+  dreamValid: Boolean,
+  nightmareValid: Boolean,
+  isAttacking: Boolean,
+  drawingData: String,
+  isVertical: Boolean
 });
 defineEmits(['attack']);
 </script>

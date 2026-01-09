@@ -32,7 +32,7 @@
     </div>
     <!-- TOP CENTER: Health Bar -->
     <div v-if="state !== 'IDLE'" class="absolute top-[20%] left-0 right-0 flex justify-center">
-      <div class="w-[60vw] max-w-2xl">
+      <div :class="isVertical ? 'w-[90vw]' : 'w-[60vw] max-w-2xl'">
         <div class="flex justify-between text-xs uppercase tracking-widest text-white/60 mb-2 px-1">
           <span>Santé de l'Étranger</span>
           <span>{{ hp * 20 }}%</span>
@@ -57,7 +57,10 @@ defineProps({
   attack: String,
   videoName: String,
   currentMusic: String,
-  shouldLoop: Boolean
+  videoName: String,
+  currentMusic: String,
+  shouldLoop: Boolean,
+  isVertical: Boolean
 });
 defineEmits(['simulate', 'capture']);
 
