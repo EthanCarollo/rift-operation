@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from src import KNNService, RiftWebSocket
 # Import Views
 from src.gui import BattleView, TrainingView
+# Import Web Server
+from src.web_server import start_server, set_battle_view, stop_server
 
 load_dotenv()
 ctk.set_appearance_mode("dark")
@@ -50,6 +52,10 @@ class App(ctk.CTk):
         )
         self.current_view.pack(fill="both", expand=True)
         
+        # Start web server for remote monitoring
+        set_battle_view(self.current_view)
+        start_server(host='0.0.0.0', port=5000)
+        
     def show_training(self):
         """Switch to Training View."""
         if self.current_view:
@@ -67,6 +73,7 @@ class App(ctk.CTk):
 
     def on_close(self):
         """Cleanup on exit."""
+        stop_server()
         if self.current_view:
             try:
                 self.current_view.cleanup()
