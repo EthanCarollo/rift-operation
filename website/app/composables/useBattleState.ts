@@ -126,7 +126,8 @@ export function useBattleState(debug = false) {
         setTimeout(() => {
             if (battleState.value === 'APPEARING') {
                 log('Intro finished, sending FIGHTING to server...');
-                const firstAttack = getNextAttack();
+                // Use INITIAL_HP (5) to deterministically pick first attack
+                const firstAttack = getNextAttack(INITIAL_HP);
                 sendBattlePayload('FIGHTING', {
                     battle_boss_hp: INITIAL_HP,
                     battle_boss_attack: firstAttack
@@ -230,7 +231,8 @@ export function useBattleState(debug = false) {
                 battleState.value = 'WEAKENED';
                 handleStateTransition('WEAKENED');
             } else {
-                const newAttack = getNextAttack();
+                // Deterministic attack based on next HP
+                const newAttack = getNextAttack(nextHp);
                 sendBattlePayload('FIGHTING', { battle_boss_hp: nextHp, battle_boss_attack: newAttack });
                 // Optimistic FIGHTING update
                 battleState.value = 'FIGHTING';
