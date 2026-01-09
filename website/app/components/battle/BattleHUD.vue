@@ -13,7 +13,7 @@
       </span>
     </div>
     <!-- TOP RIGHT: Debug Panel -->
-    <div v-if="showDebug"
+    <div v-if="showDebug && state !== 'IDLE'"
       class="absolute top-6 right-6 bg-black/60 p-3 rounded border border-white/10 text-[10px] text-white/50 font-mono leading-tight z-50 pointer-events-auto">
       <div>STATE: <span class="text-white">{{ state }}</span></div>
       <div class="mt-1 text-purple-400">VIDEO: {{ videoName }}</div>
@@ -31,7 +31,7 @@
       </div>
     </div>
     <!-- TOP CENTER: Health Bar -->
-    <div class="absolute top-[20%] left-0 right-0 flex justify-center">
+    <div v-if="state !== 'IDLE'" class="absolute top-[20%] left-0 right-0 flex justify-center">
       <div class="w-[60vw] max-w-2xl">
         <div class="flex justify-between text-xs uppercase tracking-widest text-white/60 mb-2 px-1">
           <span>Santé de l'Étranger</span>

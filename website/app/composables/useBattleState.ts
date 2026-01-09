@@ -29,7 +29,8 @@ export function useBattleState(debug = false) {
     const musicShouldLoop = ref(true);
     const lastReceivedPayload = ref<any>(null);
     // UI State
-    const drawingData = ref<string | null>(null);
+    const dreamDrawingImage = ref<string | null>(null);
+    const nightmareDrawingImage = ref<string | null>(null);
     const isAttacking = ref(false);
     const isHit = ref(false);
     const videoError = ref(false);
@@ -93,7 +94,7 @@ export function useBattleState(debug = false) {
         if (!config) return;
 
         // Apply config
-        if (config.video) currentVideo.value = config.video;
+        if (config.video && config.video !== currentVideo.value) currentVideo.value = config.video;
         if (config.music) currentMusic.value = config.music;
         musicShouldLoop.value = config.loop;
 
@@ -196,9 +197,8 @@ export function useBattleState(debug = false) {
         }
 
         // Sync Drawing
-        if (payload.battle_drawing_data) drawingData.value = payload.battle_drawing_data;
-        if (payload.battle_drawing_nightmare_image) drawingData.value = payload.battle_drawing_nightmare_image;
-        if (payload.battle_drawing_dream_image) drawingData.value = payload.battle_drawing_dream_image;
+        if (payload.battle_drawing_nightmare_image) nightmareDrawingImage.value = payload.battle_drawing_nightmare_image;
+        if (payload.battle_drawing_dream_image) dreamDrawingImage.value = payload.battle_drawing_dream_image;
     }
 
     // --- ACTIONS ---
@@ -251,8 +251,13 @@ export function useBattleState(debug = false) {
         log('Enabling Simulation Mode');
         dreamCounterValid.value = true;
         nightmareCounterValid.value = true;
-        if (!drawingData.value) {
-            drawingData.value = 'https://via.placeholder.com/600x400/000000/FFFFFF?text=AGENT+IMAGE';
+        dreamCounterValid.value = true;
+        nightmareCounterValid.value = true;
+        if (!dreamDrawingImage.value) {
+            dreamDrawingImage.value = 'https://via.placeholder.com/600x400/000000/FFFFFF?text=DREAM+IMAGE';
+        }
+        if (!nightmareDrawingImage.value) {
+            nightmareDrawingImage.value = 'https://via.placeholder.com/600x400/000000/FFFFFF?text=NIGHTMARE+IMAGE';
         }
     }
 
@@ -296,7 +301,9 @@ export function useBattleState(debug = false) {
         currentVideo,
         currentMusic,
         musicShouldLoop,
-        drawingData,
+
+        dreamDrawingImage,
+        nightmareDrawingImage,
         isAttacking,
         isHit,
         videoError,
