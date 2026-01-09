@@ -121,8 +121,10 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { io } from 'socket.io-client';
 
-// Backend URL - uses same host as the frontend, just different port
-const BACKEND_URL = `http://${window.location.hostname}:5000`;
+// Backend URL - computed on client side only (window not available during SSR)
+const backendUrl = ref('');
+
+// Will be set in onMounted when window is available
 
 // State
 const connected = ref(false);
@@ -153,7 +155,7 @@ let socket = null;
 
 // Connect to backend
 function connect() {
-    socket = io(BACKEND_URL, {
+    socket = io(backendUrl.value, {
         transports: ['websocket', 'polling']
     });
 
@@ -201,7 +203,7 @@ function updateCamera(role) {
 // Fetch available cameras from backend
 async function fetchCameras() {
     try {
-        const res = await fetch(`${BACKEND_URL}/cameras`);
+        const res = await fetch(`${backendUrl.value}/cameras`);
         if (res.ok) {
             cameras.value = await res.json();
             console.log('[Config] Cameras loaded:', cameras.value);
@@ -212,6 +214,10 @@ async function fetchCameras() {
 }
 
 onMounted(async () => {
+    // Set backend URL on client side (window not available during SSR)
+    backendUrl.value = `http://${window.location.hostname}:5000`;
+    console.log('[Config] Backend URL:', backendUrl.value);
+
     connect();
     await fetchCameras();
 
