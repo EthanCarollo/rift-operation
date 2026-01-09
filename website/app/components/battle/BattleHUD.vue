@@ -1,12 +1,8 @@
 <template>
   <div class="absolute inset-0 z-20 pointer-events-none">
-    <!-- Background Music Player -->
     <audio ref="musicRef" :src="currentMusic" :loop="shouldLoop" autoplay muted @loadeddata="onMusicLoaded"
       @error="handleMusicError"></audio>
-
-    <!-- Sound Effects Player (for hit sounds, etc.) -->
     <audio ref="sfxRef" @error="handleSfxError"></audio>
-
     <!-- TOP LEFT: Connection Status -->
     <div
       class="absolute top-6 left-6 flex items-center gap-3 bg-black/40 backdrop-blur px-3 py-1.5 rounded-full border border-white/10 pointer-events-auto">

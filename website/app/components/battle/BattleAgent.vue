@@ -1,6 +1,5 @@
 <template>
   <div class="absolute bottom-12 left-0 right-0 flex items-end justify-center px-12 gap-8 pointer-events-none z-30">
-
     <!-- LEFT: Dream Status & Button (PINK) -->
     <div class="flex flex-col items-center gap-4 transition-all duration-500 pointer-events-auto">
       <button :disabled="!dreamValid || isAttacking" @click.stop="$emit('attack')"
@@ -8,7 +7,6 @@
         :class="dreamValid ? 'bg-pink-600 text-white hover:bg-pink-500 hover:scale-110 shadow-[0_0_20px_rgba(219,39,119,0.6)] animate-pulse' : 'bg-gray-800 text-gray-500 opacity-50 cursor-not-allowed'">
         LANCER
       </button>
-
       <div class="flex flex-col items-center gap-2" :class="dreamValid ? 'opacity-100' : 'opacity-40 grayscale'">
         <div
           class="bg-black/60 border border-pink-500/30 px-4 py-3 rounded-lg flex flex-col items-center min-w-[100px]">
@@ -41,7 +39,6 @@
         :class="nightmareValid ? 'bg-blue-600 text-white hover:bg-blue-500 hover:scale-110 shadow-[0_0_20px_rgba(37,99,235,0.6)] animate-pulse' : 'bg-gray-800 text-gray-500 opacity-50 cursor-not-allowed'">
         LANCER
       </button>
-
       <div class="flex flex-col items-center gap-2" :class="nightmareValid ? 'opacity-100' : 'opacity-40 grayscale'">
         <div
           class="bg-black/60 border border-blue-500/30 px-4 py-3 rounded-lg flex flex-col items-center min-w-[100px]">

@@ -1,4 +1,3 @@
-// Global socket instance (outside composable to persist across calls)
 let globalSocket: WebSocket | null = null;
 let globalReconnectTimer: any = null;
 const WS_URL = 'ws://server.riftoperation.ethan-folio.fr/ws';
