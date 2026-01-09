@@ -16,8 +16,6 @@
     <div v-if="showDebug"
       class="absolute top-6 right-6 bg-black/60 p-3 rounded border border-white/10 text-[10px] text-white/50 font-mono leading-tight z-50 pointer-events-auto">
       <div>STATE: <span class="text-white">{{ state }}</span></div>
-      <div>HP: <span class="text-white">{{ hp }}/5</span></div>
-      <div>ROUND: {{ round }}</div>
       <div class="mt-1 text-purple-400">VIDEO: {{ videoName }}</div>
       <div class="text-green-400">MUSIC: {{ currentMusic?.split('/').pop() || 'None' }}</div>
       <!-- DEV CONTROLS -->
@@ -56,7 +54,6 @@ defineProps({
   showDebug: Boolean,
   state: String,
   hp: Number,
-  round: Number,
   attack: String,
   videoName: String,
   currentMusic: String,

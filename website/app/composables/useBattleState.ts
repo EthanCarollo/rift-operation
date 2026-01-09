@@ -187,11 +187,12 @@ export function useBattleState(debug = false) {
         }
 
         // Sync Counters
-        if (payload.battle_counter_valid_parent !== undefined) {
-            dreamCounterValid.value = payload.battle_counter_valid_parent;
+        // Sync Counters (Using correct JSON keys)
+        if (payload.battle_drawing_dream_recognised !== undefined) {
+            dreamCounterValid.value = payload.battle_drawing_dream_recognised;
         }
-        if (payload.battle_counter_valid_child !== undefined) {
-            nightmareCounterValid.value = payload.battle_counter_valid_child;
+        if (payload.battle_drawing_nightmare_recognised !== undefined) {
+            nightmareCounterValid.value = payload.battle_drawing_nightmare_recognised;
         }
 
         // Sync Drawing
@@ -206,6 +207,13 @@ export function useBattleState(debug = false) {
 
         log('Attack triggered');
         const nextHp = currentHp.value - 1;
+
+        // Optimistically update HP locally
+        currentHp.value = nextHp;
+
+        // Immediately reset valid counters to disable button
+        dreamCounterValid.value = false;
+        nightmareCounterValid.value = false;
 
         // Send HIT
         sendBattlePayload('HIT', { battle_boss_hp: nextHp });
