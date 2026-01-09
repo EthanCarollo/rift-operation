@@ -45,40 +45,48 @@
 
     <!-- 2. BATTLE VIEW (Role Selected) -->
     <template v-else>
-      <video v-show="currentVideo && !videoError && battleState !== 'IDLE'" ref="videoRef"
-        class="absolute inset-0 w-full h-full object-cover z-0" :src="currentVideo" autoplay loop muted playsinline
-        @error="handleVideoError" @loadeddata="onVideoLoaded" />
-
       <!-- IDLE STATE (Minimal Black Screen + Status) -->
-      <div v-if="battleState === 'IDLE'" class="absolute inset-0 z-10 bg-black flex items-center justify-center">
-        <!-- Minimal status provided by BattleHUD below -->
-      </div>
+       <!-- Note: We keep this outside rigid rotation if strictly just black, 
+            BUT status needs to be rotated too so user can read it. 
+            So everything goes inside the rotation wrapper. -->
 
-      <!-- BATTLE UI OVERLAY -->
-      <div class="absolute inset-0 z-10 pointer-events-none" :class="{ 'vertical-layout': isVertical }">
-        <BattleHUD ref="hudRef" 
-          :is-connected="isConnected" 
-          :show-debug="showDebug" 
-          :state="battleState" 
-          :hp="currentHp"
-          :attack="currentAttack" 
-          :video-name="currentVideo?.split('/').pop() || 'None'" 
-          :current-music="currentMusic"
-          :should-loop="musicShouldLoop" 
-          :is-vertical="isVertical"
-          @simulate="simulateRecon" @capture="simulateCapture" />
+      <div id="battle-container" :style="rotationStyle" class="absolute origin-center transition-all duration-700 ease-in-out bg-black">
+        
+        <!-- Video Layer -->
+        <video v-show="currentVideo && !videoError && battleState !== 'IDLE'" ref="videoRef"
+          class="absolute inset-0 w-full h-full object-cover z-0" :src="currentVideo" autoplay loop muted playsinline
+          @error="handleVideoError" @loadeddata="onVideoLoaded" />
 
-        <template v-if="battleState !== 'IDLE'">
-          <BattleBoss v-if="!isEndState" :is-hit="isHit" :attack="currentAttack" :is-vertical="isVertical" />
-          <BattleAgent v-if="!isEndState" 
-            :dream-valid="dreamCounterValid" 
-            :nightmare-valid="nightmareCounterValid"
-            :is-attacking="isAttacking" 
-            :drawing-data="currentRoleDrawing" 
+        <!-- IDLE BG -->
+        <div v-if="battleState === 'IDLE'" class="absolute inset-0 z-10 bg-black flex items-center justify-center">
+        </div>
+
+        <!-- BATTLE UI OVERLAY -->
+        <div class="absolute inset-0 z-10 pointer-events-none" :class="{ 'vertical-layout': isVertical }">
+          <BattleHUD ref="hudRef" 
+            :is-connected="isConnected" 
+            :show-debug="showDebug" 
+            :state="battleState" 
+            :hp="currentHp"
+            :attack="currentAttack" 
+            :video-name="currentVideo?.split('/').pop() || 'None'" 
+            :current-music="currentMusic"
+            :should-loop="musicShouldLoop" 
             :is-vertical="isVertical"
-            @attack="triggerAttack" />
-          <BattleState :message="stateMessage" :sub-message="stateSubMessage" :message-class="stateMessageClass" :is-vertical="isVertical" />
-        </template>
+            @simulate="simulateRecon" @capture="simulateCapture" />
+
+          <template v-if="battleState !== 'IDLE'">
+            <BattleBoss v-if="!isEndState" :is-hit="isHit" :attack="currentAttack" :is-vertical="isVertical" />
+            <BattleAgent v-if="!isEndState" 
+              :dream-valid="dreamCounterValid" 
+              :nightmare-valid="nightmareCounterValid"
+              :is-attacking="isAttacking" 
+              :drawing-data="currentRoleDrawing" 
+              :is-vertical="isVertical"
+              @attack="triggerAttack" />
+            <BattleState :message="stateMessage" :sub-message="stateSubMessage" :message-class="stateMessageClass" :is-vertical="isVertical" />
+          </template>
+        </div>
       </div>
     </template>
   </div>
@@ -110,6 +118,37 @@ const {
 // --- COMPUTED ---
 const isVertical = computed(() => {
   return selectedRole.value === 'dream' || selectedRole.value === 'nightmare';
+});
+
+const rotationStyle = computed(() => {
+  if (selectedRole.value === 'dream') {
+    // Rotate 90deg (Clockwise)
+    return {
+      width: '100vh',
+      height: '100vw',
+      transform: 'translate(-50%, -50%) rotate(90deg)',
+      left: '50%',
+      top: '50%'
+    };
+  }
+  if (selectedRole.value === 'nightmare') {
+    // Rotate -90deg (Counter Clockwise)
+    return {
+      width: '100vh',
+      height: '100vw',
+      transform: 'translate(-50%, -50%) rotate(-90deg)',
+      left: '50%',
+      top: '50%'
+    };
+  }
+  // Default (Dev mode)
+  return {
+    width: '100%',
+    height: '100%',
+    transform: 'none',
+    left: '0',
+    top: '0'
+  };
 });
 
 const isEndState = computed(() => {
