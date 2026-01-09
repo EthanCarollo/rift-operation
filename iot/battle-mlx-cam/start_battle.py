@@ -110,18 +110,41 @@ def select_screens():
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BACK_DIR = os.path.join(BASE_DIR, "back")
 FRONT_DIR = os.path.join(BASE_DIR, "front")
+CONDA_ENV_NAME = "rift-operation"
+
+def setup_environment():
+    """Setup conda environment and install dependencies."""
+    
+    # 1. Check if conda env exists, create if not
+    log("🔍 Checking conda environment...", Colors.CYAN)
+    result = subprocess.run(["conda", "env", "list"], capture_output=True, text=True)
+    
+    if CONDA_ENV_NAME not in result.stdout:
+        log(f"📦 Creating conda environment '{CONDA_ENV_NAME}'...", Colors.WARNING)
+        subprocess.run(["conda", "create", "-n", CONDA_ENV_NAME, "python=3.10", "-y"], check=True)
+    else:
+        log(f"✅ Conda environment '{CONDA_ENV_NAME}' exists", Colors.GREEN)
+    
+    # 2. Install Python dependencies in conda env
+    log("📦 Installing Python dependencies (back)...", Colors.CYAN)
+    subprocess.run([
+        "conda", "run", "-n", CONDA_ENV_NAME, 
+        "pip", "install", "-r", "requirements.txt", "-q"
+    ], cwd=BACK_DIR, check=True)
+    log("✅ Python dependencies installed", Colors.GREEN)
+    
+    # 3. Install npm dependencies for frontend
+    log("📦 Installing npm dependencies (front)...", Colors.CYAN)
+    subprocess.run(["npm", "install"], cwd=FRONT_DIR, check=True, capture_output=True)
+    log("✅ npm dependencies installed", Colors.GREEN)
 
 def start_backend():
     log("🚀 Starting Backend...", Colors.BLUE)
-    # Ensure dependencies are installed
-    # Use conda run to execute in the rift-operation environment
-    cmd = ["conda", "run", "-n", "rift-operation", "python", "main.py"]
-    # We use preexec_fn=os.setsid to easily kill the process tree later
+    cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "main.py"]
     return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid)
 
 def start_frontend():
     log("🚀 Starting Frontend on port 3010...", Colors.CYAN)
-    # Ensure dependencies are installed if needed, but here we assume yes
     cmd = ["npm", "run", "dev:battle"]
     return subprocess.Popen(cmd, cwd=FRONT_DIR, preexec_fn=os.setsid)
 
@@ -176,6 +199,9 @@ def main():
     front_proc = None
 
     try:
+        # Setup environment first
+        setup_environment()
+        
         back_proc = start_backend()
         front_proc = start_frontend()
 
