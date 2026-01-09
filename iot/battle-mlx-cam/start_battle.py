@@ -164,6 +164,11 @@ def setup_environment():
     log("📦 Installing npm dependencies (front)...", Colors.CYAN)
     subprocess.run(["npm", "install"], cwd=FRONT_DIR, check=True, capture_output=True)
     log("✅ npm dependencies installed", Colors.GREEN)
+    
+    # 4. Build frontend for production
+    log("🔨 Building frontend...", Colors.CYAN)
+    subprocess.run(["npm", "run", "build"], cwd=FRONT_DIR, check=True, capture_output=True)
+    log("✅ Frontend built", Colors.GREEN)
 
 def start_backend():
     log("🚀 Starting Backend...", Colors.BLUE)
@@ -171,8 +176,9 @@ def start_backend():
     return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid)
 
 def start_frontend():
-    log("🚀 Starting Frontend on port 3010...", Colors.CYAN)
-    cmd = ["npm", "run", "dev:battle"]
+    log("🚀 Starting Frontend (production) on port 3010...", Colors.CYAN)
+    # Use preview to serve the built app
+    cmd = ["npx", "nuxi", "preview", "--port", "3010", "--host", "0.0.0.0"]
     return subprocess.Popen(cmd, cwd=FRONT_DIR, preexec_fn=os.setsid)
 
 def open_browser(dream_screen=None, nightmare_screen=None):
