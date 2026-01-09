@@ -93,7 +93,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import BattleHUD from '~/components/battle/BattleHUD.vue';
 import BattleBoss from '~/components/battle/BattleBoss.vue';
 import BattleAgent from '~/components/battle/BattleAgent.vue';
@@ -114,6 +114,33 @@ const {
   hudRef, videoRef,
   init, triggerAttack, simulateCapture, simulateRecon, unlockAudio, handleVideoError, onVideoLoaded
 } = useBattleState(showDebug.value);
+
+// --- KEYBOARD SHORTCUTS ---
+function handleKeydown(e) {
+  // Only handle shortcuts when a role is selected (in battle view)
+  if (!selectedRole.value) return;
+  
+  // Ignore if typing in an input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  switch (e.key.toLowerCase()) {
+    case 'r':
+      e.preventDefault();
+      simulateRecon();
+      console.log('[Keyboard] R pressed → Simulate Recon');
+      break;
+    case 'c':
+      e.preventDefault();
+      simulateCapture();
+      console.log('[Keyboard] C pressed → Simulate Capture');
+      break;
+    case ' ':
+      e.preventDefault();
+      triggerAttack();
+      console.log('[Keyboard] Space pressed → Attack');
+      break;
+  }
+}
 
 // --- COMPUTED ---
 const isVertical = computed(() => {
@@ -164,6 +191,11 @@ const currentRoleDrawing = computed(() => {
 // --- LIFECYCLE ---
 onMounted(() => {
   init();
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 

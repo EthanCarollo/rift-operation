@@ -37,3 +37,4 @@ lab/pinguin/.jupyter_ystore.db
 iot/esp/src/Core/Controller/Depth/Dream/dream_env
 lab/flux-webcam/.env
 lab/flux-webcam-live/.env
+venv

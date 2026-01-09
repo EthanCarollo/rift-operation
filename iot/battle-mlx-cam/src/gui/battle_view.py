@@ -50,6 +50,8 @@ class BattlePanel:
         ctk.CTkLabel(self.frame, text="🎨 Output", font=ctk.CTkFont(size=14, weight="bold"), text_color=color).pack(pady=(15,5))
         self.output = CameraPreview(self.frame, height=220, text="Waiting...")
         self.output.pack(fill="x", padx=10, pady=10)
+        
+        self.last_gen_time = 0
 
     def update_cameras(self, cams):
         if cams:
@@ -76,7 +78,9 @@ class BattleView(ctk.CTkFrame):
         self.knn = knn
         self.open_training = open_training_callback
         self.running = False
+        self.running = False
         self.current_attack = None
+        self.attack_start_time = 0
         
         self._build_ui()
         self._detect_cameras()
@@ -164,9 +168,9 @@ class BattleView(ctk.CTkFrame):
             state = self.ws.last_state.get("battle_state", "IDLE")
             attack = self.ws.last_state.get("battle_boss_attack")
             
-            # Update current attack
             if attack != self.current_attack:
                 self.current_attack = attack
+                self.attack_start_time = time.time()
                 self.log(f"Boss Attack: {attack}", "info")
             
             # Auto Start/Stop
@@ -189,49 +193,61 @@ class BattleView(ctk.CTkFrame):
         for role, p in self.panels.items():
             if p.camera:
                 threading.Thread(target=self._process, args=(role, p), daemon=True).start()
-        self.after(5000, self._loop)
+        self.after(500, self._loop)
 
     def _process(self, role, p):
         try:
             frame = p.camera.capture()
             if not frame: return
             
-            # 1. KNN
-            label, dist = self.knn.predict(frame)
-            is_rec = False
-            
-            # Use thresholds from config
+            # DEMO MODE: Bypass KNN - directly use counter based on current_attack
             target_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
             
-            if label not in ["Error"] and dist < KNN_DISTANCE_THRESHOLD:
-                # Logic: Recognized ONLY if it matches the counter for current attack
-                if target_label:
-                    is_rec = (label == target_label)
-                else:
-                    is_rec = False # No attack = no recognition needed
+            if target_label:
+                # Fake successful recognition for demo
+                is_rec = True
+                label = target_label
                 
-                # Visual feedback
-                color = "#22c55e" if is_rec else "#888"
-                status_text = f"👁️ {label.upper()}"
-                if target_label and label != target_label:
-                    status_text += f" (Need: {target_label})"
-                    color = "#ef4444"
+                # Update UI
+                self.after(0, lambda l=label: p.rec_label.configure(
+                    text=f"🎯 DEMO: {l.upper()}", text_color="#22c55e"
+                ))
                 
-                self.after(0, lambda: p.rec_label.configure(text=f"{status_text} ({dist:.1f})", text_color=color))
-                
-                if is_rec:
-                    # Get prompt from config
-                    new_p = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
-                    if p.prompt_entry.get() != new_p:
-                        self.after(0, lambda: (p.prompt_entry.delete(0, "end"), p.prompt_entry.insert(0, new_p)))
-                        self.log(f"Recognized: {label}", "knn", role)
+                # Set prompt from mapping
+                new_prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+                if p.prompt_entry.get() != new_prompt:
+                    self.after(0, lambda np=new_prompt: (
+                        p.prompt_entry.delete(0, "end"), 
+                        p.prompt_entry.insert(0, np)
+                    ))
+                self.log(f"Demo: Counter {label} for attack {self.current_attack}", "knn", role)
             else:
-                 self.after(0, lambda: p.rec_label.configure(text=f"👁️ ?", text_color="#666"))
+                # No attack defined, skip processing
+                is_rec = False
+                self.after(0, lambda: p.rec_label.configure(text="⏳ Waiting attack...", text_color="#666"))
+                return
+
+                return
+
+            # Initial Delay: Wait 5s after attack starts before helping
+            if time.time() - self.view.attack_start_time < 5.0:
+                 self.after(0, lambda: p.rec_label.configure(text=f"⏳ Drawing time...", text_color="#eab308"))
+                 return
+
+            # Cost Control: Check if 3 seconds passed since last generation
+
+            # Cost Control: Check if 3 seconds passed since last generation
+            if time.time() - p.last_gen_time < 3.0:
+                # Still transformed lately, skip expensive AI call
+                return
 
             # 2. Transform
             prompt = p.prompt_entry.get()
             self.log("Transforming...", "ai", role)
             res, _ = transform_image(frame, prompt)
+            
+            # Update timestamp
+            p.last_gen_time = time.time()
             
             # 3. BG
             final, _ = remove_background(res)
