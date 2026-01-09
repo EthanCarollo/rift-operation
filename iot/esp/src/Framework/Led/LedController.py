@@ -1,5 +1,5 @@
+import gc
 import time
-import math
 import ujson
 import _thread
 from src.Framework.Led.LedStrip import LedStrip
@@ -8,7 +8,7 @@ class LedController:
     """
     Plays JSON-based animations on a LedStrip.
     Handles color interpolation (gradients) and smooth transitions (LERP) between frames.
-    Threaded version using _thread and Lock.
+    Threaded version with memory management for ESP32.
     """
     def __init__(self, strip: LedStrip):
         self.strip = strip
@@ -25,7 +25,6 @@ class LedController:
         self.frames_data = []
 
     def start_thread(self):
-        """Start the background animation thread."""
         _thread.start_new_thread(self._thread_loop, ())
 
     def _thread_loop(self):
@@ -33,35 +32,43 @@ class LedController:
             try:
                 self.update()
             except Exception as e:
-                print(f"LedController thread error: {e}")
+                print(f"LED err: {e}")
             time.sleep(0.010)
 
     def set_brightness(self, value: float):
-        """Set global brightness (0.0 to 1.0)."""
         with self.lock:
             self.brightness = max(0.0, min(1.0, value))
 
     def stop(self):
-        """Stop the current animation."""
         with self.lock:
             self.is_playing = False
+            self._clear_animation_data()
+
+    def _clear_animation_data(self):
+        """Clear animation data to free memory."""
+        self.rendered_frames = []
+        self.frames_data = []
+        self.num_frames = 0
+        gc.collect()
 
     def play(self, animation_data, loop=True):
-        """
-        Setup an animation defined by animation_data dictionary.
-        """
         frames = animation_data.get("frames", [])
         if not frames:
             return
 
-        # Stop current animation first and acquire lock for ALL modifications
         with self.lock:
-            self.is_playing = False  # Stop any ongoing render
+            self.is_playing = False
             
-            # Pre-calculate frames INSIDE lock to prevent race condition
+            # Clear old data first
+            self.rendered_frames = []
+            self.frames_data = []
+            gc.collect()
+            
+            # Pre-calculate frames
             rendered = []
             for frame in frames:
                 rendered.append(self._calculate_frame_pixels(frame))
+                gc.collect()
             
             self.rendered_frames = rendered
             self.frames_data = frames
@@ -71,40 +78,31 @@ class LedController:
             self.frame_start_time = time.ticks_ms()
             self.is_playing = True
             
-            # Render initial state immediately
             if self.num_frames > 0:
                 self._render_pixels(self.rendered_frames[0])
 
     def play_from_json(self, file_path, loop=True):
-        """
-        Load an animation from a JSON file and play it.
-        """
+        gc.collect()
         try:
             with open(file_path, "r") as f:
                 data = ujson.load(f)
             self.play(data, loop)
+            data = None
+            gc.collect()
         except Exception as e:
-            print(f"Error loading animation from {file_path}: {e}")
+            print(f"Anim load err: {e}")
+            gc.collect()
 
     def update(self):
-        """
-        Update the animation state. Called by background thread.
-        """
-        # Quick check without lock first? No, safer with lock for is_playing
         with self.lock:
             if not self.is_playing or self.num_frames == 0:
                 return
 
             now = time.ticks_ms()
-            
-            # Get duration of current frame
             duration = self.frames_data[self.current_frame_idx].get("time", 500)
-            
-            # Check if we need to advance to next frame
             elapsed = time.ticks_diff(now, self.frame_start_time)
             
             if elapsed >= duration:
-                # Advance frame
                 next_idx = self.current_frame_idx + 1
                 
                 if next_idx >= self.num_frames:
@@ -116,30 +114,19 @@ class LedController:
 
                 self.current_frame_idx = next_idx
                 self.frame_start_time = now
-                elapsed = 0 # Reset elapsed for new frame
+                elapsed = 0
                 
-            # Interpolation
             current_pixel_target = self.rendered_frames[self.current_frame_idx]
             
             next_idx = (self.current_frame_idx + 1) % self.num_frames
             if not self.loop and next_idx == 0 and self.current_frame_idx == self.num_frames - 1:
-                 # Last frame, no loop. Just hold current.
-                 next_pixel_target = current_pixel_target
+                next_pixel_target = current_pixel_target
             else:
-                 next_pixel_target = self.rendered_frames[next_idx]
+                next_pixel_target = self.rendered_frames[next_idx]
 
-            # Calculate alpha (0.0 to 1.0)
-            if duration > 0:
-                alpha = elapsed / duration
-            else:
-                alpha = 1.0
+            alpha = min(1.0, elapsed / duration) if duration > 0 else 1.0
             
-            if alpha > 1.0: alpha = 1.0
-            
-            # Render logic (inside lock because strip might trigger SPI which might need protection if shared.. 
-            # wait, strip is usually bitbang or RMT, but if it shares resources... 
-            # LedStrip usually uses NeoPixel lib which disables interrupts. Should be fine.)
-            mixed_pixels = []
+            # Render with interpolation - reuse list to avoid allocations
             for i in range(self.strip.num_pixels):
                 c1 = current_pixel_target[i]
                 c2 = next_pixel_target[i]
@@ -147,24 +134,21 @@ class LedController:
                 r = int(c1[0] + (c2[0] - c1[0]) * alpha)
                 g = int(c1[1] + (c2[1] - c1[1]) * alpha)
                 b = int(c1[2] + (c2[2] - c1[2]) * alpha)
-                a = c1[3] + (c2[3] - c1[3]) * alpha  # Keep as float 0.0-1.0
-                mixed_pixels.append((r, g, b, a))
+                a = c1[3] + (c2[3] - c1[3]) * alpha
+                
+                final_alpha = a * self.brightness
+                self.strip.set_pixel(i, (r, g, b, final_alpha))
             
-            self._render_pixels(mixed_pixels)
+            self.strip.show()
 
     def _render_pixels(self, pixels):
         for i, color in enumerate(pixels):
-            # color is (r, g, b, a) - a is float 0.0-1.0
             r, g, b, a = color
-            # Combine alpha with global brightness (both 0.0-1.0)
             final_alpha = a * self.brightness
             self.strip.set_pixel(i, (r, g, b, final_alpha))
         self.strip.show()
 
     def _calculate_frame_pixels(self, frame):
-        """
-        Returns a list of (r,g,b,a) tuples for the strip based on frame gradients.
-        """
         color_stops = frame.get("colors", [])
         num_pixels = self.strip.num_pixels
         result = [(0,0,0,0)] * num_pixels
@@ -174,7 +158,6 @@ class LedController:
 
         stops = sorted(color_stops, key=lambda x: x.get("position", 0))
 
-        # Parse colors
         parsed_stops = []
         for s in stops:
             try:
@@ -185,15 +168,10 @@ class LedController:
                 val_g = int(parts[1])
                 val_b = int(parts[2])
                 
-                # Keep alpha as float 0.0-1.0
                 val_a = 1.0
                 if len(parts) > 3:
                     raw_a = parts[3]
-                    # If already 0.0-1.0, use directly; if > 1.0, normalize from 255
-                    if raw_a > 1.0:
-                        val_a = raw_a / 255.0
-                    else:
-                        val_a = raw_a
+                    val_a = raw_a / 255.0 if raw_a > 1.0 else raw_a
                 
                 rgba = (val_r, val_g, val_b, val_a)
                 pos = float(s.get("position", 0))
@@ -221,15 +199,12 @@ class LedController:
                     break
             
             dst = end_stop[0] - start_stop[0]
-            if dst == 0:
-                ratio = 0
-            else:
-                ratio = (pct - start_stop[0]) / dst
+            ratio = (pct - start_stop[0]) / dst if dst != 0 else 0
             
             r = int(start_stop[1][0] + (end_stop[1][0] - start_stop[1][0]) * ratio)
             g = int(start_stop[1][1] + (end_stop[1][1] - start_stop[1][1]) * ratio)
             b = int(start_stop[1][2] + (end_stop[1][2] - start_stop[1][2]) * ratio)
-            a = start_stop[1][3] + (end_stop[1][3] - start_stop[1][3]) * ratio  # Keep as float
+            a = start_stop[1][3] + (end_stop[1][3] - start_stop[1][3]) * ratio
             result[i] = (r, g, b, a)
             
         return result
