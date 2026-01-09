@@ -35,7 +35,7 @@
       </div>
 
       <!-- START INSTRUCTION: Only at the very beginning (position 0 and not started) -->
-      <div v-if="isDreamTurn && !gameStarted" class="flex flex-col items-center gap-8">
+      <div v-if="riftReady && isDreamTurn && !gameStarted" class="flex flex-col items-center gap-8">
         <h2 class="text-white/70 text-2xl font-light tracking-widest uppercase">
           PRÊT À COMMENCER ?
         </h2>
@@ -57,7 +57,7 @@
       </div>
 
       <!-- DREAM Content: Show note to play -->
-      <div v-else-if="isDreamTurn && gameStarted" class="flex flex-col items-center gap-8">
+      <div v-else-if="riftReady && isDreamTurn && gameStarted" class="flex flex-col items-center gap-8">
         <h2 class="text-white/70 text-2xl font-light tracking-widest uppercase">
           JOUE CETTE NOTE
         </h2>
@@ -89,7 +89,7 @@
       </div>
 
       <!-- NIGHTMARE Content: Show waiting message -->
-      <div v-else-if="isNightmareTurn" class="flex flex-col items-center gap-8">
+      <div v-else-if="riftReady && isNightmareTurn" class="flex flex-col items-center gap-8">
         <div class="text-white/30 text-xl font-light tracking-widest uppercase">
           En attente...
         </div>
@@ -145,7 +145,11 @@ definePageMeta({ layout: false });
 // WebSocket state
 const ws = ref(null);
 const wsConnected = ref(false);
-const state = ref({});
+const state = ref({
+  depth_current_player: 'dream',
+  depth_partition: [1, 2, 3, 4, 5, 6, 5, 4, 5, 1, 3, 2, 2, 3, 1, 2, 5, 6, 4, 5],
+  depth_partition_position: 0
+});
 
 // Game started state (once started, shows notes directly)
 const gameStarted = ref(false);
@@ -166,6 +170,9 @@ const currentNote = computed(() => {
   if (localPosition.value >= partition.value.length) return null;
   return partition.value[localPosition.value];
 });
+
+// Is rift ready? (rift_part_count == 2)
+const riftReady = computed(() => state.value.rift_part_count === 2);
 
 // Is it Dream's turn? (notes 1-3)
 const isDreamTurn = computed(() => {
@@ -195,11 +202,11 @@ watch(currentPosition, (newPos, oldPos) => {
 // Note images (1, 2, 3 for Dream)
 function getNoteImage(note) {
   const noteImages = {
-    1: '/depth-diapo/note_1.png',
-    2: '/depth-diapo/note_2.png',
-    3: '/depth-diapo/note_3.png',
+    1: '/depth-diapo/DO.png',
+    2: '/depth-diapo/RE.png',
+    3: '/depth-diapo/MI.png',
   };
-  return noteImages[note] || '/depth-diapo/note_1.png';
+  return noteImages[note] || '/depth-diapo/DO.png';
 }
 
 // Note names
@@ -226,7 +233,7 @@ function getSpheroName(note) {
 
 // WebSocket connection
 function connectWebSocket() {
-  const wsUrl = 'ws://192.168.10.4:8000/ws';
+  const wsUrl = 'ws://192.168.10.7:8000/ws';
   
   try {
     ws.value = new WebSocket(wsUrl);
@@ -269,38 +276,28 @@ function connectWebSocket() {
           // Keep gameStarted = true, so we stay on notes (not shake instruction)
         }
         
-        // Update state (handle different message types)
-        if (data.depth_partition !== undefined || data.depth_partition_position !== undefined || data.depth_current_player !== undefined) {
-          state.value = { ...state.value, ...data };
-          
-          // Sync local position with server position
-          if (data.depth_partition_position !== undefined) {
-            localPosition.value = data.depth_partition_position;
-            
-            // If position > 0, game is already in progress
-            if (data.depth_partition_position > 0) {
-              gameStarted.value = true;
-            }
+        // Update state - merge all non-null values
+        for (const [key, value] of Object.entries(data)) {
+          if (value !== null && value !== undefined) {
+            state.value[key] = value;
           }
-        } else if (data.start_system !== undefined) {
-          // Full state update
-          state.value = data;
+        }
+        console.log('📊 State after merge:', JSON.stringify(state.value));
+        
+        // Sync local position with server position
+        if (data.depth_partition_position !== undefined && data.depth_partition_position !== null) {
+          localPosition.value = data.depth_partition_position;
           
-          // Sync local position
-          if (data.depth_partition_position !== undefined) {
-            localPosition.value = data.depth_partition_position;
-          }
-          
-          // Check if game is in progress
+          // If position > 0, game is already in progress
           if (data.depth_partition_position > 0) {
             gameStarted.value = true;
           }
         }
         
-        // Reset game if position goes back to 0 (RETRY)
+        // Reset position if it goes back to 0 (RETRY) - but keep gameStarted = true to show first note
         if (data.depth_partition_position === 0 && lastPosition.value > 0) {
-          console.log('🔄 RETRY detected - back to start');
-          gameStarted.value = false;
+          console.log('🔄 RETRY detected - back to first note');
+          // Keep gameStarted = true so we stay on the notes display, not the "shake to start" screen
           localPosition.value = 0;
         }
         lastPosition.value = data.depth_partition_position ?? lastPosition.value;
