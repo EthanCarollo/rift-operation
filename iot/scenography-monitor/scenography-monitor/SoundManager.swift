@@ -717,17 +717,24 @@ class SoundManager: NSObject, ObservableObject {
                 return
             }
         } else {
+            // MEMORY FIX: Capture only primitive values to avoid retain cycles
+            let instanceId = instance.id
+            let filename = instance.filename
             // Normal playback - use completionCallbackType to fire AFTER playback finishes
             player.scheduleFile(file, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 guard let self = self else { return }
-                print("Playback finished naturally for \(instance.filename)")
+                print("Playback finished naturally for \(filename)")
                 // Properly clean up the player node to prevent memory leaks
-                self.stopSound(instanceID: instance.id)
+                self.stopSound(instanceID: instanceId)
             }
         }
         
         let fileLength = file.length
         let sampleRate = file.processingFormat.sampleRate
+        
+        // MEMORY FIX: Capture only primitive values to avoid retain cycles
+        let instanceId = instance.id
+        let isLooping = instance.loopEnabled
         
         player.installTap(onBus: 0, bufferSize: 1024, format: file.processingFormat) { [weak self] (buf, time) in
             self?.processMeter(buffer: buf, busId: busId)
@@ -737,10 +744,10 @@ class SoundManager: NSObject, ObservableObject {
                let playerTime = player.playerTime(forNodeTime: nodeTime) {
                 let currentFrame = playerTime.sampleTime
                 // Use modulo for looping sounds to wrap progress
-                let wrappedFrame = instance.loopEnabled ? (currentFrame % Int64(fileLength)) : currentFrame
+                let wrappedFrame = isLooping ? (currentFrame % Int64(fileLength)) : currentFrame
                 let progress = Float(wrappedFrame) / Float(fileLength)
                 DispatchQueue.main.async {
-                    self?.playbackProgress[instance.id] = min(max(progress, 0), 1)
+                    self?.playbackProgress[instanceId] = min(max(progress, 0), 1)
                 }
             }
         }
@@ -778,8 +785,10 @@ class SoundManager: NSObject, ObservableObject {
             guard let self = self else { return }
             
             if let player = self.players[instanceID] {
-                if player.isPlaying { player.stop() }
+                // MEMORY FIX: Remove tap FIRST to prevent callbacks during cleanup
                 player.removeTap(onBus: 0)
+                
+                if player.isPlaying { player.stop() }
                 
                 if let engine = player.engine {
                     engine.disconnectNodeOutput(player)
@@ -788,7 +797,37 @@ class SoundManager: NSObject, ObservableObject {
                 
                 self.players.removeValue(forKey: instanceID)
                 self.activeFiles.removeValue(forKey: instanceID)
+                
+                // Trigger idle engine cleanup
+                self.cleanupIdleEngines()
             }
+        }
+    }
+    
+    /// Cleans up audio engines that have no active players to prevent memory accumulation
+    private func cleanupIdleEngines() {
+        // Already on audioGraphQueue, no need to dispatch
+        
+        // Find engines with active players
+        var activeEngines = Set<ObjectIdentifier>()
+        for (_, player) in self.players {
+            if let engine = player.engine {
+                activeEngines.insert(ObjectIdentifier(engine))
+            }
+        }
+        
+        // Remove idle engines (except "default" which is commonly reused)
+        var uidsToRemove: [String] = []
+        for (uid, engine) in self.engines {
+            if uid != "default" && !activeEngines.contains(ObjectIdentifier(engine)) {
+                engine.stop()
+                uidsToRemove.append(uid)
+                print("[SoundManager] Cleaned up idle engine for UID: \(uid)")
+            }
+        }
+        
+        for uid in uidsToRemove {
+            self.engines.removeValue(forKey: uid)
         }
     }
     

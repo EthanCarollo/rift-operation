@@ -32,15 +32,55 @@ class SoundTrigger: ObservableObject {
     
     // Hardcoded keys from json_reference.json
     let knownKeys: [String] = [
+        // System
+        "start_system",
+        "end_system",
+        "reset_system",
+        
+        // Rift
+        "rift_part_count",
+        
+        // Operator
         "operator_start_system",
         "operator_launch_close_rift_step_1",
         "operator_launch_close_rift_step_2",
         "operator_launch_close_rift_step_3",
+        
+        // Stranger
         "stranger_state",
-        "depth_state", 
+        "stranger_recognized_name",
+        "is_dark_cosmo_here",
+        
+        // Pinguin
+        "pinguin_micro",
+        "pinguin_audio",
+        
+        // Depth
+        "depth_state",
+        "depth_partition_position",
+        "depth_current_player",
+        
+        // Lost
         "lost_state",
-        "end_system",
-        "reset_system"
+        "lost_drawing_light_recognized",
+        "lost_cage_is_on_monster",
+        "lost_light_is_triggered",
+        "lost_mp3_play",
+        "lost_video_play",
+        
+        // Battle
+        "battle_state",
+        "battle_drawing_dream_recognised",
+        "battle_drawing_nightmare_recognised",
+        "battle_hit_confirmed",
+        "battle_cage_nightmare",
+        "battle_cage_dream",
+        "battle_video_play",
+        "battle_music_play",
+        "battle_boss_hp",
+        "battle_boss_attack",
+        "battle_drawing_dream_image",
+        "battle_drawing_nightmare_image"
     ]
     
     init() {

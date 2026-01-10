@@ -108,6 +108,7 @@ struct SampleSlotView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(isLoading)
+                .accessibilityIdentifier("SampleSlot_PlayButton_\(instance.id)")
                 
                 Spacer()
             }
