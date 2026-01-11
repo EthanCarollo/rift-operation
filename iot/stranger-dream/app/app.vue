@@ -105,6 +105,25 @@
         data-testid="dev-panel"
         class="absolute bottom-8 right-8 bg-white/90 p-4 rounded-xl shadow-lg backdrop-blur-sm font-sans text-sm max-w-xs">
         <div class="font-bold text-gray-700 mb-2 uppercase text-xs tracking-wide">Dev Panel</div>
+        
+        <!-- Quick State Navigation -->
+        <div class="flex flex-wrap gap-1 mb-3">
+          <button
+            v-for="state in availableStates"
+            :key="state"
+            @click="setDevState(state)"
+            :data-testid="`state-btn-${state}`"
+            :class="[
+              'px-2 py-1 text-xs font-bold rounded transition-colors',
+              strangerState === state 
+                ? 'bg-green-500 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ]">
+            {{ state }}
+          </button>
+        </div>
+
+        <!-- WebSocket URL Config -->
         <div class="flex flex-col gap-2">
           <input
             v-model="urlInput"
@@ -134,12 +153,20 @@ const isDev = config.public.isDev
 
 const { isConnected, strangerState, wsUrl, reconnectWithUrl } = useStrangerSocket()
 
+// Available states for dev navigation
+const availableStates = ['inactive', 'active', 'step_2', 'step_3', 'step_4']
+
 // Local state for URL input
 const urlInput = ref(wsUrl.value)
 
 // Handle reconnection with new URL
 const handleReconnect = () => {
   reconnectWithUrl(urlInput.value)
+}
+
+// Set state directly (dev only)
+const setDevState = (state: string) => {
+  strangerState.value = state
 }
 
 // Computed

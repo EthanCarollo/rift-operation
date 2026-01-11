@@ -173,6 +173,65 @@ describe('Stranger Dream - Dev Mode Features', () => {
             // Verify still connected (status shows ONLINE)
             cy.get('[data-testid="connection-status"]').should('contain.text', 'ONLINE');
         });
+
+        it('should have quick state navigation buttons', () => {
+            cy.get('[data-testid="state-btn-inactive"]').should('exist');
+            cy.get('[data-testid="state-btn-active"]').should('exist');
+            cy.get('[data-testid="state-btn-step_2"]').should('exist');
+            cy.get('[data-testid="state-btn-step_3"]').should('exist');
+            cy.get('[data-testid="state-btn-step_4"]').should('exist');
+        });
+
+        it('should switch to active state when clicking active button', () => {
+            cy.wait(100); // Wait for connection
+            // Reset state first
+            cy.get('[data-testid="state-btn-inactive"]').click();
+            cy.get('[data-testid="state-btn-inactive"]').should('have.class', 'bg-green-500');
+            
+            // Now test active
+            cy.get('[data-testid="state-btn-active"]').click();
+            cy.get('[data-testid="state-btn-active"]').should('have.class', 'bg-green-500');
+            cy.contains('h2', 'Étape 1:').should('be.visible');
+        });
+
+        it('should switch to step_2 state when clicking step_2 button', () => {
+            cy.wait(100);
+            cy.get('[data-testid="state-btn-inactive"]').click();
+            
+            cy.get('[data-testid="state-btn-step_2"]').click();
+            cy.get('[data-testid="state-btn-step_2"]').should('have.class', 'bg-green-500');
+            cy.contains('h2', 'Trouvez le point faible').should('be.visible');
+        });
+
+        it('should switch to step_3 state when clicking step_3 button', () => {
+            cy.wait(100);
+            cy.get('[data-testid="state-btn-inactive"]').click();
+            
+            cy.get('[data-testid="state-btn-step_3"]').click();
+            cy.get('[data-testid="state-btn-step_3"]').should('have.class', 'bg-green-500');
+            cy.contains('h2', 'Demandez gentiment').should('be.visible');
+        });
+
+        it('should switch to step_4 state when clicking step_4 button', () => {
+            cy.wait(100);
+            cy.get('[data-testid="state-btn-inactive"]').click();
+            
+            cy.get('[data-testid="state-btn-step_4"]').click();
+            cy.get('[data-testid="state-btn-step_4"]').should('have.class', 'bg-green-500');
+            cy.contains('h2', 'Ramenez Dark Cosmo').should('be.visible');
+        });
+
+        it('should return to inactive state when clicking inactive button after being active', () => {
+            cy.wait(100);
+            // Click inactive first to ensure we start from a known state
+            cy.get('[data-testid="state-btn-inactive"]').click();
+            // Wait until inactive is selected
+            cy.get('[data-testid="state-btn-inactive"]').should('have.class', 'bg-green-500');
+            
+            // Now go to active
+            cy.get('[data-testid="state-btn-active"]').click();
+            cy.get('[data-testid="state-btn-active"]').should('have.class', 'bg-green-500');
+        });
     });
 
     describe('Stranger State Transitions', () => {
