@@ -85,15 +85,41 @@
 
       </div>
 
-      <!-- Status Indicator -->
+      <!-- Dev-Only Status Indicator -->
       <div
+        v-if="isDev"
+        data-testid="dev-status-indicator"
         class="absolute top-8 right-8 bg-white/80 px-4 py-2 rounded-full flex items-center gap-2 shadow-sm backdrop-blur-sm">
         <div class="w-3 h-3 rounded-full shadow-sm transition-all duration-300"
+          data-testid="connection-dot"
           :class="isConnected ? 'bg-green-400' : 'bg-red-400'"></div>
         <!-- Debug State -->
-        <span class="text-xs font-bold text-gray-500 font-sans tracking-wide uppercase">
+        <span class="text-xs font-bold text-gray-500 font-sans tracking-wide uppercase" data-testid="connection-status">
           {{ isConnected ? (strangerState !== 'inactive' ? strangerState : 'ONLINE') : 'CONNECTING...' }}
         </span>
+      </div>
+
+      <!-- Dev Panel for WebSocket Configuration -->
+      <div
+        v-if="isDev"
+        data-testid="dev-panel"
+        class="absolute bottom-8 right-8 bg-white/90 p-4 rounded-xl shadow-lg backdrop-blur-sm font-sans text-sm max-w-xs">
+        <div class="font-bold text-gray-700 mb-2 uppercase text-xs tracking-wide">Dev Panel</div>
+        <div class="flex flex-col gap-2">
+          <input
+            v-model="urlInput"
+            type="text"
+            data-testid="ws-url-input"
+            placeholder="WebSocket URL"
+            class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            @click="handleReconnect"
+            data-testid="reconnect-button"
+            class="w-full px-3 py-2 text-xs font-bold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors">
+            Reconnect
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -103,7 +129,18 @@
 import { useStrangerSocket } from '~/composables/useStrangerSocket'
 import { questions, type Question } from '~/config/questions'
 
-const { isConnected, strangerState } = useStrangerSocket()
+const config = useRuntimeConfig()
+const isDev = config.public.isDev
+
+const { isConnected, strangerState, wsUrl, reconnectWithUrl } = useStrangerSocket()
+
+// Local state for URL input
+const urlInput = ref(wsUrl.value)
+
+// Handle reconnection with new URL
+const handleReconnect = () => {
+  reconnectWithUrl(urlInput.value)
+}
 
 // Computed
 const currentQuestion = computed<Question | null>(() => {

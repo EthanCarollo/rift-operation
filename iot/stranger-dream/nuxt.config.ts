@@ -2,6 +2,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss'],
+  runtimeConfig: {
+    public: {
+      isDev: process.env.NODE_ENV !== 'production',
+      defaultWsUrl: 'ws://192.168.10.7:8000/ws'
+    }
+  },
   app: {
     head: {
        link: [

@@ -1,7 +1,9 @@
 export const useStrangerSocket = () => {
+    const config = useRuntimeConfig()
     const isConnected = useState<boolean>('socket-connected', () => false)
     const messages = useState<any[]>('socket-messages', () => [])
     const strangerState = useState<string>('stranger-state', () => 'inactive')
+    const wsUrl = useState<string>('ws-url', () => config.public.defaultWsUrl as string)
     let socket: WebSocket | null = null
     let reconnectTimer: any = null
 
@@ -9,10 +11,10 @@ export const useStrangerSocket = () => {
         if (socket?.readyState === WebSocket.OPEN) return
 
         try {
-            socket = new WebSocket('ws://192.168.10.7:8000/ws')
+            socket = new WebSocket(wsUrl.value)
 
             socket.onopen = () => {
-                console.log('WebSocket Connected')
+                console.log('WebSocket Connected to', wsUrl.value)
                 isConnected.value = true
                 if (reconnectTimer) {
                     clearTimeout(reconnectTimer)
@@ -59,6 +61,24 @@ export const useStrangerSocket = () => {
         }
     }
 
+    const disconnect = () => {
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer)
+            reconnectTimer = null
+        }
+        if (socket) {
+            socket.close()
+            socket = null
+        }
+        isConnected.value = false
+    }
+
+    const reconnectWithUrl = (newUrl: string) => {
+        wsUrl.value = newUrl
+        disconnect()
+        connect()
+    }
+
     onMounted(() => {
         connect()
     })
@@ -66,6 +86,10 @@ export const useStrangerSocket = () => {
     return {
         isConnected,
         messages,
-        strangerState
+        strangerState,
+        wsUrl,
+        reconnectWithUrl,
+        disconnect
     }
 }
+
