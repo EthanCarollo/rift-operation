@@ -9,9 +9,9 @@ export default defineNuxtConfig({
     }
   },
   app: {
-    head: {
+      head: {
        link: [
-         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap' }
+         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&family=Cinzel:wght@400;700;900&display=swap' }
        ]
     }
   }

@@ -28,7 +28,9 @@ export const questions: Record<string, Question> = {
   step_2: {
     type: 'text',
     step: 2,
-    text: "Trouvez le point faible de Dark Cosmo et dites-le lui."
+    title: "QUESTION 2 :",
+    text: "Pour trouver la 2ème lettre, trouve le point faible du pingouin Dark Cosmo et dis-le lui.",
+    // image: '/images/stranger/dark-cosmo.png' // Placeholder if valid path found
   },
   step_3: {
     type: 'text',
