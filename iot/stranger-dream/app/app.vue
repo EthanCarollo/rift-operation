@@ -1,8 +1,8 @@
 <template>
-  <div class="app-container bg-cover">
-
+  <div class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat"
+    :style="{ backgroundImage: 'url(/images/stranger/bg-candy-land.png)' }">
     <!-- Main content area -->
-    <main class="main-content">
+    <main class="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">
       <template v-if="strangerState !== 'inactive'">
         <!-- Candy container with content -->
         <CandyContainer>
@@ -29,7 +29,6 @@
 <script setup lang="ts">
 import { useStrangerSocket } from '~/composables/useStrangerSocket'
 import { questions, type Question } from '~/config/questions'
-import BackgroundScene from '~/components/BackgroundScene.vue'
 import CandyContainer from '~/components/CandyContainer.vue'
 import PuzzleView from '~/components/PuzzleView.vue'
 import TextView from '~/components/TextView.vue'
@@ -65,7 +64,7 @@ const currentQuestion = computed<Question | null>(() => {
 </script>
 
 <style>
-/* Font face declarations */
+/* Font face declarations - keeping global styles only */
 @font-face {
   font-family: 'Lineal';
   src: url('/Lineal.otf') format('opentype');
@@ -82,7 +81,6 @@ const currentQuestion = computed<Question | null>(() => {
   font-display: swap;
 }
 
-/* Global resets */
 :root {
   color-scheme: dark;
 }
@@ -98,7 +96,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -114,24 +111,5 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #cc00a6;
-}
-</style>
-
-<style scoped>
-.app-container {
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-}
-
-.main-content {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
 }
 </style>

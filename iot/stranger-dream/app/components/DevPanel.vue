@@ -1,36 +1,44 @@
 <template>
-    <div class="dev-panel" data-testid="dev-panel">
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-end" data-testid="dev-panel">
         <!-- Status Indicator -->
-        <div class="status-indicator" data-testid="dev-status-indicator">
-            <div class="status-dot-wrapper">
-                <span v-if="isConnected" class="status-ping"></span>
-                <span class="status-dot" :class="isConnected ? 'connected' : 'disconnected'"></span>
+        <div class="bg-stranger-blue/80 border border-white/20 px-4 py-2 rounded-full flex items-center gap-3 backdrop-blur-md shadow-lg"
+            data-testid="dev-status-indicator">
+            <div class="relative flex w-3 h-3">
+                <span v-if="isConnected"
+                    class="absolute inset-0 rounded-full bg-stranger-green opacity-75 animate-ping"></span>
+                <span class="relative w-3 h-3 rounded-full"
+                    :class="isConnected ? 'bg-stranger-green' : 'bg-red-500'"></span>
             </div>
-            <span class="status-text">
+            <span class="text-xs font-bold text-white font-mono tracking-widest uppercase">
                 {{ isConnected ? (currentState !== 'inactive' ? currentState : 'ONLINE') : 'OFFLINE' }}
             </span>
         </div>
 
         <!-- Control Panel -->
-        <div class="control-panel">
-            <div class="panel-header">
-                <span class="panel-title">Control Panel</span>
-                <span class="panel-badge">DEV</span>
+        <div class="bg-slate-900/95 border border-white/10 p-5 rounded-2xl shadow-2xl backdrop-blur-md w-72 text-white">
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
+                <span class="font-bold text-xs uppercase tracking-widest text-gray-400">Control Panel</span>
+                <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-gray-300">DEV</span>
             </div>
 
             <!-- State buttons -->
-            <div class="state-buttons">
-                <button v-for="state in states" :key="state" @click="$emit('setState', state)" class="state-btn"
-                    :class="{ active: currentState === state }">
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button v-for="state in states" :key="state" @click="$emit('setState', state)"
+                    class="px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-200 border cursor-pointer"
+                    :class="currentState === state
+                        ? 'bg-stranger-rose border-stranger-rose text-white'
+                        : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white'">
                     {{ formatState(state) }}
                 </button>
             </div>
 
             <!-- URL input -->
-            <div class="url-section">
+            <div class="flex flex-col gap-2">
                 <input :value="urlValue" @input="$emit('update:urlValue', ($event.target as HTMLInputElement).value)"
-                    type="text" placeholder="ws://..." class="url-input" />
-                <button @click="$emit('reconnect')" class="reconnect-btn">
+                    type="text" placeholder="ws://..."
+                    class="w-full bg-slate-800 text-gray-300 text-xs px-3 py-2.5 rounded-lg border border-white/5 outline-none focus:border-stranger-rose/50 focus:ring-1 focus:ring-stranger-rose/50 transition-all" />
+                <button @click="$emit('reconnect')"
+                    class="w-full py-2 text-xs font-bold text-stranger-blue bg-stranger-green rounded-lg hover:bg-stranger-green/90 transition-all cursor-pointer">
                     UPDATE CONNECTION
                 </button>
             </div>
@@ -58,184 +66,3 @@ const formatState = (state: string): string => {
     return state.replace('step_', 'S').toUpperCase()
 }
 </script>
-
-<style scoped>
-.dev-panel {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    z-index: 50;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: flex-end;
-}
-
-.status-indicator {
-    background-color: rgba(21, 0, 89, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
-
-.status-dot-wrapper {
-    position: relative;
-    display: flex;
-    width: 12px;
-    height: 12px;
-}
-
-.status-ping {
-    position: absolute;
-    inset: 0;
-    border-radius: 9999px;
-    background-color: #00FFC4;
-    opacity: 0.75;
-    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-.status-dot {
-    position: relative;
-    width: 12px;
-    height: 12px;
-    border-radius: 9999px;
-}
-
-.status-dot.connected {
-    background-color: #00FFC4;
-}
-
-.status-dot.disconnected {
-    background-color: #ef4444;
-}
-
-.status-text {
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: white;
-    font-family: monospace;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-.control-panel {
-    background-color: rgba(15, 23, 42, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1.25rem;
-    border-radius: 1rem;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    width: 280px;
-    color: white;
-}
-
-.panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.panel-title {
-    font-weight: bold;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #9ca3af;
-}
-
-.panel-badge {
-    font-size: 0.625rem;
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.25rem;
-    color: #d1d5db;
-}
-
-.state-buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.state-btn {
-    padding: 0.375rem 0.5rem;
-    font-size: 0.625rem;
-    font-weight: bold;
-    border-radius: 0.5rem;
-    transition: all 0.2s;
-    border: 1px solid;
-    cursor: pointer;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.05);
-    color: #9ca3af;
-}
-
-.state-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-.state-btn.active {
-    background-color: #FF00CF;
-    border-color: #FF00CF;
-    color: white;
-}
-
-.url-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.url-input {
-    width: 100%;
-    background-color: #1e293b;
-    color: #d1d5db;
-    font-size: 0.75rem;
-    padding: 0.625rem 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.url-input:focus {
-    border-color: rgba(255, 0, 207, 0.5);
-    box-shadow: 0 0 0 2px rgba(255, 0, 207, 0.25);
-}
-
-.reconnect-btn {
-    width: 100%;
-    padding: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #150059;
-    background-color: #00FFC4;
-    border-radius: 0.5rem;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.reconnect-btn:hover {
-    background-color: rgba(0, 255, 196, 0.9);
-}
-
-@keyframes ping {
-
-    75%,
-    100% {
-        transform: scale(2);
-        opacity: 0;
-    }
-}
-</style>
