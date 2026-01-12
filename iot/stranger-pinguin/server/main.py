@@ -355,13 +355,17 @@ async def audio_websocket(websocket: WebSocket):
                     # Dark Cosmo: detect end of sentence (affirmation)
                     contains_trigger = "." in streaming_buffer
                     trigger_type = "affirmation"
+                    min_length = 30  # Require longer phrases for Dark Cosmo
+                    min_confidence = 0.6  # Higher confidence threshold
                 else:
                     # Cosmo: detect question mark
                     contains_trigger = "?" in streaming_buffer
                     trigger_type = "question"
+                    min_length = 10
+                    min_confidence = 0.4
                 
                 # If we detect a trigger OR the buffer is getting long
-                if (contains_trigger and len(streaming_buffer) > 10) or len(streaming_buffer) > 200:
+                if (contains_trigger and len(streaming_buffer) > min_length) or len(streaming_buffer) > 200:
                     # 🎯 Extraction de la dernière phrase
                     import re
                     sentences = re.split(r'[.!?]+', streaming_buffer)
@@ -369,12 +373,20 @@ async def audio_websocket(websocket: WebSocket):
                     
                     phrase_to_match = sentences[-1] if sentences else streaming_buffer
                     
+                    # Skip if phrase is too short for Dark Cosmo
+                    if SERVER_MODE == 'dark_cosmo' and len(phrase_to_match) < 15:
+                        continue
+                    
+                    # Dark Cosmo: require the word "chaussettes" to be present
+                    if SERVER_MODE == 'dark_cosmo' and "chaussette" not in phrase_to_match.lower():
+                        continue
+                    
                     print(f"🔍 {trigger_type.capitalize()} détectée : {phrase_to_match}")
                     
-                    # Try to answer (threshold slightly higher for auto-triggers)
-                    qa_result = qa_service.answer(phrase_to_match, min_confidence=0.4)
+                    # Try to answer with mode-specific confidence threshold
+                    qa_result = qa_service.answer(phrase_to_match, min_confidence=min_confidence)
                     
-                    if qa_result['confidence'] > 0.4:
+                    if qa_result['confidence'] > min_confidence:
                         print(f"💡 Réponse auto : {qa_result['answer']}")
                         
                         # LOGGING: Explicitly mark the start of "talking"
