@@ -17,11 +17,15 @@ class KyutaiSttService:
         self.lm_config = None
         self.other_codebooks = 0
         self.is_loaded = False
+        # State for context management
+        self._recent_tokens = []
+        self._context_invalid = False
 
     def load_model(self):
-        if self.is_loaded:
-            return
-
+        """Load the model from scratch (hard reset)."""
+        # Reset loaded flag to allow reloading
+        self.is_loaded = False
+        
         print(f"Loading Kyutai model from {self.hf_repo}...")
         
         # Download/Load config
@@ -62,11 +66,17 @@ class KyutaiSttService:
         self.model.warmup()
         
         self.is_loaded = True
+        self._recent_tokens.clear()
+        self._context_invalid = False
         print("Model loaded.")
 
     def create_generator(self, max_steps=4096):
         if not self.is_loaded:
             raise RuntimeError("Model not loaded. Call load_model() first.")
+        
+        # Clear context state when creating new generator
+        self._recent_tokens.clear()
+        self._context_invalid = False
             
         return models.LmGen(
             model=self.model,
@@ -76,35 +86,85 @@ class KyutaiSttService:
             check=False,
         )
 
+    def _check_loop_detected(self, piece: str) -> bool:
+        """Check if we're in a loop (same piece repeated 6 times)."""
+        self._recent_tokens.append(piece)
+        if len(self._recent_tokens) > 8:
+            self._recent_tokens.pop(0)
+        
+        if len(self._recent_tokens) >= 6:
+            if all(p == piece for p in self._recent_tokens[-6:]):
+                return True
+        return False
+
     async def process_audio_chunk(self, data, generator):
         """
         Processes a raw audio chunk and yields transcribed text pieces.
+        Raises ContextOverflowError if context needs to be reset.
         """
-        # Convert to numpy array
-        audio_chunk = np.frombuffer(data, dtype=np.float32)
-        
-        # Adapt input to shape (1, 1, N) for encode_step
-        audio_chunk = audio_chunk[None, None, :] 
-        
-        other_audio_tokens = self.audio_tokenizer.encode_step(audio_chunk)
-        other_audio_tokens = mx.array(other_audio_tokens).transpose(0, 2, 1)[:, :, :self.other_codebooks]
-        
-        # Process each frame separately if multiple frames returned
-        num_frames = other_audio_tokens.shape[1]
-        transcriptions = []
-        
-        for frame_idx in range(num_frames):
-            # Extract single frame: shape (1, 32) -> what model expects
-            single_frame = other_audio_tokens[:, frame_idx:frame_idx+1, :]
+        # If context was marked invalid, signal caller to recreate generator
+        if self._context_invalid:
+            self._context_invalid = False
+            raise ContextOverflowError("Context was invalidated, needs reset")
+
+        try:
+            # Convert to numpy array
+            audio_chunk = np.frombuffer(data, dtype=np.float32).copy()
             
-            # Generate
-            text_token = generator.step(single_frame[0])
-            text_token = text_token[0].item()
+            # Adapt input to shape (1, 1, N) for encode_step
+            audio_chunk = audio_chunk[None, None, :] 
             
-            if text_token not in (0, 3):
-                text = self.text_tokenizer.id_to_piece(text_token)
-                text = text.replace("▁", " ")
-                if text:
-                    transcriptions.append(text)
-        
-        return transcriptions
+            other_audio_tokens = self.audio_tokenizer.encode_step(audio_chunk)
+            other_audio_tokens = mx.array(other_audio_tokens).transpose(0, 2, 1)[:, :, :self.other_codebooks]
+            
+            # Process each frame separately if multiple frames returned
+            num_frames = other_audio_tokens.shape[1]
+            transcriptions = []
+            
+            for frame_idx in range(num_frames):
+                # Preventative reset: check if approaching context limit
+                if hasattr(generator, 'step_idx') and hasattr(generator, 'max_steps'):
+                    if generator.step_idx >= generator.max_steps - 32:
+                        print(f"⚠️ [STT] Preventative reset triggered (step_idx: {generator.step_idx}/{generator.max_steps})")
+                        self._context_invalid = True
+                        raise ContextOverflowError("Approaching context limit, needs reset")
+                
+                # Extract single frame: shape (1, 32) -> what model expects
+                single_frame = other_audio_tokens[:, frame_idx:frame_idx+1, :]
+                
+                # Generate
+                text_token = generator.step(single_frame[0])
+                text_token = text_token[0].item()
+                
+                if text_token not in (0, 3):
+                    text = self.text_tokenizer.id_to_piece(text_token)
+                    text = text.replace("▁", " ")
+                    if text:
+                        # Check for loop (repetition bug)
+                        if self._check_loop_detected(text):
+                            print(f"⚠️ [STT] Loop detected ('{text}' x6). Hard reset needed.")
+                            self._context_invalid = True
+                            self.load_model()  # Hard reset
+                            raise ContextOverflowError("Loop detected, model reloaded")
+                        
+                        transcriptions.append(text)
+            
+            return transcriptions
+            
+        except ContextOverflowError:
+            raise  # Re-raise our custom exception
+        except Exception as e:
+            msg = str(e)
+            # Handle known context overflow errors from Kyutai
+            if "narrow invalid args" in msg or "start + len > dim_len" in msg:
+                print(f"⚠️ [STT] Context full (Error: {msg}), performing HARD RESET...")
+                self._context_invalid = True
+                self.load_model()  # Hard reset - reload model
+                raise ContextOverflowError(f"Context overflow: {msg}")
+            # Re-raise other exceptions
+            raise
+
+
+class ContextOverflowError(Exception):
+    """Raised when Kyutai context is full and needs reset."""
+    pass

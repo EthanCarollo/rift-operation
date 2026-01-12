@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from services.KyutaiSttService import KyutaiSttService
+from services.KyutaiSttService import KyutaiSttService, ContextOverflowError
 from services.PinguinQaService import PinguinQaService
 
 from typing import Dict, Any
@@ -310,6 +310,10 @@ async def audio_websocket(websocket: WebSocket):
 
                 try:
                     texts = await stt_service.process_audio_chunk(data, local_gen)
+                except ContextOverflowError as e:
+                    print(f"🔄 [STT] Context reset: {e}. Creating fresh generator...")
+                    local_gen = stt_service.create_generator()
+                    continue
                 except Exception as e:
                     print(f"❌ [STT] Error processing chunk: {e}")
                     await websocket.send_json({
@@ -437,12 +441,12 @@ if __name__ == "__main__":
         cosmo_process = multiprocessing.Process(
             target=run_server,
             args=('cosmo',),
-            name='cosmo-server'
+            name='CosmoServer'
         )
         dark_cosmo_process = multiprocessing.Process(
             target=run_server,
             args=('dark_cosmo',),
-            name='dark-cosmo-server'
+            name='DarkCosmoServer'
         )
         
         try:
