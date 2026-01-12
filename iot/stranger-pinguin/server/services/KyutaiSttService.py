@@ -7,6 +7,14 @@ import sentencepiece
 from huggingface_hub import hf_hub_download
 from moshi_mlx import models, utils
 
+# ANSI color codes
+ORANGE = "\033[38;5;208m"
+RESET_COLOR = "\033[0m"
+
+def log_orange(msg: str):
+    """Print a message in orange color."""
+    print(f"{ORANGE}🟠 {msg}{RESET_COLOR}")
+
 class KyutaiSttService:
     def __init__(self, hf_repo="kyutai/stt-1b-en_fr-mlx", local_dir="kyutai-model"):
         self.hf_repo = hf_repo
@@ -20,6 +28,8 @@ class KyutaiSttService:
         # State for context management
         self._recent_tokens = []
         self._context_invalid = False
+        # Buffer for pending audio chunks during reset
+        self._pending_audio_chunks = []
 
     def load_model(self):
         """Load the model from scratch (hard reset)."""
@@ -77,6 +87,7 @@ class KyutaiSttService:
         # Clear context state when creating new generator
         self._recent_tokens.clear()
         self._context_invalid = False
+        # Note: Don't clear pending chunks here - they'll be processed by caller
             
         return models.LmGen(
             model=self.model,
@@ -97,6 +108,16 @@ class KyutaiSttService:
                 return True
         return False
 
+    def get_pending_chunks(self) -> list:
+        """Get and clear pending audio chunks that need reprocessing."""
+        chunks = self._pending_audio_chunks.copy()
+        self._pending_audio_chunks.clear()
+        return chunks
+
+    def has_pending_chunks(self) -> bool:
+        """Check if there are pending chunks to process."""
+        return len(self._pending_audio_chunks) > 0
+
     async def process_audio_chunk(self, data, generator):
         """
         Processes a raw audio chunk and yields transcribed text pieces.
@@ -105,6 +126,8 @@ class KyutaiSttService:
         # If context was marked invalid, signal caller to recreate generator
         if self._context_invalid:
             self._context_invalid = False
+            # Save this chunk for reprocessing after reset
+            self._pending_audio_chunks.append(data)
             raise ContextOverflowError("Context was invalidated, needs reset")
 
         try:
@@ -125,8 +148,9 @@ class KyutaiSttService:
                 # Preventative reset: check if approaching context limit
                 if hasattr(generator, 'step_idx') and hasattr(generator, 'max_steps'):
                     if generator.step_idx >= generator.max_steps - 32:
-                        print(f"⚠️ [STT] Preventative reset triggered (step_idx: {generator.step_idx}/{generator.max_steps})")
+                        log_orange(f"[STT] Context approaching limit (step_idx: {generator.step_idx}/{generator.max_steps}). Resetting...")
                         self._context_invalid = True
+                        self._pending_audio_chunks.append(data)  # Save for reprocessing
                         raise ContextOverflowError("Approaching context limit, needs reset")
                 
                 # Extract single frame: shape (1, 32) -> what model expects
@@ -142,8 +166,9 @@ class KyutaiSttService:
                     if text:
                         # Check for loop (repetition bug)
                         if self._check_loop_detected(text):
-                            print(f"⚠️ [STT] Loop detected ('{text}' x6). Hard reset needed.")
+                            log_orange(f"[STT] Loop detected ('{text}' x6). Hard resetting model...")
                             self._context_invalid = True
+                            self._pending_audio_chunks.append(data)  # Save for reprocessing
                             self.load_model()  # Hard reset
                             raise ContextOverflowError("Loop detected, model reloaded")
                         
@@ -157,8 +182,9 @@ class KyutaiSttService:
             msg = str(e)
             # Handle known context overflow errors from Kyutai
             if "narrow invalid args" in msg or "start + len > dim_len" in msg:
-                print(f"⚠️ [STT] Context full (Error: {msg}), performing HARD RESET...")
+                log_orange(f"[STT] Context full! Performing HARD RESET...")
                 self._context_invalid = True
+                self._pending_audio_chunks.append(data)  # Save for reprocessing
                 self.load_model()  # Hard reset - reload model
                 raise ContextOverflowError(f"Context overflow: {msg}")
             # Re-raise other exceptions

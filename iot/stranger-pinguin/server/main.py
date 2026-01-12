@@ -313,6 +313,20 @@ async def audio_websocket(websocket: WebSocket):
                 except ContextOverflowError as e:
                     print(f"🔄 [STT] Context reset: {e}. Creating fresh generator...")
                     local_gen = stt_service.create_generator()
+                    
+                    # Reprocess any pending chunks that were buffered during reset
+                    pending = stt_service.get_pending_chunks()
+                    if pending:
+                        print(f"🔄 [STT] Reprocessing {len(pending)} buffered audio chunks...")
+                        for pending_chunk in pending:
+                            try:
+                                pending_texts = await stt_service.process_audio_chunk(pending_chunk, local_gen)
+                                for text in pending_texts:
+                                    await websocket.send_text(f"stt: {text}")
+                                    session_transcription += text
+                                    streaming_buffer += text
+                            except Exception as pe:
+                                print(f"⚠️ [STT] Failed to reprocess pending chunk: {pe}")
                     continue
                 except Exception as e:
                     print(f"❌ [STT] Error processing chunk: {e}")
