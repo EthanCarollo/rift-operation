@@ -81,9 +81,9 @@ describe('Stranger Dream - Component Tests', () => {
         });
 
         it('should switch to active state when clicking ACTIVE button', () => {
-            cy.wait(100);
+            cy.wait(500);
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
             // Puzzle view should be visible - check for puzzle content
             cy.contains('Étape 1').should('be.visible');
@@ -117,7 +117,7 @@ describe('Stranger Dream - Component Tests', () => {
             cy.wait(100);
             // First go to active
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
             cy.contains('Étape 1').should('be.visible');
             
@@ -134,10 +134,10 @@ describe('Stranger Dream - Component Tests', () => {
         it('should display the candy container when active', () => {
             cy.wait(100);
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
-            // Candy container should exist (look for yellow background SVG)
-            cy.get('svg polygon[fill="#FFFF00"]').should('exist');
+            // Candy container should exist (look for the candy background image)
+            cy.get('img[src="/images/stranger/question-container-candy.png"]').should('be.visible');
         });
     });
 
@@ -145,7 +145,7 @@ describe('Stranger Dream - Component Tests', () => {
         it('should display step numbers when active', () => {
             cy.wait(100);
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
             // Check for step numbers in pagination
             cy.contains('span', '1').should('exist');
@@ -159,7 +159,7 @@ describe('Stranger Dream - Component Tests', () => {
         it('should display puzzle title for active state', () => {
             cy.wait(100);
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
             cy.contains('Étape 1').should('be.visible');
         });
@@ -167,7 +167,7 @@ describe('Stranger Dream - Component Tests', () => {
         it('should display puzzle items with images', () => {
             cy.wait(100);
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
             cy.get('img[src*="hat"]').should('have.length', 3);
         });
@@ -175,7 +175,7 @@ describe('Stranger Dream - Component Tests', () => {
         it('should display puzzle letters', () => {
             cy.wait(100);
             cy.get('[data-testid="dev-panel"]').within(() => {
-                cy.contains('button', 'ACTIVE').click();
+                cy.contains('button', /^ACTIVE$/).click();
             });
             cy.contains('B').should('exist');
             cy.contains('i').should('exist');

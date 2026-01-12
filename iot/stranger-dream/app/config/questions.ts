@@ -11,6 +11,7 @@ export type Question = {
   step: number;
   text?: string;
   image?: string;
+  images?: string[];
   imagePosition?: 'top' | 'bottom';
   puzzleItems?: PuzzleItem[];
 }
@@ -19,7 +20,7 @@ export const questions: Record<string, Question> = {
   active: {
     type: 'puzzle',
     step: 1,
-    title: "Étape 1:",
+    title: "QUESTION 1 :",
     subtitle: "Pour trouver la première lettre, trouve le chapeau de l'étranger qui hante le cauchemar.",
     puzzleItems: [
       { image: '/images/stranger/hat-star.png', symbol: '➤', letter: 'B' },
@@ -45,6 +46,7 @@ export const questions: Record<string, Question> = {
   step_4: {
     type: 'text',
     step: 4,
-    text: "Ramenez Dark Cosmo à la lumière dans son foyer."
+    text: "Ramenez Dark Cosmo à la lumière dans son foyer.",
+    images: ['/images/stranger/dark-cosmo.png', '/images/stranger/cosmo.png']
   },
 }
