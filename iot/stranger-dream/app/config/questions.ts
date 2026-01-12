@@ -5,11 +5,13 @@ export type PuzzleItem = {
 }
 
 export type Question = {
-  type: 'text' | 'puzzle'; // Renamed 'hat-puzzle' to generic 'puzzle'
+  type: 'text' | 'puzzle';
   title?: string;
   subtitle?: string;
   step: number;
   text?: string;
+  image?: string;
+  imagePosition?: 'top' | 'bottom';
   puzzleItems?: PuzzleItem[];
 }
 
@@ -30,12 +32,15 @@ export const questions: Record<string, Question> = {
     step: 2,
     title: "QUESTION 2 :",
     text: "Pour trouver la 2ème lettre, trouve le point faible du pingouin Dark Cosmo et dis-le lui.",
-    // image: '/images/stranger/dark-cosmo.png' // Placeholder if valid path found
+    image: '/images/stranger/dark-cosmo.png',
+    imagePosition: 'bottom'
   },
   step_3: {
     type: 'text',
     step: 3,
-    text: "Demandez gentiment la lettre à Cosmo le pingouin."
+    text: "Demandez gentiment la lettre à Cosmo le pingouin.",
+    image: '/images/stranger/cosmo.png',
+    imagePosition: 'bottom'
   },
   step_4: {
     type: 'text',

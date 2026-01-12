@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col items-center w-full gap-4">
-        <h2 class="font-bold text-2xl md:text-4xl text-stranger-rose uppercase tracking-wide m-0 text-center">
-            {{ question.title }}
+        <h2 class="font-bold text-3xl md:text-5xl text-stranger-rose uppercase tracking-wide m-0 text-center">
+            Question {{ question.step }}
         </h2>
         <p class="text-lg md:text-xl text-stranger-blue leading-snug m-0 text-center max-w-lg">
             {{ question.subtitle }}
