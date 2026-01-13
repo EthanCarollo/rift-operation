@@ -82,6 +82,24 @@
                             :message-class="stateMessageClass" :is-vertical="isVertical" />
                     </template>
                 </div>
+
+                <!-- CAMERA FEED OVERLAY (Bottom Left) -->
+                <div v-if="battleState !== 'IDLE'" 
+                     class="absolute bottom-4 left-4 z-30 w-48 aspect-video rounded-lg overflow-hidden border-2 border-white/30 shadow-2xl bg-black">
+                    <!-- Live Camera Feed -->
+                    <img v-if="cameraFrame" :src="'data:image/jpeg;base64,' + cameraFrame"
+                        class="absolute inset-0 w-full h-full object-cover" alt="Camera" />
+                    <div v-else class="absolute inset-0 flex items-center justify-center text-white/50 text-xs">
+                        📷 No Feed
+                    </div>
+                    <!-- AI Drawing Overlay -->
+                    <img v-if="outputFrame" :src="'data:image/png;base64,' + outputFrame"
+                        class="absolute inset-0 w-full h-full object-contain z-10" alt="Drawing" />
+                    <!-- Label -->
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] px-1 py-0.5 text-center uppercase tracking-wider z-20">
+                        {{ pureRole || 'Camera' }}
+                    </div>
+                </div>
             </div>
         </template>
     </div>
@@ -89,6 +107,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { io } from 'socket.io-client';
 import BattleHUD from '~/components/battle/BattleHUD.vue';
 import BattleBoss from '~/components/battle/BattleBoss.vue';
 import BattleAgent from '~/components/battle/BattleAgent.vue';
@@ -98,9 +117,21 @@ import { useBattleState } from '~/composables/useBattleState';
 // definePageMeta({ layout: false }); // REMOVE FOR APP.VUE
 
 // --- CONFIG ---
+const config = useRuntimeConfig();
 const showDebug = ref(true);
 const route = useRoute();
 const selectedRole = ref(route.query.role || null); // 'dream' | 'nightmare' | 'dream-dev' | 'nightmare-dev'
+
+// --- CAMERA FEED STATE ---
+const cameraFrame = ref(null);
+const outputFrame = ref(null);
+let backendSocket = null;
+
+// Pure role name (without -dev suffix)
+const pureRole = computed(() => {
+    if (!selectedRole.value) return null;
+    return selectedRole.value.replace('-dev', '');
+});
 
 // --- COMPOSABLE ---
 const {
@@ -110,6 +141,30 @@ const {
     hudRef, videoRef,
     init, triggerAttack, simulateCapture, simulateRecon, unlockAudio, handleVideoError, onVideoLoaded
 } = useBattleState(showDebug.value);
+
+// --- BACKEND SOCKET FOR CAMERA ---
+function connectBackend() {
+    const backendUrl = config.public.backendUrl || 'http://localhost:5010';
+    console.log('[Battle] Connecting to backend for camera:', backendUrl);
+    
+    backendSocket = io(backendUrl, { transports: ['websocket', 'polling'] });
+    
+    backendSocket.on('connect', () => {
+        console.log('[Battle] Backend connected');
+    });
+    
+    backendSocket.on('camera_frame', (data) => {
+        if (data.role === pureRole.value && data.frame) {
+            cameraFrame.value = data.frame;
+        }
+    });
+    
+    backendSocket.on('output_frame', (data) => {
+        if (data.role === pureRole.value && data.frame) {
+            outputFrame.value = data.frame;
+        }
+    });
+}
 
 // --- KEYBOARD SHORTCUTS ---
 function handleKeydown(e) {
@@ -161,11 +216,13 @@ const currentRoleDrawing = computed(() => {
 // --- LIFECYCLE ---
 onMounted(() => {
     init();
+    connectBackend();
     window.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown);
+    if (backendSocket) backendSocket.disconnect();
 });
 </script>
 
