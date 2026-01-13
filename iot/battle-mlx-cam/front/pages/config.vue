@@ -180,12 +180,16 @@ function connect() {
 
     socket.on('output_frame', (data) => {
         if (data.role && data.frame) {
+            // Only log if the frame actually changed (new generation)
+            const prevFrame = outputs.value[data.role];
+            const isNewFrame = !prevFrame || prevFrame.substring(0, 100) !== data.frame.substring(0, 100);
+            
             outputs.value[data.role] = data.frame;
             
-            // Log this event
-            // Try to find the label from status if available, or just log generation
-            const label = status.value?.cameras?.[data.role]?.label || 'image';
-            addLog(data.role, label);
+            if (isNewFrame) {
+                const label = status.value?.cameras?.[data.role]?.label || 'image';
+                addLog(data.role, label);
+            }
         }
     });
 }
