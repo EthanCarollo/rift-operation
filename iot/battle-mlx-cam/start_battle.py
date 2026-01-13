@@ -328,21 +328,29 @@ def log_configuration():
     # 1. Extract Backend WS URL
     ws_url = "Unknown"
     try:
-        ws_file = os.path.join(BACK_DIR, "src", "websocket_client.py")
-        with open(ws_file, "r") as f:
+        env_file = os.path.join(BACK_DIR, ".env")
+        with open(env_file, "r") as f:
             for line in f:
-                if line.strip().startswith("WS_URL"):
-                    # Extract string between quotes
-                    import re
-                    match = re.search(r'["\'](.*?)["\']', line)
-                    if match:
-                        ws_url = match.group(1)
+                if line.strip().startswith("WS_URL="):
+                    ws_url = line.strip().split("=", 1)[1]
                     break
     except Exception as e:
-        pass
+        ws_url = f"Error reading .env: {e}"
         
+    # 2. Extract Frontend->Backend URL
+    front_backend = f"http://localhost:{BACKEND_PORT} (default)"
+    try:
+        front_env = os.path.join(FRONT_DIR, ".env")
+        with open(front_env, "r") as f:
+             for line in f:
+                if line.strip().startswith("NUXT_PUBLIC_BACKEND_URL="):
+                    front_backend = line.strip().split("=", 1)[1]
+                    break
+    except:
+        pass
+
     print(f"   • Backend ➜ Rift Server:  {Colors.BOLD}{ws_url}{Colors.ENDC}")
-    print(f"   • Frontend ➜ Backend:     {Colors.BOLD}http://192.168.10.7:{BACKEND_PORT}{Colors.ENDC}")
+    print(f"   • Frontend ➜ Backend:     {Colors.BOLD}{front_backend}{Colors.ENDC}")
     print(f"   • User Access ➜ Web App:  {Colors.BOLD}http://localhost:{FRONTEND_PORT}/config{Colors.ENDC}")
     print("")
 

@@ -4,9 +4,15 @@ import ssl
 import json
 import threading
 import websocket
+import os
+from dotenv import load_dotenv
+
+# Load .env
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
 
 # Server URL
-WS_URL = "ws://192.168.10.7:8000/ws"
+WS_URL = os.getenv("WS_URL", "ws://127.0.0.1:8000/ws")
 
 class RiftWebSocket:
     """WebSocket client for Rift Operation battle server."""

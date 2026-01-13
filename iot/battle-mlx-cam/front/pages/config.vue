@@ -131,7 +131,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { io } from 'socket.io-client';
 
-const backendUrl = ref('http://192.168.10.7:5010');
+const config = useRuntimeConfig();
+const backendUrl = ref(config.public.backendUrl);
 const connected = ref(false);
 const status = ref(null);
 const logs = ref([]);
