@@ -310,6 +310,7 @@ def list_connected_cameras():
     print("")
 
 
+
 def check_fal_key():
     """Run the key check script."""
     log("🔑 Verifying FAL_KEY...", Colors.CYAN)
@@ -318,6 +319,17 @@ def check_fal_key():
         subprocess.run(cmd, cwd=BACK_DIR, check=False)
     except Exception as e:
         log(f"⚠️ Key check failed: {e}", Colors.WARNING)
+    print("")
+
+def check_ws_connection():
+    """Run the WebSocket connection check."""
+    log("🔌 Verifying WebSocket Server...", Colors.CYAN)
+    try:
+        cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "check_ws.py"]
+        # Allow failure (don't exit), just warn
+        subprocess.run(cmd, cwd=BACK_DIR, check=False)
+    except Exception as e:
+        log(f"⚠️ WS Check failed to run: {e}", Colors.WARNING)
     print("")
 
 def main():
@@ -333,6 +345,9 @@ def main():
         
         # 0b. Check API Key
         check_fal_key()
+        
+        # 0c. Check WebSocket Config
+        check_ws_connection()
         
         back_proc = start_backend()
         front_proc = start_frontend()
