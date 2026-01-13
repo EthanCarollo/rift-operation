@@ -1,8 +1,10 @@
 let globalSocket: WebSocket | null = null;
 let globalReconnectTimer: any = null;
-const WS_URL = 'ws://server.riftoperation.ethan-folio.fr/ws';
 
 export const useRiftSocket = () => {
+    const config = useRuntimeConfig();
+    const WS_URL = (config.public.wsUrl as string) || 'ws://localhost:8000/ws';
+
     const isConnected = useState('rift-socket-connected', () => false);
     const lastPayload = useState('rift-socket-payload', () => null);
 

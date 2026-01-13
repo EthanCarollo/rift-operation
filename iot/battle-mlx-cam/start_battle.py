@@ -337,20 +337,23 @@ def log_configuration():
     except Exception as e:
         ws_url = f"Error reading .env: {e}"
         
-    # 2. Extract Frontend->Backend URL
+    # 2. Extract Frontend->Backend URL and Frontend WS URL
     front_backend = f"http://localhost:{BACKEND_PORT} (default)"
+    front_ws = "ws://localhost:8000/ws (default)"
     try:
         front_env = os.path.join(FRONT_DIR, ".env")
         with open(front_env, "r") as f:
              for line in f:
                 if line.strip().startswith("NUXT_PUBLIC_BACKEND_URL="):
                     front_backend = line.strip().split("=", 1)[1]
-                    break
+                if line.strip().startswith("NUXT_PUBLIC_WS_URL="):
+                    front_ws = line.strip().split("=", 1)[1]
     except:
         pass
 
     print(f"   • Backend ➜ Rift Server:  {Colors.BOLD}{ws_url}{Colors.ENDC}")
     print(f"   • Frontend ➜ Backend:     {Colors.BOLD}{front_backend}{Colors.ENDC}")
+    print(f"   • Frontend ➜ Rift Server: {Colors.BOLD}{front_ws}{Colors.ENDC}")
     print(f"   • User Access ➜ Web App:  {Colors.BOLD}http://localhost:{FRONTEND_PORT}/config{Colors.ENDC}")
     print("")
 
