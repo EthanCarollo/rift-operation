@@ -126,15 +126,17 @@ class Camera:
                 return None
 
 
-def list_cameras(max_check: int = 5) -> list[tuple[int, str]]:
+def list_cameras(max_check: int = 3) -> list[tuple[int, str]]:
     """
     List available cameras.
     Returns list of (index, name).
+    Risk of Segfault on macOS with OpenCV is high when probing non-existent indices.
     """
     # Try to get names via system_profiler (macOS only)
     names = {}
     try:
         import subprocess
+        # Get list from system_profiler to know how many to potentially expect
         cmd = ["system_profiler", "SPCameraDataType", "-json"]
         result = subprocess.run(cmd, capture_output=True, text=True)
         import json
@@ -142,20 +144,15 @@ def list_cameras(max_check: int = 5) -> list[tuple[int, str]]:
         
         items = data.get('SPCameraDataType', [])
         
-        # Filter out iPhone/Continuity cameras as they often don't match OpenCV indices or cause offsets
-        # And reverse the list because system_profiler usually lists Built-in first, but OpenCV often enumerates USB first.
-        physical_cameras = [
-            item for item in items 
-            if 'iPhone' not in item.get('_name', '') and 'iPhone' not in item.get('spcamera_model-id', '')
-        ]
+        # Filter out iPhone/Continuity if possible
+        # Actually, let's just use the count to limit OpenCV checks
+        max_check = len(items) if items else 3
+        if max_check < 1: max_check = 1
         
-        # Heuristic: Reverse the list to match OpenCV's common [External -> Internal] enumeration order
-        physical_cameras.reverse()
-        
-        for i, item in enumerate(physical_cameras):
-            # Map index to name (assuming order matches OpenCV)
-            names[i] = item.get('_name', f"Camera {i}")
-            
+        # Populate names map
+        for i, item in enumerate(reversed(items)):
+             names[i] = item.get('_name', f"Camera {i}")
+             
     except Exception:
         pass
 
@@ -163,15 +160,21 @@ def list_cameras(max_check: int = 5) -> list[tuple[int, str]]:
     os.environ["OPENCV_LOG_LEVEL"] = "OFF"
     
     cameras = []
-    for i in range(max_check):
+    # Limit check range to avoid segfaults on out-of-bound indices
+    for i in range(max_check + 1): 
         try:
-            cap = cv2.VideoCapture(i)
+            # CAP_AVFOUNDATION is safer on macOS
+            cap = cv2.VideoCapture(i, cv2.CAP_AVFOUNDATION) if os.name == 'posix' else cv2.VideoCapture(i)
+            
             if cap.isOpened():
-                ret, _ = cap.read()
-                if ret:
-                    name = names.get(i, f"Camera {i}")
-                    cameras.append((i, name))
+                # Do NOT calling read() here, it causes segfaults on some drivers during enumeration
+                name = names.get(i, f"Camera {i}")
+                cameras.append((i, name))
                 cap.release()
+            else:
+                # If 0 fails, we might continue, but if 1 fails after 0 worked, usually we stop?
+                # No, sometimes gaps exist. But segfaults happen on high indices.
+                pass
         except:
             pass
     
