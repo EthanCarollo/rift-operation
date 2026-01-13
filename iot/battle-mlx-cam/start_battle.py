@@ -262,6 +262,45 @@ def open_browser(dream_screen=None, nightmare_screen=None):
     log("✅ Browser windows launched", Colors.GREEN)
 
 
+def list_connected_cameras():
+    """List available cameras using the backend function."""
+    log("📷 Checking available cameras...", Colors.CYAN)
+    try:
+        # Run python script to list cameras
+        cmd = [
+            "conda", "run", "-n", CONDA_ENV_NAME,
+            "python", "-c", "from src import list_cameras; print(list_cameras())"
+        ]
+        result = subprocess.run(cmd, cwd=BACK_DIR, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            # Parse output - it prints a list of tuples like [(0, 'Name'), ...]
+            output = result.stdout.strip()
+            # Basic cleanup of stdout if there are other prints
+            lines = output.split('\n')
+            camera_list_str = lines[-1] # The list should be the last thing printed
+            
+            try:
+                # Safe eval to parse the string representation of list
+                import ast
+                cameras = ast.literal_eval(camera_list_str)
+                
+                if not cameras:
+                    log("⚠️ No cameras detected!", Colors.WARNING)
+                else:
+                    log(f"✅ Found {len(cameras)} camera(s):", Colors.GREEN)
+                    for idx, name in cameras:
+                        print(f"   [{idx}] {name}")
+            except:
+                log(f"⚠️ Could not parse camera list: {camera_list_str}", Colors.WARNING)
+        else:
+            log(f"⚠️ Failed to list cameras: {result.stderr}", Colors.WARNING)
+            
+    except Exception as e:
+        log(f"⚠️ Error checking cameras: {e}", Colors.WARNING)
+    print("")
+
+
 def main():
     back_proc = None
     front_proc = None
@@ -269,6 +308,9 @@ def main():
     try:
         # Setup environment first
         setup_environment()
+        
+        # 0. List cameras to help user debug
+        list_connected_cameras()
         
         back_proc = start_backend()
         front_proc = start_frontend()
