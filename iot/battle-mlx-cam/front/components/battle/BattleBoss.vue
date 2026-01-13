@@ -4,7 +4,7 @@
       <h2
         class="text-6xl md:text-8xl font-black text-white tracking-widest drop-shadow-2xl mix-blend-overlay opacity-90 transition-colors duration-100"
         :class="{ 'text-red-500 opacity-100': isHit }">
-        L'ÉTRANGER
+        L'INCONNU
       </h2>
       <div v-if="attack"
         class="mt-4 inline-block px-6 py-3 bg-black/80 border-2 border-red-500 rounded-lg text-white text-lg font-black uppercase tracking-widest shadow-[0_0_30px_rgba(239,68,68,0.8)] animate-pulse">

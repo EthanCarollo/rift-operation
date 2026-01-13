@@ -17,6 +17,7 @@ class CameraPanel:
         self.last_frame = None
         self.last_output = None
         self.recognition_status = "Waiting..."
+        self.last_label = None  # Track the recognized/demo label
         self.prompt = PROMPT_MAPPING.get("sword", "Steel katana sword cartoon style")
         
         if camera_index is not None:
@@ -85,7 +86,8 @@ class BattleService:
                 role: {
                     "index": p.camera_index,
                     "has_camera": p.camera is not None,
-                    "recognition": p.recognition_status
+                    "recognition": p.recognition_status,
+                    "label": p.last_label
                 }
                 for role, p in self.panels.items()
             }
@@ -180,6 +182,7 @@ class BattleService:
             if self.current_attack and (time.time() - self.attack_start_time < 5.0):
                 remaining = 5.0 - (time.time() - self.attack_start_time)
                 panel.recognition_status = f"⏳ Drawing time... ({remaining:.1f}s)"
+                panel.last_label = None
                 return
             
             # Demo mode: use counter based on attack
@@ -189,10 +192,12 @@ class BattleService:
             if target_label:
                 is_rec = True
                 label = target_label
+                panel.last_label = label # Track label
                 panel.recognition_status = f"🎯 DEMO: {label.upper()}"
                 panel.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
             else:
                 panel.recognition_status = "⏳ Waiting attack..."
+                panel.last_label = None
                 return
             
             # Transform image

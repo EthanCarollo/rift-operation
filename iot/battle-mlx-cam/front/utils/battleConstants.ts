@@ -59,7 +59,7 @@ export const BATTLE_STATE_CONFIG: Record<string, StateConfig> = {
         video: BATTLE_VIDEOS.WEAKENED ?? null,
         music: BATTLE_MUSIC.WEAKENED ?? null,
         loop: true,
-        message: "L'ÉTRANGER EST AFFAIBLI",
+        message: "L'INCONNU EST AFFAIBLI",
         subMessage: "Utilisez les sceaux de confinement de la BRC pour le mettre hors d'état de nuire !",
         messageClass: 'text-purple-400',
         clearAttack: true

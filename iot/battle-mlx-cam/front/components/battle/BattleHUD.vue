@@ -34,7 +34,7 @@
     <div v-if="state !== 'IDLE'" class="absolute top-[12%] left-0 right-0 flex justify-center">
       <div :class="isVertical ? 'w-[53vw]' : 'w-[60vw] max-w-2xl'">
         <div class="flex justify-between text-xs uppercase tracking-widest text-white/60 mb-2 px-1">
-          <span>Santé de l'Étranger</span>
+          <span>Santé de l'Inconnu</span>
           <span>{{ hp * 20 }}%</span>
         </div>
         <div class="flex gap-2 h-6">

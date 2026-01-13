@@ -109,6 +109,20 @@
                     {{ recognition.dream || 'Idle' }}
                 </div>
             </div>
+        </div> <!-- End Grid -->
+
+        <!-- Logs Section -->
+        <div class="mt-4 border-t border-neutral-700 pt-4">
+            <h2 class="text-xs font-bold mb-2 text-neutral-400">ACTIVITY LOG</h2>
+            <div class="h-32 overflow-y-auto bg-neutral-800 rounded p-2 text-xs font-mono space-y-1">
+                <div v-for="(log, i) in logs" :key="i" class="text-neutral-400">
+                    <span class="text-neutral-600">[{{ log.time }}]</span>
+                    <span :class="log.role === 'dream' ? 'text-blue-400' : 'text-pink-400'">{{ log.role.toUpperCase() }}</span>
+                    <span>: generated </span>
+                    <span class="text-white">{{ log.label || 'unknown' }}</span>
+                </div>
+                <div v-if="logs.length === 0" class="text-neutral-600 italic">No activity yet...</div>
+            </div>
         </div>
     </div>
 </template>
@@ -120,6 +134,7 @@ import { io } from 'socket.io-client';
 const backendUrl = ref('http://localhost:5010');
 const connected = ref(false);
 const status = ref(null);
+const logs = ref([]);
 const cameras = ref([
     { index: 0, name: 'Camera 0' },
     { index: 1, name: 'Camera 1' }
@@ -130,6 +145,12 @@ const outputs = ref({ nightmare: null, dream: null });
 const recognition = ref({ nightmare: '', dream: '' });
 
 let socket = null;
+
+function addLog(role, label) {
+    const time = new Date().toLocaleTimeString();
+    logs.value.unshift({ time, role, label });
+    if (logs.value.length > 50) logs.value.pop();
+}
 
 function connect() {
     socket = io(backendUrl.value, { transports: ['websocket', 'polling'] });
@@ -159,6 +180,11 @@ function connect() {
     socket.on('output_frame', (data) => {
         if (data.role && data.frame) {
             outputs.value[data.role] = data.frame;
+            
+            // Log this event
+            // Try to find the label from status if available, or just log generation
+            const label = status.value?.cameras?.[data.role]?.label || 'image';
+            addLog(data.role, label);
         }
     });
 }
