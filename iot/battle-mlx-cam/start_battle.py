@@ -264,6 +264,15 @@ def open_browser(dream_screen=None, nightmare_screen=None):
 
 def list_connected_cameras():
     """List available cameras using the backend function."""
+    
+    # Check for SSH session on macOS
+    if os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY'):
+        log("⚠️  SSH SESSION DETECTED", Colors.WARNING)
+        log("   macOS often blocks camera access for SSH/Remote sessions.", Colors.WARNING)
+        log("   You may need to run this from the physical machine's Terminal.", Colors.WARNING)
+        log("   (Or use Screen Sharing/VNC)", Colors.WARNING)
+        print("")
+
     log("📷 Checking available cameras...", Colors.CYAN)
     try:
         # Run python script to list cameras
@@ -301,6 +310,16 @@ def list_connected_cameras():
     print("")
 
 
+def check_fal_key():
+    """Run the key check script."""
+    log("🔑 Verifying FAL_KEY...", Colors.CYAN)
+    try:
+        cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "check_key.py"]
+        subprocess.run(cmd, cwd=BACK_DIR, check=False)
+    except Exception as e:
+        log(f"⚠️ Key check failed: {e}", Colors.WARNING)
+    print("")
+
 def main():
     back_proc = None
     front_proc = None
@@ -311,6 +330,9 @@ def main():
         
         # 0. List cameras to help user debug
         list_connected_cameras()
+        
+        # 0b. Check API Key
+        check_fal_key()
         
         back_proc = start_backend()
         front_proc = start_frontend()
