@@ -154,12 +154,20 @@ class BattleService:
         while self.running:
             for role, panel in self.panels.items():
                 if panel.camera:
+                    # Check rate limit BEFORE spawning thread
+                    elapsed = time.time() - panel.last_gen_time
+                    if elapsed < 10.0:
+                        continue  # Skip, too soon
+                    
+                    # Mark as processing immediately to prevent duplicate spawns
+                    panel.last_gen_time = time.time()
+                    
                     threading.Thread(
                         target=self._process_panel, 
                         args=(role, panel), 
                         daemon=True
                     ).start()
-            time.sleep(0.5)
+            time.sleep(1.0)
     
     def _process_panel(self, role: str, panel: CameraPanel):
         """Process a single panel."""
@@ -187,14 +195,9 @@ class BattleService:
                 panel.recognition_status = "⏳ Waiting attack..."
                 return
             
-            # Rate limit: 3s between generations
-            if time.time() - panel.last_gen_time < 3.0:
-                return
-            
             # Transform image
             print(f"[BattleService] Transforming {role}...")
             res, _ = transform_image(frame, panel.prompt)
-            panel.last_gen_time = time.time()
             
             # Remove background
             final, _ = remove_background(res)
