@@ -321,12 +321,36 @@ def check_fal_key():
         log(f"⚠️ Key check failed: {e}", Colors.WARNING)
     print("")
 
+def log_configuration():
+    """Print current configuration URLs."""
+    log("\n📋 Configuration Summary:", Colors.HEADER)
+    
+    # 1. Extract Backend WS URL
+    ws_url = "Unknown"
+    try:
+        ws_file = os.path.join(BACK_DIR, "src", "websocket_client.py")
+        with open(ws_file, "r") as f:
+            for line in f:
+                if line.strip().startswith("WS_URL"):
+                    # Extract string between quotes
+                    import re
+                    match = re.search(r'["\'](.*?)["\']', line)
+                    if match:
+                        ws_url = match.group(1)
+                    break
+    except Exception as e:
+        pass
+        
+    print(f"   • Backend ➜ Rift Server:  {Colors.BOLD}{ws_url}{Colors.ENDC}")
+    print(f"   • Frontend ➜ Backend:     {Colors.BOLD}http://192.168.10.7:{BACKEND_PORT}{Colors.ENDC}")
+    print(f"   • User Access ➜ Web App:  {Colors.BOLD}http://localhost:{FRONTEND_PORT}/config{Colors.ENDC}")
+    print("")
+
 def check_ws_connection():
     """Run the WebSocket connection check."""
-    log("🔌 Verifying WebSocket Server...", Colors.CYAN)
+    # log("🔌 Verifying WebSocket Server...", Colors.CYAN) # Moved inside check_ws
     try:
         cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "check_ws.py"]
-        # Allow failure (don't exit), just warn
         subprocess.run(cmd, cwd=BACK_DIR, check=False)
     except Exception as e:
         log(f"⚠️ WS Check failed to run: {e}", Colors.WARNING)
@@ -339,6 +363,9 @@ def main():
     try:
         # Setup environment first
         setup_environment()
+        
+        # Log config
+        log_configuration()
         
         # 0. List cameras to help user debug
         list_connected_cameras()

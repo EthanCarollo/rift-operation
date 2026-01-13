@@ -131,7 +131,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { io } from 'socket.io-client';
 
-const backendUrl = ref('http://localhost:5010');
+const backendUrl = ref('http://192.168.10.7:5010');
 const connected = ref(false);
 const status = ref(null);
 const logs = ref([]);
@@ -205,7 +205,7 @@ async function fetchCameras() {
 }
 
 onMounted(async () => {
-    backendUrl.value = `http://${window.location.hostname}:5010`;
+    // backendUrl.value = `http://${window.location.hostname}:5010`; // Forced to 192.168.10.7
     connect();
     await fetchCameras();
     setTimeout(() => {
