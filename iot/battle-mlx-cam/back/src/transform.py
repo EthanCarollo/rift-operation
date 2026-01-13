@@ -62,10 +62,15 @@ def transform_image(
         "acceleration": "high",
     }
     
+    # Log inference start
+    prompt_preview = prompt[:50] + "..." if len(prompt) > 50 else prompt
+    print(f"[FLUX] 🚀 Starting inference | Prompt: \"{prompt_preview}\"")
+    
     # Submit request
     response = _session.post(FAL_API_URL, headers=headers, json=payload, timeout=60)
     
     if response.status_code != 200:
+        print(f"[FLUX] ❌ API error {response.status_code}")
         raise RuntimeError(f"API error {response.status_code}: {response.text[:100]}")
     
     result = response.json()
@@ -104,4 +109,7 @@ def transform_image(
         img_resp = _session.get(image_url, timeout=60)
         output_bytes = img_resp.content
     
-    return output_bytes, time.time() - start
+    elapsed = time.time() - start
+    print(f"[FLUX] ✅ Inference complete | Duration: {elapsed:.2f}s")
+    
+    return output_bytes, elapsed

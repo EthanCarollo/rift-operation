@@ -1,38 +1,39 @@
-# Battle Camera
+# Battle Camera (Headless)
 
-Webcam capture with AI transformation for the Battle module.
+Webcam capture with AI transformation for the Battle module. Runs headless (no GUI), controlled via web API.
 
 ## Quick Start
 
 ```bash
-# Activate virtual environment
-source venv/bin/activate
+# Via start_battle.py (recommended - handles everything)
+python start_battle.py
 
-# Run the app
-python main.py
+# Or manually with conda
+conda run -n rift-operation python main_headless.py
 ```
 
 ## Features
 
-- 📷 Camera selection dropdown
-- 🌙/☀️ Role selector (Nightmare/Dream)
+- 📷 Dual camera support (Dream/Nightmare roles)
 - 🎨 AI transformation with Flux Kontext
 - ✂️ Background removal (macOS Vision)
 - 📡 WebSocket streaming to battle page
+- 🌐 REST API for monitoring (port 5010)
 
-## Structure
+## API Endpoints
 
-```
-battle-mlx-cam/
-├── main.py              # Entry point with GUI
-├── src/
-│   ├── camera.py        # Webcam capture
-│   ├── transform.py     # fal.ai API
-│   ├── background.py    # Background removal
-│   └── websocket_client.py  # WS connection
-├── requirements.txt
-└── .env                 # Your FAL_KEY
-```
+| Endpoint | Description |
+|----------|-------------|
+| `GET /health` | Health check |
+| `GET /status` | Battle status |
+| `GET /cameras` | List available cameras |
+
+## Socket.io Events
+
+- `camera_frame` - Raw camera frames
+- `output_frame` - Transformed frames
+- `status` - Battle status updates
+- `set_camera` - Set camera for role
 
 ## Configuration
 

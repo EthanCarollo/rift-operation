@@ -84,6 +84,12 @@ def select_screens():
         log("⚠️ No screens detected (AppKit missing?). Using defaults.", Colors.WARNING)
         return None, None
 
+    # Auto-select if only one screen
+    if len(screens) == 1:
+        log(f"🖥️  Single display detected: {screens[0]['w']}x{screens[0]['h']}", Colors.CYAN)
+        log("   Auto-selecting for both DREAM and NIGHTMARE", Colors.GREEN)
+        return screens[0], screens[0]
+
     log("\n🖥️  Connected Displays:", Colors.HEADER)
     for s in screens:
         print(f"   [{s['index']}] {s['w']}x{s['h']} at ({s['x']},{s['y']})")
