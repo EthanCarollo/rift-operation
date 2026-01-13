@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mzbac/flux.swift",
       "state" : {
-        "branch" : "main",
-        "revision" : "4ce5808ca82e8036962a078f892c49729e999859"
+        "revision" : "613ff32d27bdfef0ed07c6a3aa37a5b7ee862985",
+        "version" : "0.1.7"
       }
     },
     {

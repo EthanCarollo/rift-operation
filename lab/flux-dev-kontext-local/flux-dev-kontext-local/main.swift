@@ -42,10 +42,33 @@ func savePPM(array: MLXArray, path: String) {
         let binaryData = Data(data) 
         fileData.append(binaryData)
         try fileData.write(to: url)
-        log("Saved PPM image to \(path) (View specific viewers or convert)", emoji: "💾")
+        log("Saved PPM image to \(path)", emoji: "💾")
     } catch {
         log("Failed to save image: \(error)", emoji: "❌")
     }
+}
+
+/// Create a simple test input image (gradient pattern)
+func createTestImage(width: Int, height: Int) -> MLXArray {
+    log("Creating test input image (\(width)x\(height))...", emoji: "🎨")
+    
+    // Create a simple gradient image for testing
+    var pixels: [Float] = []
+    for y in 0..<height {
+        for x in 0..<width {
+            let r = Float(x) / Float(width)      // Red gradient horizontal
+            let g = Float(y) / Float(height)     // Green gradient vertical
+            let b: Float = 0.5                   // Constant blue
+            pixels.append(r)
+            pixels.append(g)
+            pixels.append(b)
+        }
+    }
+    
+    // Create MLXArray with shape [H, W, C] and normalize to [-1, 1]
+    let array = MLXArray(pixels, [height, width, 3])
+    let normalized = array * 2 - 1  // Convert from [0,1] to [-1,1]
+    return normalized
 }
 
 
@@ -53,13 +76,14 @@ func savePPM(array: MLXArray, path: String) {
 struct FluxTest {
     static func main() async {
         do {
-            log("Starting Flux Test...", emoji: "🚀")
+            log("Starting Flux Kontext Test...", emoji: "🚀")
             
             // 1. Define Model and Parameters
             let repoId = "mzbac/flux1.kontext.4bit.mlx"
             let outputFilename = "flux_output.ppm" 
             
             log("Target Model: \(repoId)", emoji: "🎯")
+            log("Note: Kontext is an image-to-image model - requires input image", emoji: "📌")
             
             // 2. Download/Locate Model
             log("Checking model availability...", emoji: "🔍")
@@ -67,74 +91,91 @@ struct FluxTest {
             log("Model available at: \(modelDir.path)", emoji: "📂")
             
             // 3. Load Quantized Model
-            log("Loading quantized model (Type: kontext)...", emoji: "🧠")
+            log("Loading quantized Kontext model...", emoji: "🧠")
             let loadStart = Date()
             
-            // Load the model. Returns FLUX.
-            // We cast it to TextToImageGenerator (or ImageToImageGenerator if available/needed)
+            // Load the model as Kontext type
             let baseModel = try await FLUX.loadQuantized(
                 from: modelDir.path, 
-                modelType: "kontext" 
+                modelType: "kontext"
             )
             
-            guard let generator = baseModel as? TextToImageGenerator else {
-                log("Error: Loaded model does not conform to TextToImageGenerator", emoji: "❌")
+            // Cast to KontextImageToImageGenerator for image-to-image generation
+            guard let generator = baseModel as? KontextImageToImageGenerator else {
+                log("Error: Loaded model does not conform to KontextImageToImageGenerator", emoji: "❌")
                 return
             }
             
             let loadTime = Date().timeIntervalSince(loadStart)
             log("Model loaded in \(String(format: "%.2f", loadTime))s", emoji: "✅")
             
-            // 4. Configuration
+            // 4. Create Input Image
+            let inputWidth = 512
+            let inputHeight = 512
+            let inputImage = createTestImage(width: inputWidth, height: inputHeight)
+            
+            // 5. Configuration
             log("Configuring parameters...", emoji: "⚙️")
-            // Use defaults from Flux1Dev configuration as fallback/base
-            var params = FluxConfiguration.flux1Dev.defaultParameters()
-            params.prompt = "A futuristic city with neon lights, high detail, 8k resolution"
-            params.width = 512
-            params.height = 512
-            params.numInferenceSteps = 4 
+            
+            // Use Kontext default parameters (30 steps, shift sigmas)
+            var params = FluxConfiguration.flux1KontextDev.defaultParameters()
+            params.prompt = "Transform this into a futuristic cyberpunk scene with neon lights"
+            params.width = inputWidth
+            params.height = inputHeight
+            params.numInferenceSteps = 30  // Recommended for Kontext
 
             log("Prompt: \"\(params.prompt)\"", emoji: "📝")
             log("Size: \(params.width)x\(params.height)", emoji: "📏")
             log("Steps: \(params.numInferenceSteps)", emoji: "👣")
             
-            // 5. Generate
-            log("Generaton started...", emoji: "🎨")
+            // 6. Generate using Kontext (image-to-image)
+            log("Generation started (image-to-image)...", emoji: "🎨")
             let genStart = Date()
             
-            // Generate latents sequence
-            let latentsSequence = generator.generateLatents(parameters: params)
+            // Use generateKontextLatents for image-to-image transformation
+            var latentsSequence = generator.generateKontextLatents(
+                image: inputImage,
+                parameters: params
+            )
             
             var lastXt: MLXArray?
-            for xt in latentsSequence {
-                lastXt = xt
+            var stepCount = 0
+            while let xt = latentsSequence.next() {
+                stepCount += 1
+                eval(xt)  // Ensure computation is complete before continuing
                 print(".", terminator: "")
                 fflush(stdout)
+                lastXt = xt
             }
             print("")
+            log("Completed \(stepCount) denoising steps", emoji: "✓")
             
             guard let finalLatents = lastXt else {
                 log("Failed to generate latents", emoji: "❌")
                 return
             }
             
-            // Decode
+            // 7. Decode
             log("Decoding latents...", emoji: "🖼️")
             let unpacked = unpackLatents(finalLatents, height: params.height, width: params.width)
             let decoded = generator.decode(xt: unpacked)
             
-            // Post-process
+            // 8. Post-process
             let squeezed = decoded.squeezed()
-            let raster = (squeezed * 255).asType(.uint8)
+            // Clamp to [0, 1] then scale to [0, 255]
+            let clamped = MLX.clip(squeezed, min: 0, max: 1)
+            let raster = (clamped * 255).asType(.uint8)
             
-            // Save Image
+            // 9. Save Image
             savePPM(array: raster, path: outputFilename)
             
             let genTime = Date().timeIntervalSince(genStart)
             
-            // 6. Report
+            // 10. Report
             log("Generation complete!", emoji: "✨")
             log("Total Generation Time: \(String(format: "%.2f", genTime))s", emoji: "⏱️")
+            log("Output saved to: \(outputFilename)", emoji: "📁")
+            log("Tip: Convert PPM to PNG with: convert \(outputFilename) output.png", emoji: "💡")
             
         } catch {
             log("An error occurred: \(error)", emoji: "💥")

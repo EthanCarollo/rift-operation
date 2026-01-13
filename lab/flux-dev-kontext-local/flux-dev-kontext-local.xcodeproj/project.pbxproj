@@ -6,6 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		19EEBB2D2F16E78700619A56 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB2C2F16E78700619A56 /* MLX */; };
+		19EEBB2F2F16E78700619A56 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB2E2F16E78700619A56 /* MLXFFT */; };
+		19EEBB312F16E78700619A56 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB302F16E78700619A56 /* MLXFast */; };
+		19EEBB332F16E78700619A56 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB322F16E78700619A56 /* MLXLinalg */; };
+		19EEBB352F16E78700619A56 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB342F16E78700619A56 /* MLXNN */; };
+		19EEBB382F16E7CA00619A56 /* Hub in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB372F16E7CA00619A56 /* Hub */; };
+		19EEBB3A2F16E7CA00619A56 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB392F16E7CA00619A56 /* Tokenizers */; };
+		19EEBB3C2F16E7CA00619A56 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 19EEBB3B2F16E7CA00619A56 /* Transformers */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		19EEBB1F2F16A26900619A56 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -35,6 +46,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				19EEBB382F16E7CA00619A56 /* Hub in Frameworks */,
+				19EEBB3A2F16E7CA00619A56 /* Tokenizers in Frameworks */,
+				19EEBB3C2F16E7CA00619A56 /* Transformers in Frameworks */,
+				19EEBB312F16E78700619A56 /* MLXFast in Frameworks */,
+				19EEBB332F16E78700619A56 /* MLXLinalg in Frameworks */,
+				19EEBB2D2F16E78700619A56 /* MLX in Frameworks */,
+				19EEBB352F16E78700619A56 /* MLXNN in Frameworks */,
+				19EEBB2F2F16E78700619A56 /* MLXFFT in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,6 +96,14 @@
 			);
 			name = "flux-dev-kontext-local";
 			packageProductDependencies = (
+				19EEBB2C2F16E78700619A56 /* MLX */,
+				19EEBB2E2F16E78700619A56 /* MLXFFT */,
+				19EEBB302F16E78700619A56 /* MLXFast */,
+				19EEBB322F16E78700619A56 /* MLXLinalg */,
+				19EEBB342F16E78700619A56 /* MLXNN */,
+				19EEBB372F16E7CA00619A56 /* Hub */,
+				19EEBB392F16E7CA00619A56 /* Tokenizers */,
+				19EEBB3B2F16E7CA00619A56 /* Transformers */,
 			);
 			productName = "flux-dev-kontext-local";
 			productReference = 19EEBB212F16A26900619A56 /* flux-dev-kontext-local */;
@@ -106,6 +133,11 @@
 			);
 			mainGroup = 19EEBB182F16A26900619A56;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				19EEBB362F16E7CA00619A56 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				19EEBB3D2F16E8BC00619A56 /* XCRemoteSwiftPackageReference "flux.swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 19EEBB222F16A26900619A56 /* Products */;
 			projectDirPath = "";
@@ -295,6 +327,76 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.30.2;
+			};
+		};
+		19EEBB362F16E7CA00619A56 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.6;
+			};
+		};
+		19EEBB3D2F16E8BC00619A56 /* XCRemoteSwiftPackageReference "flux.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mzbac/flux.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.7;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		19EEBB2C2F16E78700619A56 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		19EEBB2E2F16E78700619A56 /* MLXFFT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFFT;
+		};
+		19EEBB302F16E78700619A56 /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		19EEBB322F16E78700619A56 /* MLXLinalg */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXLinalg;
+		};
+		19EEBB342F16E78700619A56 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB2B2F16E78700619A56 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		19EEBB372F16E7CA00619A56 /* Hub */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB362F16E7CA00619A56 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Hub;
+		};
+		19EEBB392F16E7CA00619A56 /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB362F16E7CA00619A56 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
+		};
+		19EEBB3B2F16E7CA00619A56 /* Transformers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19EEBB362F16E7CA00619A56 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Transformers;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 19EEBB192F16A26900619A56 /* Project object */;
 }
