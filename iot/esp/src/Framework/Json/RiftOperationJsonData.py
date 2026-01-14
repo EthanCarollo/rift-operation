@@ -9,6 +9,7 @@ class RiftOperationJsonData:
                 operator_launch_close_rift_step_1=None,
                 operator_launch_close_rift_step_2=None,
                 operator_launch_close_rift_step_3=None,
+                operator_launch_battle_attack=None,
                 operator_start_system=None,
                 
                 stranger_state=None,
@@ -59,6 +60,7 @@ class RiftOperationJsonData:
         self.operator_launch_close_rift_step_1 = operator_launch_close_rift_step_1
         self.operator_launch_close_rift_step_2 = operator_launch_close_rift_step_2
         self.operator_launch_close_rift_step_3 = operator_launch_close_rift_step_3
+        self.operator_launch_battle_attack = operator_launch_battle_attack
         self.operator_start_system = operator_start_system
         
         self.stranger_state = stranger_state
