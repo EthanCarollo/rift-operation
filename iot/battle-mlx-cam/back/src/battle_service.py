@@ -72,6 +72,8 @@ class BattleService:
                 role: {
                     "recognition": p.recognition_status,
                     "label": p.last_label,
+                    "knn_label": getattr(p, 'knn_label', None),
+                    "knn_distance": getattr(p, 'knn_distance', None),
                     "processing": p.processing
                 }
                 for role, p in self.roles.items()
@@ -164,6 +166,10 @@ class BattleService:
             # 1. KNN RECOGNITION (What the user is actually drawing)
             label_knn, distance = self.knn.predict(image_bytes)
             print(f"[BattleService] 🧠 KNN Result for {role}: '{label_knn}' (dist: {distance:.2f})")
+            
+            # Store KNN results in state for status broadcast
+            state.knn_label = label_knn
+            state.knn_distance = distance
 
             # 2. Determine Prompt based on Game State or KNN
             # Wait 5s after attack starts? (Game logic)
@@ -220,7 +226,8 @@ class BattleService:
                 return
 
             # 2. Transform Image (AI)
-            print(f"[BattleService] Transforming {role} with prompt: {state.prompt[:50]}...")
+            print(f"[BattleService] Transforming {role} with prompt:")
+            print(f"    → {state.prompt}")
             
             from PIL import Image
             import io

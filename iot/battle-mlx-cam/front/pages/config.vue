@@ -41,6 +41,11 @@
                         📷 No camera feed...
                      </div>
                      <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Live Camera</div>
+                     <!-- KNN Status -->
+                     <div v-if="knnStatus.nightmare" class="absolute bottom-2 left-2 right-2 bg-black/70 px-2 py-1 rounded text-xs">
+                        🧠 KNN: <span class="font-bold" :class="knnStatus.nightmare.label === 'Need Training' ? 'text-yellow-400' : 'text-green-400'">{{ knnStatus.nightmare.label }}</span>
+                        <span class="text-neutral-500 ml-1">({{ knnStatus.nightmare.distance?.toFixed(1) || '?' }})</span>
+                     </div>
                 </div>
 
                 <!-- AI Output Preview (from Backend) -->
@@ -77,6 +82,11 @@
                         📷 No camera feed...
                      </div>
                      <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Live Camera</div>
+                     <!-- KNN Status -->
+                     <div v-if="knnStatus.dream" class="absolute bottom-2 left-2 right-2 bg-black/70 px-2 py-1 rounded text-xs">
+                        🧠 KNN: <span class="font-bold" :class="knnStatus.dream.label === 'Need Training' ? 'text-yellow-400' : 'text-green-400'">{{ knnStatus.dream.label }}</span>
+                        <span class="text-neutral-500 ml-1">({{ knnStatus.dream.distance?.toFixed(1) || '?' }})</span>
+                     </div>
                 </div>
 
                 <!-- AI Output Preview (from Backend) -->
