@@ -3,16 +3,16 @@ Configu for Battle Camera System
 """
 
 # Key: Label defined in Training View
-# Value: Prompt sent to Flux Kontext
+# Value: Prompt sent to Flux Kontext (None = skip generation)
 PROMPT_MAPPING = {
-    "key": "A golden key illustration, vector art sticker style, white background, isolated, high contrast",
-    "door": "A wooden door illustration, vector art sticker style, white background, isolated, high contrast",
-    "star": "A cute yellow star illustration, vector art sticker style, white background, isolated, high contrast",
-    "eye": "A mystic eye illustration, vector art sticker style, white background, isolated, high contrast",
-    "cloud": "A fluffy blue cloud illustration, vector art sticker style, white background, isolated, high contrast",
-    "sword": "A sharp steel katana sword, vector art sticker style, white background, isolated, high contrast",
-    "empty": "pure white background",
-    "bullshit": "random cartoon scribble, white background",
+    "key": "Transform this drawing into a realistic image of a golden antique key, detailed metalwork, soft shadows",
+    "door": "Transform this drawing into a realistic image of a wooden medieval door, detailed wood grain, iron hinges",
+    "star": "Transform this drawing into a realistic image of a glowing golden star, soft magical glow, cosmic feel",
+    "eye": "Transform this drawing into a realistic image of a mystical all-seeing eye, detailed iris, ethereal glow",
+    "cloud": "Transform this drawing into a realistic image of a fluffy cumulus cloud, soft lighting, atmospheric",
+    "sword": "Transform this drawing into a realistic image of a steel katana sword, sharp edge, detailed hilt",
+    "empty": None,      # Skip generation
+    "bullshit": None,   # Skip generation - unrecognized drawing
 }
 
 # Threshold for KNN distance (lower = stricter)

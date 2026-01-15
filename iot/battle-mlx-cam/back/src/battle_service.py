@@ -9,6 +9,11 @@ from src.config import PROMPT_MAPPING, ATTACK_TO_COUNTER_LABEL
 # Configurable rate limit between AI generations (per role)
 GENERATION_RATE_LIMIT_S = 2.0  # 2 seconds between generations
 
+# TEST MODE: Simulate attack sequence when WebSocket has no attack
+# Set to None to disable test mode
+TEST_ATTACK_SEQUENCE = ["door", "eye", "star", "cloud", "key"]  # Cycles through these
+# TEST_ATTACK_SEQUENCE = None  # Uncomment to disable test mode
+
 # We need socketio to emit back 'output_frame' to the frontend client who sent it
 # But BattleService doesn't have direct access to socketio object usually.
 # The web_server calls service.process_client_frame.
@@ -147,6 +152,8 @@ class BattleService:
 
     def _process_image_task(self, role: str, state: BattleRoleState, image_bytes: bytes):
         try:
+            print(f"[BattleService] Processing frame for {role}...")
+            
             # 1. Determine Prompt based on Game State
             # Wait 5s after attack starts? (Game logic)
             if self.current_attack and (time.time() - self.attack_start_time < 5.0):
@@ -158,15 +165,25 @@ class BattleService:
             # Demo/Game Logic: Target label based on Current Attack
             target_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
             
+            # TEST MODE: If no attack from WebSocket, cycle through test sequence
             if target_label:
-                # We assume player is drawing the counter
-                # In real game we would use KNN to recognize drawing
-                # Here we just assume and generate that item
                 label = target_label
                 state.last_label = label
-                state.recognition_status = f"🎯 DEMO: {label.upper()}"
+                state.recognition_status = f"🎯 {label.upper()}"
                 state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+            elif TEST_ATTACK_SEQUENCE:
+                # Get next item from test sequence
+                if not hasattr(self, '_test_index'):
+                    self._test_index = 0
+                label = TEST_ATTACK_SEQUENCE[self._test_index % len(TEST_ATTACK_SEQUENCE)]
+                self._test_index += 1
+                
+                state.last_label = label
+                state.recognition_status = f"🧪 TEST: {label.upper()}"
+                state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+                print(f"[BattleService] TEST MODE: Using '{label}' ({self._test_index}/{len(TEST_ATTACK_SEQUENCE)})")
             else:
+                print(f"[BattleService] No attack detected, skipping (current_attack={self.current_attack})")
                 state.recognition_status = "⏳ Waiting attack..."
                 state.last_label = None
                 self._emit_status()
@@ -174,13 +191,15 @@ class BattleService:
 
             self._emit_status()
 
+            # Check if prompt is None (empty/bullshit = skip)
+            if state.prompt is None:
+                print(f"[BattleService] Prompt is None for '{label}', skipping generation")
+                state.recognition_status = f"⚠️ Unrecognized: {label}"
+                self._emit_status()
+                return
+
             # 2. Transform Image (AI)
-            print(f"[BattleService] Transforming {role}...")
-            # We need to decode bytes to numpy/cv2 for transform_image? 
-            # transform_image expects PIL Image or bytes?
-            # It expects PIL Image usually or cv2 array. Let's check src/__init__.py or transform.py
-            # Assuming transform_image handles bytes or we convert securely.
-            # Let's decode to be safe if needed, but transform.py usually takes PIL.
+            print(f"[BattleService] Transforming {role} with prompt: {state.prompt[:50]}...")
             
             from PIL import Image
             import io
