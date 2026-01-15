@@ -2,13 +2,14 @@
 import threading
 import time
 import base64
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, origins="*")
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Increasing max_http_buffer_size for large base64 images
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', max_http_buffer_size=10*1024*1024)
 
 _running = False
 
@@ -39,14 +40,18 @@ def status():
     service = _get_service()
     
     if service:
-        return jsonify(service.get_status())
+        try:
+            return jsonify(service.get_status())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     else:
         return jsonify({"error": "No service available"}), 500
 
 
 @app.route('/cameras')
 def get_cameras():
-    """Get list of available cameras."""
+    """Get list of available cameras (server side - unused in client mode but kept for debugging)."""
+    # In client-mode this returns server cams, not client cams.
     from src import list_cameras
     cams = list_cameras()
     return jsonify([{"index": idx, "name": name} for idx, name in cams])
@@ -54,41 +59,52 @@ def get_cameras():
 
 @app.route('/debug')
 def debug_cameras():
-    """Debug endpoint to check camera capture status."""
+    """Debug endpoint to check service status."""
     service = _get_service()
     
     if not service:
         return jsonify({"error": "No service"}), 500
     
     debug_info = {}
-    for role, panel in service.panels.items():
-        debug_info[role] = {
-            "has_camera": panel.camera is not None,
-            "camera_index": panel.camera_index,
-            "camera_opened": panel.camera.cap.isOpened() if panel.camera and panel.camera.cap else False,
-            "has_last_frame": panel.last_frame is not None,
-            "last_frame_size": len(panel.last_frame) if panel.last_frame else 0,
-            "recognition_status": panel.recognition_status
-        }
+    try:
+        for role, state in service.roles.items():
+            debug_info[role] = {
+                "processing": state.processing,
+                "recognition_status": state.recognition_status,
+                "last_gen": state.last_gen_time,
+                "has_last_output": state.last_output is not None
+            }
+    except Exception as e:
+        debug_info["error"] = str(e)
     
     return jsonify(debug_info)
 
 
+@socketio.on('process_frame')
+def handle_process_frame(data):
+    """Handle incoming camera frame from frontend for AI processing."""
+    role = data.get('role')
+    image_b64 = data.get('image')
+    
+    if not role or not image_b64:
+        return
+
+    service = _get_service()
+    if service:
+        try:
+            # Decode base64
+            image_bytes = base64.b64decode(image_b64)
+            
+            # Delegate processing to service
+            service.process_client_frame(role, image_bytes)
+        except Exception as e:
+            print(f"[WebServer] Frame processing failed: {e}")
+
+
 @socketio.on('set_camera')
 def handle_set_camera(data):
-    """Handle camera selection from config page."""
-    role = data.get('role')
-    cam_index = data.get('camera_index')
-    
-    if role is None or cam_index is None:
-        return
-    
-    service = _get_service()
-    
-    if service:
-        success = service.set_camera(role, cam_index)
-        if success:
-            socketio.emit('camera_changed', {'role': role, 'camera_index': cam_index})
+    # Legacy - maintained for compatibility but unused
+    pass
 
 
 @app.route('/camera_settings', methods=['GET'])
@@ -102,7 +118,6 @@ def get_camera_settings():
 def update_camera_settings():
     """Update camera compression settings."""
     from src.camera import update_camera_settings as update_settings
-    from flask import request
     
     data = request.get_json() or {}
     new_settings = update_settings(data)
@@ -133,49 +148,18 @@ def handle_update_camera_settings(data):
     socketio.emit('camera_settings_updated', new_settings)
 
 
-def _broadcast_loop():
-    """Background thread to broadcast camera frames and status."""
-    global _running
-    _running = True
-    
-    while _running:
-        service = _get_service()
-        
-        if service:
-            try:
-                socketio.emit('status', service.get_status())
-                
-                for role, panel in service.panels.items():
-                    if panel.camera and panel.last_frame:
-                        b64 = base64.b64encode(panel.last_frame).decode('utf-8')
-                        socketio.emit('camera_frame', {
-                            'role': role,
-                            'frame': b64,
-                            'recognition': panel.recognition_status
-                        })
-                    
-                    if panel.last_output:
-                        b64 = base64.b64encode(panel.last_output).decode('utf-8')
-                        socketio.emit('output_frame', {
-                            'role': role,
-                            'frame': b64
-                        })
-            except Exception as e:
-                print(f"[WebServer] Broadcast error: {e}")
-        
-        time.sleep(0.1)  # 10 FPS
-
-
 def start_server_headless(host='0.0.0.0', port=5010):
     """Start the web server in blocking mode."""
-    broadcast_thread = threading.Thread(target=_broadcast_loop, daemon=True)
-    broadcast_thread.start()
+    service = _get_service()
+    if service:
+        # Inject socketio into service for emitting events
+        service.set_socketio(socketio)
+        print("[WebServer] SocketIO injected into Service")
     
     print(f"[WebServer] Starting on http://{host}:{port}")
     socketio.run(app, host=host, port=port, debug=False, use_reloader=False, allow_unsafe_werkzeug=True)
 
 
 def stop_server():
-    """Stop the broadcast loop."""
-    global _running
-    _running = False
+    """Stop server helpers."""
+    pass

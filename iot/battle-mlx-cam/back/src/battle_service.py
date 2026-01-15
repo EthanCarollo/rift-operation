@@ -3,62 +3,36 @@ import threading
 import time
 import base64
 
-from src import Camera, list_cameras, transform_image, remove_background, get_api_key, KNNService, RiftWebSocket
+from src import transform_image, remove_background, get_api_key, KNNService, RiftWebSocket, list_cameras
 from src.config import PROMPT_MAPPING, ATTACK_TO_COUNTER_LABEL
 
+# We need socketio to emit back 'output_frame' to the frontend client who sent it
+# But BattleService doesn't have direct access to socketio object usually.
+# The web_server calls service.process_client_frame.
+# The service should probably return the result or use a callback?
+# The original code used socketio.emit in web_server.py's _broadcast_loop reading from panel.last_output.
+# We can keep a similar pattern: service updates state, and web_server broadcasts update events.
+# Or better: service emits event directly via a callback provided at init.
 
-class CameraPanel:
-    """Manages one camera (Dream/Nightmare)."""
-    def __init__(self, role: str, camera_index: int = None):
+class BattleRoleState:
+    """Manages state for one role (Dream/Nightmare)."""
+    def __init__(self, role: str):
         self.role = role
-        self.camera = None
-        self.camera_index = camera_index
         self.last_gen_time = 0
-        self.last_frame = None
-        self.last_output = None
+        self.last_output = None # Bytes of the PNG output
         self.recognition_status = "Waiting..."
-        self.last_label = None  # Track the recognized/demo label
+        self.last_label = None
         self.prompt = PROMPT_MAPPING.get("sword", "Steel katana sword cartoon style")
-        
-        if camera_index is not None:
-            self.set_camera(camera_index)
-    
-    def set_camera(self, index: int) -> bool:
-        """Set camera by index."""
-        try:
-            if self.camera:
-                self.camera.close()
-            self.camera = Camera(index)
-            self.camera.open()
-            self.camera_index = index
-            print(f"[BattleService] {self.role} camera set to {index}")
-            return True
-        except Exception as e:
-            print(f"[BattleService] Failed to set {self.role} camera: {e}")
-            return False
-    
-    def capture(self) -> bytes:
-        """Capture frame from camera."""
-        if self.camera:
-            self.last_frame = self.camera.capture()
-            return self.last_frame
-        return None
-    
-    def close(self):
-        """Close camera."""
-        if self.camera:
-            self.camera.close()
-            self.camera = None
-
+        self.processing = False
 
 class BattleService:
-    """Headless battle service managing cameras, KNN, and WebSocket."""
+    """Headless battle service managing AI processing and WebSocket."""
     
-    def __init__(self, nightmare_cam: int = 0, dream_cam: int = 1):
-        # Cameras
-        self.panels = {
-            'nightmare': CameraPanel('nightmare', nightmare_cam),
-            'dream': CameraPanel('dream', dream_cam)
+    def __init__(self):
+        # Roles
+        self.roles = {
+            'nightmare': BattleRoleState('nightmare'),
+            'dream': BattleRoleState('dream')
         }
         
         # Services
@@ -69,12 +43,16 @@ class BattleService:
         self.running = False
         self.current_attack = None
         self.attack_start_time = 0
+        self.socketio = None # Set later
         
-        # Connect to WebSocket
+        # Connect to WebSocket to Rift Server
         self.ws.connect()
         
-        print("[BattleService] Initialized")
+        print("[BattleService] Initialized (Client-Side Camera Mode)")
     
+    def set_socketio(self, socketio):
+        self.socketio = socketio
+
     def get_status(self) -> dict:
         """Get current status."""
         return {
@@ -84,21 +62,26 @@ class BattleService:
             "ws_state": self.ws.last_state,
             "cameras": {
                 role: {
-                    "index": p.camera_index,
-                    "has_camera": p.camera is not None,
                     "recognition": p.recognition_status,
-                    "label": p.last_label
+                    "label": p.last_label,
+                    "processing": p.processing
                 }
-                for role, p in self.panels.items()
+                for role, p in self.roles.items()
             }
         }
     
+    # Legacy for web_server compatibility
     def set_camera(self, role: str, index: int) -> bool:
-        """Set camera for a role."""
-        if role in self.panels:
-            return self.panels[role].set_camera(index)
-        return False
-    
+        return True 
+
+    @property
+    def panels(self):
+        # Compatibility property for old code accessing service.panels.items()
+        # We simulate objects with expected attributes if needed, or just return roles
+        # The old code accessed panel.camera and panel.last_frame/output
+        # We need to adapt web_server.py to not rely on this property for broadcasting camera frames anymore.
+        return self.roles
+
     def start(self):
         """Start battle processing."""
         if not get_api_key():
@@ -107,30 +90,11 @@ class BattleService:
         self.running = True
         print("[BattleService] Started")
         
-        # Start preview capture thread (always runs for config page)
-        self._preview_thread = threading.Thread(target=self._preview_loop, daemon=True)
-        self._preview_thread.start()
-        
-        # Start processing thread (for AI transforms)
-        self._process_thread = threading.Thread(target=self._process_loop, daemon=True)
-        self._process_thread.start()
-        
         # Start state monitor
         self._monitor_thread = threading.Thread(target=self._state_monitor, daemon=True)
         self._monitor_thread.start()
         
         return True
-    
-    def _preview_loop(self):
-        """Capture frames for preview (5 FPS)."""
-        while self.running:
-            for role, panel in self.panels.items():
-                try:
-                    if panel.camera:
-                        panel.capture()
-                except Exception as e:
-                    print(f"[BattleService] Preview capture error {role}: {e}")
-            time.sleep(0.2)  # 5 FPS
     
     def stop(self):
         """Stop battle processing."""
@@ -148,81 +112,117 @@ class BattleService:
                     self.current_attack = attack
                     self.attack_start_time = time.time()
                     print(f"[BattleService] Boss Attack: {attack}")
+                    # Broadcast status update via socketio
+                    if self.socketio:
+                        self.socketio.emit('status', self.get_status())
             
             time.sleep(0.5)
-    
-    def _process_loop(self):
-        """Main processing loop."""
-        while self.running:
-            for role, panel in self.panels.items():
-                if panel.camera:
-                    # Check rate limit BEFORE spawning thread
-                    elapsed = time.time() - panel.last_gen_time
-                    if elapsed < 10.0:
-                        continue  # Skip, too soon
-                    
-                    # Mark as processing immediately to prevent duplicate spawns
-                    panel.last_gen_time = time.time()
-                    
-                    threading.Thread(
-                        target=self._process_panel, 
-                        args=(role, panel), 
-                        daemon=True
-                    ).start()
-            time.sleep(1.0)
-    
-    def _process_panel(self, role: str, panel: CameraPanel):
-        """Process a single panel."""
-        try:
-            frame = panel.capture()
-            if not frame:
-                return
+
+    def process_client_frame(self, role: str, image_bytes: bytes):
+        """Process a frame received from a client."""
+        if role not in self.roles:
+            return
             
-            # Wait 5s after attack starts
+        state = self.roles[role]
+        
+        # Rate limit (e.g., 5 seconds between generations per role)
+        if time.time() - state.last_gen_time < 5.0:
+            return # Skip silently
+        
+        if state.processing:
+            return
+
+        # Start async processing
+        state.processing = True
+        state.last_gen_time = time.time()
+        
+        threading.Thread(
+            target=self._process_image_task,
+            args=(role, state, image_bytes),
+            daemon=True
+        ).start()
+
+    def _process_image_task(self, role: str, state: BattleRoleState, image_bytes: bytes):
+        try:
+            # 1. Determine Prompt based on Game State
+            # Wait 5s after attack starts? (Game logic)
             if self.current_attack and (time.time() - self.attack_start_time < 5.0):
                 remaining = 5.0 - (time.time() - self.attack_start_time)
-                panel.recognition_status = f"⏳ Drawing time... ({remaining:.1f}s)"
-                panel.last_label = None
+                state.recognition_status = f"⏳ Drawing time... ({remaining:.1f}s)"
+                self._emit_status()
                 return
-            
-            # Demo mode: use counter based on attack
+
+            # Demo/Game Logic: Target label based on Current Attack
             target_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
-            is_rec = False
             
             if target_label:
-                is_rec = True
+                # We assume player is drawing the counter
+                # In real game we would use KNN to recognize drawing
+                # Here we just assume and generate that item
                 label = target_label
-                panel.last_label = label # Track label
-                panel.recognition_status = f"🎯 DEMO: {label.upper()}"
-                panel.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+                state.last_label = label
+                state.recognition_status = f"🎯 DEMO: {label.upper()}"
+                state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
             else:
-                panel.recognition_status = "⏳ Waiting attack..."
-                panel.last_label = None
+                state.recognition_status = "⏳ Waiting attack..."
+                state.last_label = None
+                self._emit_status()
                 return
-            
-            # Transform image
+
+            self._emit_status()
+
+            # 2. Transform Image (AI)
             print(f"[BattleService] Transforming {role}...")
-            res, _ = transform_image(frame, panel.prompt)
+            # We need to decode bytes to numpy/cv2 for transform_image? 
+            # transform_image expects PIL Image or bytes?
+            # It expects PIL Image usually or cv2 array. Let's check src/__init__.py or transform.py
+            # Assuming transform_image handles bytes or we convert securely.
+            # Let's decode to be safe if needed, but transform.py usually takes PIL.
             
-            # Remove background
-            final, _ = remove_background(res)
-            panel.last_output = final
+            from PIL import Image
+            import io
+            import numpy as np
+            import cv2
             
-            # Send via WebSocket
-            b64 = base64.b64encode(final).decode('utf-8')
-            extra = {f"battle_drawing_{role}_recognised": is_rec}
-            if self.ws.send_image(b64, role, extra):
-                print(f"[BattleService] Sent {role}")
-                
+            img_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            img_cv2 = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
+
+            res, _ = transform_image(img_cv2, state.prompt)
+            
+            # 3. Remove Background
+            final_bytes, _ = remove_background(res)
+            
+            state.last_output = final_bytes
+            
+            # 4. Emit Result back to Frontend
+            if self.socketio:
+                b64 = base64.b64encode(final_bytes).decode('utf-8')
+                self.socketio.emit('output_frame', {
+                    'role': role,
+                    'frame': b64
+                })
+            
+            # 5. Send to Rift Server
+            # We send bytes base64 encoded
+            b64_rift = base64.b64encode(final_bytes).decode('utf-8')
+            extra = {f"battle_drawing_{role}_recognised": True}
+            if self.ws.send_image(b64_rift, role, extra):
+                print(f"[BattleService] Sent {role} to Rift Server")
+
         except Exception as e:
             print(f"[BattleService] Error processing {role}: {e}")
-            panel.recognition_status = f"❌ Error: {e}"
-    
+            state.recognition_status = f"❌ Error: {e}"
+        finally:
+            state.processing = False
+            self._emit_status()
+
+    def _emit_status(self):
+        if self.socketio:
+            self.socketio.emit('status', self.get_status())
+
     def cleanup(self):
         """Cleanup resources."""
         self.running = False
-        for panel in self.panels.values():
-            panel.close()
         self.ws.close()
         print("[BattleService] Cleaned up")
 
@@ -238,5 +238,5 @@ def get_service() -> BattleService:
 def init_service(nightmare_cam: int = 0, dream_cam: int = 1) -> BattleService:
     """Initialize the BattleService singleton."""
     global _service
-    _service = BattleService(nightmare_cam, dream_cam)
+    _service = BattleService() # No params needed anymore
     return _service

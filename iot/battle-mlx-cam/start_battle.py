@@ -245,9 +245,12 @@ def open_browser(dream_screen=None, nightmare_screen=None):
             f"--user-data-dir={user_data}",
             f"--window-position={target_x},{target_y}",
             f"--window-size={screen['w']},{screen['h']}",
+            f"--window-size={screen['w']},{screen['h']}",
             "--kiosk",
             "--no-first-run",
             "--no-default-browser-check",
+            "--use-fake-ui-for-media-stream",  # Auto-accept camera permission
+            f"--unsafely-treat-insecure-origin-as-secure={url.split('/')[0]}//{url.split('/')[2]}", # Allow cam on HTTP
             url
         ]
         
