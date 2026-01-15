@@ -6,6 +6,9 @@ import base64
 from src import transform_image, remove_background, get_api_key, KNNService, RiftWebSocket, list_cameras
 from src.config import PROMPT_MAPPING, ATTACK_TO_COUNTER_LABEL
 
+# Configurable rate limit between AI generations (per role)
+GENERATION_RATE_LIMIT_S = 2.0  # 2 seconds between generations
+
 # We need socketio to emit back 'output_frame' to the frontend client who sent it
 # But BattleService doesn't have direct access to socketio object usually.
 # The web_server calls service.process_client_frame.
@@ -125,8 +128,8 @@ class BattleService:
             
         state = self.roles[role]
         
-        # Rate limit (e.g., 5 seconds between generations per role)
-        if time.time() - state.last_gen_time < 5.0:
+        # Rate limit (configurable at top of file)
+        if time.time() - state.last_gen_time < GENERATION_RATE_LIMIT_S:
             return # Skip silently
         
         if state.processing:

@@ -40,8 +40,8 @@ const outputFrame = ref(null);
 let socket = null;
 let captureInterval = null;
 
-// Config (could be props too)
-const CAPTURE_RATE_MS = 200; // 5 FPS for AI processing
+// Config - Capture rate for AI processing
+const CAPTURE_RATE_MS = 2000; // 2 seconds between frames
 const JPEG_QUALITY = 0.85;
 
 async function startCamera(overrideDeviceId = null) {

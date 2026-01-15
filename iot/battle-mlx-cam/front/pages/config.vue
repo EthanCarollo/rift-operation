@@ -133,8 +133,18 @@ function connect() {
     // Listen for AI output frames (to verify it works)
     socket.on('output_frame', (data) => {
         if (data.role && data.frame) {
+            console.log(`[Config] 🎨 AI Output received for ${data.role.toUpperCase()} (${Math.round(data.frame.length / 1024)}KB)`);
             outputs.value[data.role] = data.frame;
         }
+    });
+
+    // Listen for status updates (generation progress)
+    socket.on('status', (data) => {
+        console.log('[Config] 📊 Status update:', JSON.stringify({
+            attack: data.current_attack,
+            dream: data.cameras?.dream,
+            nightmare: data.cameras?.nightmare
+        }, null, 2));
     });
 }
 

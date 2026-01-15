@@ -21,15 +21,17 @@
             <!-- TOP: Video/Boss Area -->
             <div class="relative w-full bg-black overflow-hidden" 
                  :class="showCamera ? 'h-[70%]' : 'h-full'">
-                <!-- Video Layer -->
+                <!-- Video Layer with fade transition -->
                 <video v-show="currentVideo && !videoError" ref="videoRef"
-                    class="absolute inset-0 w-full h-full object-cover z-0" 
-                    :src="currentVideo" autoplay loop muted playsinline 
-                    @error="handleVideoError" @loadeddata="onVideoLoaded" />
+                    class="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500"
+                    :class="videoReady ? 'opacity-100' : 'opacity-0'"
+                    :src="currentVideo" autoplay loop muted playsinline preload="auto"
+                    @error="handleVideoError" @loadeddata="onVideoReady" @canplay="onVideoReady" />
 
-                <!-- IDLE BG -->
-                <div v-if="battleState === 'IDLE' || !currentVideo"
-                    class="absolute inset-0 z-10 bg-black flex items-center justify-center">
+                <!-- IDLE BG / Loading State -->
+                <div v-if="battleState === 'IDLE' || !currentVideo || !videoReady"
+                    class="absolute inset-0 z-10 bg-black flex items-center justify-center transition-opacity duration-300"
+                    :class="videoReady && battleState !== 'IDLE' ? 'opacity-0 pointer-events-none' : 'opacity-100'">
                     <div class="text-purple-500/30 text-xl animate-pulse">EN ATTENTE...</div>
                 </div>
 
@@ -55,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { io } from 'socket.io-client';
 import BattleBoss from '~/components/battle/BattleBoss.vue';
 import BattleHUD from '~/components/battle/BattleHUD.vue';
@@ -86,6 +88,23 @@ const {
     hudRef, videoRef,
     init, triggerAttack, simulateCapture, simulateRecon, unlockAudio, handleVideoError, onVideoLoaded
 } = useBattleState(false); // debug = false
+
+// --- VIDEO TRANSITION ---
+const videoReady = ref(false);
+let lastVideoSrc = '';
+
+function onVideoReady() {
+    videoReady.value = true;
+    onVideoLoaded();
+}
+
+// Watch for video source changes to reset ready state
+watch(currentVideo, (newSrc) => {
+    if (newSrc !== lastVideoSrc) {
+        videoReady.value = false;
+        lastVideoSrc = newSrc;
+    }
+});
 
 // --- COMPUTED ---
 const isEndState = computed(() => {
