@@ -127,12 +127,19 @@ class BattleService:
             time.sleep(0.5)
 
     def process_client_frame(self, role: str, image_bytes: bytes):
-        """Process a frame received from a client."""
+        """Receive frame from client (async)."""
+        if not self.running:
+            return
+            
         if role not in self.roles:
             return
             
         state = self.roles[role]
         
+        # Log frame reception (throttle or sample if too many?)
+        # For now let's just log it
+        print(f"[BattleService] 📸 Frame received from {role}")
+
         # Rate limit (configurable at top of file)
         if time.time() - state.last_gen_time < GENERATION_RATE_LIMIT_S:
             return # Skip silently
@@ -152,13 +159,26 @@ class BattleService:
 
     def _process_image_task(self, role: str, state: BattleRoleState, image_bytes: bytes):
         try:
-            print(f"[BattleService] Processing frame for {role}...")
+            print(f"[BattleService] ⚙️ Processing task for {role}...")
             
-            # 1. Determine Prompt based on Game State
+            # 1. KNN RECOGNITION (What the user is actually drawing)
+            label_knn, distance = self.knn.predict(image_bytes)
+            print(f"[BattleService] 🧠 KNN Result for {role}: '{label_knn}' (dist: {distance:.2f})")
+
+            # 2. Determine Prompt based on Game State or KNN
             # Wait 5s after attack starts? (Game logic)
             if self.current_attack and (time.time() - self.attack_start_time < 5.0):
                 remaining = 5.0 - (time.time() - self.attack_start_time)
                 state.recognition_status = f"⏳ Drawing time... ({remaining:.1f}s)"
+                self._emit_status()
+                return
+
+            # CRITICAL: If KNN says empty or bullshit, we skip generation entirely
+            if label_knn in ["empty", "bullshit"]:
+                print(f"[BattleService] ⛔ Drawing is '{label_knn}', skipping generation.")
+                state.recognition_status = f"⚠️ {label_knn.upper()}"
+                state.last_label = label_knn
+                state.prompt = None
                 self._emit_status()
                 return
 
@@ -167,6 +187,8 @@ class BattleService:
             
             # TEST MODE: If no attack from WebSocket, cycle through test sequence
             if target_label:
+                # For demo, we still use the target_label if it's there, 
+                # but we've already handled empty/bullshit skip above.
                 label = target_label
                 state.last_label = label
                 state.recognition_status = f"🎯 {label.upper()}"
@@ -181,7 +203,6 @@ class BattleService:
                 state.last_label = label
                 state.recognition_status = f"🧪 TEST: {label.upper()}"
                 state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
-                print(f"[BattleService] TEST MODE: Using '{label}' ({self._test_index}/{len(TEST_ATTACK_SEQUENCE)})")
             else:
                 print(f"[BattleService] No attack detected, skipping (current_attack={self.current_attack})")
                 state.recognition_status = "⏳ Waiting attack..."

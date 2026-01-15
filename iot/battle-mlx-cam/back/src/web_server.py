@@ -233,6 +233,70 @@ def handle_assign_device(data):
         socketio.emit('set_device', {'role': role, 'deviceId': device_id})
 
 
+# --- KNN TRAINING ---
+
+@app.route('/knn/samples', methods=['GET'])
+def get_knn_samples():
+    """Get sample counts per label."""
+    service = _get_service()
+    if service and service.knn:
+        return jsonify(service.knn.get_counts())
+    return jsonify({})
+
+@app.route('/knn/add_sample', methods=['POST'])
+def add_knn_sample():
+    """Add a training sample."""
+    data = request.json
+    label = data.get('label')
+    image_b64 = data.get('image')  # Base64 encoded
+    
+    if not label or not image_b64:
+        return jsonify({'error': 'Missing label or image'}), 400
+    
+    service = _get_service()
+    if service and service.knn:
+        image_bytes = base64.b64decode(image_b64)
+        success = service.knn.add_sample(image_bytes, label)
+        print(f"[WebServer] KNN: Added sample '{label}' -> {'OK' if success else 'FAIL'}")
+        return jsonify({'success': success})
+    
+    return jsonify({'error': 'Service not available'}), 500
+
+@app.route('/knn/predict', methods=['POST'])
+def predict_knn():
+    """Predict label for an image."""
+    data = request.json
+    image_b64 = data.get('image')
+    
+    if not image_b64:
+        return jsonify({'error': 'Missing image'}), 400
+    
+    service = _get_service()
+    if service and service.knn:
+        image_bytes = base64.b64decode(image_b64)
+        label, distance = service.knn.predict(image_bytes)
+        return jsonify({'label': label, 'distance': distance})
+    
+    return jsonify({'error': 'Service not available'}), 500
+
+@app.route('/knn/delete_label', methods=['POST'])
+def delete_knn_label():
+    """Delete all samples of a label."""
+    data = request.json
+    label = data.get('label')
+    
+    if not label:
+        return jsonify({'error': 'Missing label'}), 400
+    
+    service = _get_service()
+    if service and service.knn:
+        service.knn.delete_label(label)
+        print(f"[WebServer] KNN: Deleted all samples of '{label}'")
+        return jsonify({'success': True})
+    
+    return jsonify({'error': 'Service not available'}), 500
+
+
 # --- DEBUG MODE ---
 _debug_mode = False
 

@@ -205,7 +205,8 @@ def setup_environment():
 
 def start_backend():
     log("🚀 Starting Backend (headless) on port 5010...", Colors.BLUE)
-    cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "python", "main_headless.py"]
+    # Use -u for unbuffered output so logs appear immediately
+    cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "--no-capture-output", "python", "-u", "main_headless.py"]
     return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid)
 
 def start_frontend():
