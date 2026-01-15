@@ -30,12 +30,22 @@
                     </select>
                 </div>
 
+                <!-- Camera Preview (Raw Feed) -->
+                <div class="relative aspect-video bg-neutral-950 rounded border border-neutral-800 overflow-hidden">
+                     <img v-if="cameraPreviews.nightmare" :src="'data:image/jpeg;base64,' + cameraPreviews.nightmare"
+                        class="absolute inset-0 w-full h-full object-cover" />
+                     <div v-else class="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs">
+                        📷 No camera feed...
+                     </div>
+                     <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Live Camera</div>
+                </div>
+
                 <!-- AI Output Preview (from Backend) -->
                 <div class="relative aspect-video bg-black rounded border border-neutral-800 overflow-hidden group">
                      <img v-if="outputs.nightmare" :src="'data:image/png;base64,' + outputs.nightmare"
                         class="absolute inset-0 w-full h-full object-contain" />
-                     <div v-else class="absolute inset-0 flex items-center justify-center text-neutral-600">
-                        Waiting for AI Output...
+                     <div v-else class="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs">
+                        🎨 Waiting for AI Output...
                      </div>
                      <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">AI Output</div>
                 </div>
@@ -56,12 +66,22 @@
                     </select>
                 </div>
 
+                <!-- Camera Preview (Raw Feed) -->
+                <div class="relative aspect-video bg-neutral-950 rounded border border-neutral-800 overflow-hidden">
+                     <img v-if="cameraPreviews.dream" :src="'data:image/jpeg;base64,' + cameraPreviews.dream"
+                        class="absolute inset-0 w-full h-full object-cover" />
+                     <div v-else class="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs">
+                        📷 No camera feed...
+                     </div>
+                     <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">Live Camera</div>
+                </div>
+
                 <!-- AI Output Preview (from Backend) -->
                 <div class="relative aspect-video bg-black rounded border border-neutral-800 overflow-hidden group">
                      <img v-if="outputs.dream" :src="'data:image/png;base64,' + outputs.dream"
                         class="absolute inset-0 w-full h-full object-contain" />
-                     <div v-else class="absolute inset-0 flex items-center justify-center text-neutral-600">
-                        Waiting for AI Output...
+                     <div v-else class="absolute inset-0 flex items-center justify-center text-neutral-600 text-xs">
+                        🎨 Waiting for AI Output...
                      </div>
                      <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">AI Output</div>
                 </div>
@@ -98,6 +118,7 @@ const connected = ref(false);
 const remoteDevices = ref([]);
 const assignments = ref({ nightmare: null, dream: null });
 const outputs = ref({ nightmare: null, dream: null });
+const cameraPreviews = ref({ nightmare: null, dream: null });
 const debugMode = ref(false);
 
 let socket = null;
@@ -145,6 +166,13 @@ function connect() {
             dream: data.cameras?.dream,
             nightmare: data.cameras?.nightmare
         }, null, 2));
+    });
+
+    // Listen for camera preview frames
+    socket.on('camera_preview', (data) => {
+        if (data.role && data.frame) {
+            cameraPreviews.value[data.role] = data.frame;
+        }
     });
 }
 

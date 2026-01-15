@@ -111,9 +111,9 @@ const isEndState = computed(() => {
     return battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
 });
 
-// Show camera only when NOT in IDLE (in battle mode)
+// Show camera when NOT in IDLE, OR when debugMode is enabled
 const showCamera = computed(() => {
-    return battleState.value !== 'IDLE';
+    return battleState.value !== 'IDLE' || debugMode.value;
 });
 
 // --- SOCKET CONNECTION FOR DEBUG MODE ---

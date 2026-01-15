@@ -14,6 +14,15 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', max_h
 _running = False
 
 
+@socketio.on('connect')
+def handle_connect():
+    print(f"[WebServer] Client connected: {request.sid}")
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f"[WebServer] Client disconnected: {request.sid}")
+
+
 def _get_service():
     """Get BattleService instance."""
     try:
@@ -88,6 +97,9 @@ def handle_process_frame(data):
     
     if not role or not image_b64:
         return
+
+    # Broadcast raw camera frame to all clients (for config preview)
+    socketio.emit('camera_preview', {'role': role, 'frame': image_b64})
 
     service = _get_service()
     if service:
