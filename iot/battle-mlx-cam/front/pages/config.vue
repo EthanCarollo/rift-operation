@@ -38,6 +38,68 @@
             </div>
         </div>
 
+        <!-- Camera Settings Panel -->
+        <div class="mb-4 p-4 bg-neutral-800 rounded-lg border border-neutral-700">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-bold text-sm flex items-center gap-2">
+                    <span class="text-blue-400">⚙️</span> Paramètres Caméra
+                </h2>
+                <button @click="resetCameraSettings"
+                    class="px-3 py-1 text-xs bg-neutral-700 hover:bg-neutral-600 rounded transition-colors">
+                    🔄 Reset
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- JPEG Quality -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs text-neutral-400">Qualité JPEG</label>
+                        <span class="text-xs font-mono bg-neutral-900 px-2 py-0.5 rounded">
+                            {{ cameraSettings.jpeg_quality }}%
+                        </span>
+                    </div>
+                    <input type="range" min="10" max="100" step="5" v-model.number="cameraSettings.jpeg_quality"
+                        @input="debouncedUpdateSettings"
+                        class="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                    <p class="text-xs text-neutral-500">↑ Plus haut = meilleure qualité, fichiers plus gros</p>
+                </div>
+
+                <!-- Denoise Strength -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs text-neutral-400">Réduction Bruit</label>
+                        <span class="text-xs font-mono bg-neutral-900 px-2 py-0.5 rounded"
+                            :class="cameraSettings.denoise_strength > 0 ? 'text-green-400' : 'text-neutral-500'">
+                            {{ cameraSettings.denoise_strength === 0 ? 'OFF' : cameraSettings.denoise_strength }}
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="10" step="1" v-model.number="cameraSettings.denoise_strength"
+                        @input="debouncedUpdateSettings"
+                        class="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-green-500" />
+                    <p class="text-xs text-neutral-500">⚠️ Plus haut = plus lent mais moins de noise</p>
+                </div>
+
+                <!-- Resolution Scale -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs text-neutral-400">Résolution</label>
+                        <span class="text-xs font-mono bg-neutral-900 px-2 py-0.5 rounded">
+                            {{ Math.round(cameraSettings.capture_scale * 100) }}%
+                        </span>
+                    </div>
+                    <select v-model.number="cameraSettings.capture_scale" @change="updateCameraSettings"
+                        class="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-xs">
+                        <option :value="1.0">100% (Full HD)</option>
+                        <option :value="0.75">75%</option>
+                        <option :value="0.5">50%</option>
+                        <option :value="0.25">25% (Rapide)</option>
+                    </select>
+                    <p class="text-xs text-neutral-500">↓ Plus bas = plus rapide, moins de détails</p>
+                </div>
+            </div>
+        </div>
+
         <!-- All States Debug -->
         <details class="mb-4">
             <summary class="cursor-pointer text-neutral-500 hover:text-neutral-300 text-xs">
@@ -145,7 +207,15 @@ const frames = ref({ nightmare: null, dream: null });
 const outputs = ref({ nightmare: null, dream: null });
 const recognition = ref({ nightmare: '', dream: '' });
 
+// Camera compression settings
+const cameraSettings = ref({
+    jpeg_quality: 85,
+    capture_scale: 1.0,
+    denoise_strength: 0
+});
+
 let socket = null;
+let updateSettingsTimeout = null;
 
 function addLog(role, label) {
     const time = new Date().toLocaleTimeString();
@@ -192,11 +262,59 @@ function connect() {
             }
         }
     });
+
+    // Listen for camera settings updates from other clients
+    socket.on('camera_settings_updated', (data) => {
+        cameraSettings.value = { ...cameraSettings.value, ...data };
+    });
 }
 
 function updateCamera(role) {
     if (socket) {
         socket.emit('set_camera', { role, camera_index: selectedCameras.value[role] });
+    }
+}
+
+// Camera settings functions
+function updateCameraSettings() {
+    if (socket) {
+        socket.emit('update_camera_settings', cameraSettings.value);
+    }
+}
+
+function debouncedUpdateSettings() {
+    // Debounce slider changes to avoid spamming the server
+    if (updateSettingsTimeout) {
+        clearTimeout(updateSettingsTimeout);
+    }
+    updateSettingsTimeout = setTimeout(() => {
+        updateCameraSettings();
+    }, 100);
+}
+
+async function resetCameraSettings() {
+    try {
+        const res = await fetch(`${backendUrl.value}/camera_settings/reset`, {
+            method: 'POST'
+        });
+        if (res.ok) {
+            const data = await res.json();
+            cameraSettings.value = data;
+        }
+    } catch (e) {
+        console.error('[Config] Failed to reset camera settings:', e);
+    }
+}
+
+async function fetchCameraSettings() {
+    try {
+        const res = await fetch(`${backendUrl.value}/camera_settings`);
+        if (res.ok) {
+            const data = await res.json();
+            cameraSettings.value = data;
+        }
+    } catch (e) {
+        console.error('[Config] Failed to fetch camera settings:', e);
     }
 }
 
@@ -213,6 +331,7 @@ onMounted(async () => {
     // backendUrl.value = `http://${window.location.hostname}:5010`; // Forced to 192.168.10.7
     connect();
     await fetchCameras();
+    await fetchCameraSettings();
     setTimeout(() => {
         updateCamera('nightmare');
         updateCamera('dream');
@@ -221,5 +340,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (socket) socket.disconnect();
+    if (updateSettingsTimeout) clearTimeout(updateSettingsTimeout);
 });
 </script>

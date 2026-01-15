@@ -69,6 +69,48 @@ def handle_set_camera(data):
             socketio.emit('camera_changed', {'role': role, 'camera_index': cam_index})
 
 
+@app.route('/camera_settings', methods=['GET'])
+def get_camera_settings():
+    """Get current camera compression settings."""
+    from src.camera import get_camera_settings as get_settings
+    return jsonify(get_settings())
+
+
+@app.route('/camera_settings', methods=['POST'])
+def update_camera_settings():
+    """Update camera compression settings."""
+    from src.camera import update_camera_settings as update_settings
+    from flask import request
+    
+    data = request.get_json() or {}
+    new_settings = update_settings(data)
+    
+    # Broadcast to all connected clients
+    socketio.emit('camera_settings_updated', new_settings)
+    
+    return jsonify(new_settings)
+
+
+@app.route('/camera_settings/reset', methods=['POST'])
+def reset_camera_settings():
+    """Reset camera settings to defaults."""
+    from src.camera import reset_camera_settings as reset_settings
+    
+    new_settings = reset_settings()
+    socketio.emit('camera_settings_updated', new_settings)
+    
+    return jsonify(new_settings)
+
+
+@socketio.on('update_camera_settings')
+def handle_update_camera_settings(data):
+    """Handle real-time camera settings update via SocketIO."""
+    from src.camera import update_camera_settings as update_settings
+    
+    new_settings = update_settings(data)
+    socketio.emit('camera_settings_updated', new_settings)
+
+
 def _broadcast_loop():
     """Background thread to broadcast camera frames and status."""
     global _running

@@ -265,13 +265,13 @@ def open_browser(dream_screen=None, nightmare_screen=None):
 def list_connected_cameras():
     """List available cameras using the backend function."""
     
-    # Check for SSH session on macOS
+    # Check for SSH session on macOS - CRASH if detected
     if os.environ.get('SSH_CLIENT') or os.environ.get('SSH_TTY'):
-        log("⚠️  SSH SESSION DETECTED", Colors.WARNING)
-        log("   macOS often blocks camera access for SSH/Remote sessions.", Colors.WARNING)
-        log("   You may need to run this from the physical machine's Terminal.", Colors.WARNING)
-        log("   (Or use Screen Sharing/VNC)", Colors.WARNING)
-        print("")
+        log("🚫 SSH SESSION DETECTED - CANNOT RUN", Colors.FAIL)
+        log("   macOS bloque l'accès caméra pour les sessions SSH/Remote.", Colors.FAIL)
+        log("   Lancez ce script depuis le Terminal local de la machine.", Colors.FAIL)
+        log("   (Ou via Screen Sharing/VNC)", Colors.WARNING)
+        sys.exit(1)
 
     log("📷 Checking available cameras...", Colors.CYAN)
     try:

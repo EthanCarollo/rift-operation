@@ -8,6 +8,39 @@ from io import BytesIO
 
 import threading
 
+# Runtime settings (can be modified via web UI)
+_camera_settings = {
+    'jpeg_quality': 85,
+    'capture_scale': 1.0,
+    'denoise_strength': 0
+}
+_settings_lock = threading.Lock()
+
+def get_camera_settings() -> dict:
+    """Get current camera settings."""
+    with _settings_lock:
+        return _camera_settings.copy()
+
+def update_camera_settings(settings: dict) -> dict:
+    """Update camera settings. Returns the new settings."""
+    with _settings_lock:
+        if 'jpeg_quality' in settings:
+            _camera_settings['jpeg_quality'] = max(1, min(100, int(settings['jpeg_quality'])))
+        if 'capture_scale' in settings:
+            _camera_settings['capture_scale'] = max(0.25, min(1.0, float(settings['capture_scale'])))
+        if 'denoise_strength' in settings:
+            _camera_settings['denoise_strength'] = max(0, min(10, int(settings['denoise_strength'])))
+        return _camera_settings.copy()
+
+def reset_camera_settings() -> dict:
+    """Reset camera settings to defaults from config."""
+    from src.config import JPEG_QUALITY, CAPTURE_SCALE, DENOISE_STRENGTH
+    with _settings_lock:
+        _camera_settings['jpeg_quality'] = JPEG_QUALITY
+        _camera_settings['capture_scale'] = CAPTURE_SCALE
+        _camera_settings['denoise_strength'] = DENOISE_STRENGTH
+        return _camera_settings.copy()
+
 class Camera:
     """Manages webcam capture."""
     
@@ -46,12 +79,25 @@ class Camera:
                 if not ret or frame is None:
                     return None
                 
-                # Convert BGR to RGB
+                # Load static config (zoom, boost)
                 if hasattr(self, '_config_loaded') is False:
                     from src.config import CAMERA_ZOOM, LOW_LIGHT_BOOST
                     self.zoom = CAMERA_ZOOM
                     self.boost = LOW_LIGHT_BOOST
                     self._config_loaded = True
+
+                # Get dynamic settings
+                settings = get_camera_settings()
+                jpeg_quality = settings['jpeg_quality']
+                scale = settings['capture_scale']
+                denoise = settings['denoise_strength']
+
+                # 0. Capture Scale (resize before processing)
+                if scale < 1.0:
+                    h, w = frame.shape[:2]
+                    new_w, new_h = int(w * scale), int(h * scale)
+                    if new_w > 10 and new_h > 10:
+                        frame = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
                 # 1. Low Light Boost (CLAHE)
                 if self.boost:
@@ -62,7 +108,13 @@ class Camera:
                     limg = cv2.merge((cl,a,b))
                     frame = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
 
-                # 2. Digital Zoom (Center Crop)
+                # 2. Denoising (if enabled)
+                if denoise > 0:
+                    # h parameter for denoising strength (3-10 is reasonable range)
+                    h_param = denoise
+                    frame = cv2.fastNlMeansDenoisingColored(frame, None, h_param, h_param, 7, 21)
+
+                # 3. Digital Zoom (Center Crop)
                 if self.zoom > 1.0:
                     h, w = frame.shape[:2]
                     # Safety check
@@ -78,9 +130,9 @@ class Camera:
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(frame_rgb)
                 
-                # Return as JPEG bytes
+                # Return as JPEG bytes with configurable quality
                 buffer = BytesIO()
-                img.save(buffer, format='JPEG', quality=85)
+                img.save(buffer, format='JPEG', quality=jpeg_quality)
                 return buffer.getvalue()
             except Exception as e:
                 import traceback

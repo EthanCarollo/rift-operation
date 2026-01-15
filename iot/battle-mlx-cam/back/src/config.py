@@ -23,6 +23,11 @@ NON_RECOGNITION_LABELS = ["empty"]
 CAMERA_ZOOM = 2.0       # 1.0 = No zoom, 2.0 = 2x zoom (center)
 LOW_LIGHT_BOOST = True  # Enhance brightness/contrast for dark environments
 
+# Camera Compression Settings (can be updated at runtime via web UI)
+JPEG_QUALITY = 85           # 1-100, higher = better quality, larger file
+CAPTURE_SCALE = 1.0         # 0.25-1.0, lower = smaller image before processing
+DENOISE_STRENGTH = 0        # 0-10, higher = more denoising (slower but cleaner)
+
 # Mapping: Boss Attack -> Required Counter (KNN Label)
 ATTACK_TO_COUNTER_LABEL = {
     "PORTE": "key",
