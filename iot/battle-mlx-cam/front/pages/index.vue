@@ -2,6 +2,19 @@
     <div class="fixed inset-0 bg-black flex flex-col overflow-hidden font-mono select-none cursor-none"
         @click="unlockAudio">
 
+        <!-- Hidden Audio Controller (BattleHUD without visible UI) -->
+        <BattleHUD ref="hudRef" 
+            :is-connected="isConnected" 
+            :show-debug="false" 
+            :state="battleState"
+            :hp="currentHp" 
+            :attack="currentAttack" 
+            :video-name="''"
+            :current-music="currentMusic" 
+            :should-loop="musicShouldLoop" 
+            :is-vertical="false"
+            class="hidden" />
+
         <!-- Main Battle Layout: 70% Video Top, 30% Camera Bottom -->
         <div class="flex flex-col w-full h-full">
             
@@ -43,6 +56,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import BattleBoss from '~/components/battle/BattleBoss.vue';
+import BattleHUD from '~/components/battle/BattleHUD.vue';
 import { useBattleState } from '~/composables/useBattleState';
 
 // --- CONFIG ---

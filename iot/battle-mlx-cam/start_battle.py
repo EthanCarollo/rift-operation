@@ -252,10 +252,10 @@ def open_browser(dream_screen=None, nightmare_screen=None):
         # Suppress Chrome stderr/stdout to avoid log spam
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
-    # Launch both windows
-    launch_kiosk(url_dream, dream_screen, "DREAM")
+    # Launch both windows (swapped: nightmare uses dream_screen, dream uses nightmare_screen)
+    launch_kiosk(url_nightmare, dream_screen, "NIGHTMARE")
     time.sleep(0.5)
-    launch_kiosk(url_nightmare, nightmare_screen, "NIGHTMARE")
+    launch_kiosk(url_dream, nightmare_screen, "DREAM")
         
     log("✅ Browser windows launched", Colors.GREEN)
 
