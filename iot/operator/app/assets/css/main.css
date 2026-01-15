@@ -18,6 +18,14 @@
   --tri-state-hover: #f0f0f0;
   --success: #10b981;
   --code-bg: #f4f4f4;
+  
+  /* Mission Dashboard Colors */
+  --mission-bg: #090b11;
+  --mission-accent: #00FFC4;
+  --mission-yellow: #FFFF00;
+  --mission-pink: #FF00CF;
+  --mission-blue: #150059;
+  --mission-text: #ccffff;
 }
 
 .dark-mode {
