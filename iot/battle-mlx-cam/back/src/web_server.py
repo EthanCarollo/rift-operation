@@ -52,6 +52,28 @@ def get_cameras():
     return jsonify([{"index": idx, "name": name} for idx, name in cams])
 
 
+@app.route('/debug')
+def debug_cameras():
+    """Debug endpoint to check camera capture status."""
+    service = _get_service()
+    
+    if not service:
+        return jsonify({"error": "No service"}), 500
+    
+    debug_info = {}
+    for role, panel in service.panels.items():
+        debug_info[role] = {
+            "has_camera": panel.camera is not None,
+            "camera_index": panel.camera_index,
+            "camera_opened": panel.camera.cap.isOpened() if panel.camera and panel.camera.cap else False,
+            "has_last_frame": panel.last_frame is not None,
+            "last_frame_size": len(panel.last_frame) if panel.last_frame else 0,
+            "recognition_status": panel.recognition_status
+        }
+    
+    return jsonify(debug_info)
+
+
 @socketio.on('set_camera')
 def handle_set_camera(data):
     """Handle camera selection from config page."""

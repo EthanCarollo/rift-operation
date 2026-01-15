@@ -80,7 +80,7 @@ class Camera:
                     return None
                 
                 # Load static config (zoom, boost)
-                if hasattr(self, '_config_loaded') is False:
+                if not hasattr(self, '_config_loaded'):
                     from src.config import CAMERA_ZOOM, LOW_LIGHT_BOOST
                     self.zoom = CAMERA_ZOOM
                     self.boost = LOW_LIGHT_BOOST
@@ -154,10 +154,10 @@ class Camera:
                 
                 # Apply same transforms for consistency
                 if not hasattr(self, '_config_loaded'):
-                     from src.config import CAMERA_ZOOM, LOW_LIGHT_BOOST
-                     self.zoom = CAMERA_ZOOM
-                     self.boost = LOW_LIGHT_BOOST
-                     self._config_loaded = True
+                    from src.config import CAMERA_ZOOM, LOW_LIGHT_BOOST
+                    self.zoom = CAMERA_ZOOM
+                    self.boost = LOW_LIGHT_BOOST
+                    self._config_loaded = True
                 
                 if self.boost:
                     lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
