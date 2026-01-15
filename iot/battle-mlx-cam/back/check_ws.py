@@ -1,16 +1,13 @@
 
 import sys
 import os
-import websocket
 import time
 
 # Add src to path to import config if needed, or just parse the file
-# Ideally we import the constant to be truthful to the code
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 try:
     from dotenv import load_dotenv
-    # Load .env explicitly
     env_path = os.path.join(os.path.dirname(__file__), '.env')
     load_dotenv(env_path)
     WS_URL = os.getenv("WS_URL", "ws://127.0.0.1:8000/ws")
@@ -21,45 +18,21 @@ except ImportError:
 def check_ws():
     print(f"🔌 Testing WebSocket connection to: {WS_URL} ...")
     
-    result = {"success": False}
-    
-    def on_open(ws):
-        print("✅ WebSocket connection successful!")
-        result["success"] = True
-        ws.close()
-    
-    def on_error(ws, error):
-        print(f"❌ WebSocket Error: {error}")
-        
-    def on_close(ws, close_status_code, close_msg):
-        pass
-
-    # Try to connect with a short timeout
-    ws = websocket.WebSocketApp(WS_URL,
-                                on_open=on_open,
-                                on_error=on_error,
-                                on_close=on_close)
-    
-    # Run loop for max 3 seconds
-    start_time = time.time()
     try:
-        # We need to run run_forever in a way that respects timeout? 
-        # Actually run_forever is blocking. We can use a thread or just rely on sockopt timeout
-        # But for a simple check, a timeout in run_forever is hard.
-        # Let's use simple socket create_connection to test availability first?
-        # No, let's use the library but with a trick or just simple timeout.
-        
-        # Simpler approach:
-        ws.run_forever(ping_timeout=2)
-        
-        if result["success"]:
-            return True
-        else:
-            print("⚠️ Connection failed (timeout or refused)")
-            return False
-            
+        import websocket
+        # Simple blocking connection test
+        ws = websocket.create_connection(WS_URL, timeout=3)
+        print("✅ WebSocket connection successful!")
+        ws.close()
+        return True
+    except websocket.WebSocketTimeoutException:
+        print("⚠️ Connection timed out")
+        return False
+    except ConnectionRefusedError:
+        print("❌ Connection refused (server not running?)")
+        return False
     except Exception as e:
-        print(f"❌ Connection check crashed: {e}")
+        print(f"❌ Connection failed: {e}")
         return False
 
 if __name__ == "__main__":
