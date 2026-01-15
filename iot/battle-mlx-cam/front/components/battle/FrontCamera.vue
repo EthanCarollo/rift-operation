@@ -44,15 +44,19 @@ let captureInterval = null;
 const CAPTURE_RATE_MS = 200; // 5 FPS for AI processing
 const JPEG_QUALITY = 0.85;
 
-async function startCamera() {
+async function startCamera(overrideDeviceId = null) {
     try {
         error.value = null;
-        // 1. Get Config
-        const savedConfig = localStorage.getItem('battle_camera_config');
-        let deviceId = null;
-        if (savedConfig) {
-            const config = JSON.parse(savedConfig);
-            deviceId = config[props.role];
+        
+        let deviceId = overrideDeviceId;
+
+        // Fallback to local config if no override
+        if (!deviceId) {
+            const savedConfig = localStorage.getItem('battle_camera_config');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                deviceId = config[props.role];
+            }
         }
 
         const constraints = {
@@ -66,6 +70,11 @@ async function startCamera() {
             constraints.video.deviceId = { exact: deviceId };
         }
 
+        // Stop existing stream
+        if (stream.value) {
+            stream.value.getTracks().forEach(t => t.stop());
+        }
+
         // 2. Start Stream
         stream.value = await navigator.mediaDevices.getUserMedia(constraints);
         if (videoRef.value) {
@@ -73,6 +82,8 @@ async function startCamera() {
         }
 
         startCaptureLoop();
+        
+        // Report success?
 
     } catch (e) {
         console.error(`[FrontCam] Error starting ${props.role} camera:`, e);
@@ -80,44 +91,21 @@ async function startCamera() {
     }
 }
 
-function startCaptureLoop() {
-    if (captureInterval) clearInterval(captureInterval);
-    
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    captureInterval = setInterval(() => {
-        if (!videoRef.value || !socket || !socket.connected) return;
-
-        try {
-            // Check if video is ready
-            if (videoRef.value.readyState < 2) return;
-
-            // Draw to canvas
-            canvas.width = videoRef.value.videoWidth;
-            canvas.height = videoRef.value.videoHeight;
+async function registerDevices() {
+    try {
+        // Ensure perm first
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices
+            .filter(d => d.kind === 'videoinput')
+            .map(d => ({ deviceId: d.deviceId, label: d.label }));
             
-            // Mirror if needed (to match display) - actually backend expects original usually?
-            // Let's send original, AI transforms usually handle flipping if needed or we flip only display.
-            ctx.drawImage(videoRef.value, 0, 0);
-
-            // Compress
-            // remove data:image/jpeg;base64, prefix for backend? Depends on backend.
-            // Current backend expects raw base64 bytes usually? No, let's verify backend expected format.
-            // Backend web_server.py usually broadcasts.
-            // We need a NEW event 'process_frame' on backend.
-            const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
-            const base64Data = dataUrl.split(',')[1];
-
-            socket.emit('process_frame', {
-                role: props.role,
-                image: base64Data
-            });
-
-        } catch (e) {
-            console.error('Capture frame error:', e);
-        }
-    }, CAPTURE_RATE_MS);
+        console.log('[FrontCam] Registering devices:', videoInputs);
+        socket.emit('register_client', { devices: videoInputs });
+        
+    } catch (e) {
+        console.error('[FrontCam] Failed to register devices:', e);
+    }
 }
 
 function connectSocket() {
@@ -125,6 +113,8 @@ function connectSocket() {
     
     socket.on('connect', () => {
         console.log(`[FrontCam:${props.role}] Socket Connected`);
+        // Register devices only once (e.g. from first role to connect? or both? doesn't matter)
+        registerDevices();
     });
 
     // Receive processed result
@@ -134,7 +124,20 @@ function connectSocket() {
         }
     });
 
-    // Also listen for recognition status or other signals if needed
+    // Remote Configuration
+    socket.on('set_device', (data) => {
+        if (data.role === props.role && data.deviceId) {
+            console.log(`[FrontCam] Remote config received for ${props.role}:`, data.deviceId);
+            // Save to local storage for persistence
+            const saved = localStorage.getItem('battle_camera_config') || '{}';
+            const config = JSON.parse(saved);
+            config[props.role] = data.deviceId;
+            localStorage.setItem('battle_camera_config', JSON.stringify(config));
+            
+            // Apply
+            startCamera(data.deviceId);
+        }
+    });
 }
 
 onMounted(() => {

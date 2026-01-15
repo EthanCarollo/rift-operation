@@ -148,6 +148,79 @@ def handle_update_camera_settings(data):
     socketio.emit('camera_settings_updated', new_settings)
 
 
+# --- REMOTE CAMERA CONFIGURATION ---
+
+# Store remote devices sent by Battle Client
+# { 'client_sid': [ {deviceId, label}, ... ] }
+_remote_devices_map = {} 
+# Assignments: { 'dream': deviceId, 'nightmare': deviceId }
+_assignments = { 'dream': None, 'nightmare': None }
+
+@socketio.on('register_client')
+def handle_register_client(data):
+    """Battle Client registers its available devices."""
+    global _remote_devices_map
+    devices = data.get('devices', [])
+    sid = request.sid
+    
+    print(f"[WebServer] Client {sid} registered {len(devices)} devices")
+    _remote_devices_map[sid] = devices
+    
+    # Broadcast updated list to admin clients
+    all_devices = []
+    for d_list in _remote_devices_map.values():
+        all_devices.extend(d_list)
+        
+    socketio.emit('remote_devices_update', all_devices)
+    
+    # Send current assignments back to this client immediately
+    for role, device_id in _assignments.items():
+        if device_id:
+            socketio.emit('set_device', {'role': role, 'deviceId': device_id}, room=sid)
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    global _remote_devices_map
+    sid = request.sid
+    if sid in _remote_devices_map:
+        print(f"[WebServer] Client {sid} disconnected")
+        del _remote_devices_map[sid]
+        # Notify admins? maybe unnecessary spam
+
+
+@app.route('/remote/devices', methods=['GET'])
+def get_remote_devices():
+    """Get all connected remote devices."""
+    all_devices = []
+    # Deduplicate by deviceId if needed, or keep all
+    seen = set()
+    for d_list in _remote_devices_map.values():
+        for d in d_list:
+            if d['deviceId'] not in seen:
+                all_devices.append(d)
+                seen.add(d['deviceId'])
+    return jsonify(all_devices)
+
+@app.route('/remote/assignments', methods=['GET'])
+def get_assignments():
+    return jsonify(_assignments)
+
+
+@socketio.on('assign_device')
+def handle_assign_device(data):
+    """Admin assigns a device to a role."""
+    role = data.get('role')
+    device_id = data.get('deviceId')
+    
+    if role and device_id:
+        print(f"[WebServer] Assigning {device_id} to {role}")
+        _assignments[role] = device_id
+        
+        # Broadcast assignment to ALL clients (Battle Client will pick it up)
+        socketio.emit('set_device', {'role': role, 'deviceId': device_id})
+
+
 def start_server_headless(host='0.0.0.0', port=5010):
     """Start the web server in blocking mode."""
     service = _get_service()
