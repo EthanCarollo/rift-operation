@@ -56,6 +56,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { io } from 'socket.io-client';
 import BattleBoss from '~/components/battle/BattleBoss.vue';
 import BattleHUD from '~/components/battle/BattleHUD.vue';
 import { useBattleState } from '~/composables/useBattleState';
@@ -67,8 +68,9 @@ const route = useRoute();
 // Role from URL query param only (no selector screen)
 const selectedRole = ref(route.query.role || null);
 
-// Debug mode from localStorage
+// Debug mode from backend (synced)
 const debugMode = ref(false);
+let socket = null;
 
 // Pure role name (without -dev suffix)
 const pureRole = computed(() => {
@@ -95,14 +97,41 @@ const showCamera = computed(() => {
     return battleState.value !== 'IDLE' || debugMode.value;
 });
 
+// --- SOCKET CONNECTION FOR DEBUG MODE ---
+function connectDebugSocket() {
+    socket = io(config.public.backendUrl, { transports: ['websocket', 'polling'] });
+    
+    socket.on('connect', () => {
+        console.log('[Battle] Connected to backend for debug sync');
+        // Fetch initial debug mode
+        fetchDebugMode();
+    });
+    
+    socket.on('debug_mode_changed', (data) => {
+        console.log('[Battle] Debug mode changed:', data.enabled);
+        debugMode.value = data.enabled;
+    });
+}
+
+async function fetchDebugMode() {
+    try {
+        const res = await fetch(`${config.public.backendUrl}/remote/debug_mode`);
+        if (res.ok) {
+            const data = await res.json();
+            debugMode.value = data.debug_mode || false;
+        }
+    } catch (e) {
+        console.error('[Battle] Failed to fetch debug mode:', e);
+    }
+}
+
 // --- LIFECYCLE ---
 onMounted(() => {
-    // Load debug mode from config
-    const savedDebug = localStorage.getItem('battle_debug_mode');
-    if (savedDebug) {
-        try { debugMode.value = JSON.parse(savedDebug); } catch {}
-    }
-    
+    connectDebugSocket();
     init();
+});
+
+onUnmounted(() => {
+    if (socket) socket.disconnect();
 });
 </script>

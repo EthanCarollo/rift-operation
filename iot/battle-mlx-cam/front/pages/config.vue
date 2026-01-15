@@ -103,7 +103,7 @@ const debugMode = ref(false);
 let socket = null;
 
 function saveDebugMode() {
-    localStorage.setItem('battle_debug_mode', JSON.stringify(debugMode.value));
+    socket.emit('set_debug_mode', { enabled: debugMode.value });
     console.log('[Config] Debug mode:', debugMode.value);
 }
 
@@ -117,6 +117,7 @@ function connect() {
         // Request initial data
         fetchRemoteDevices();
         fetchAssignments();
+        fetchDebugMode();
     });
 
     socket.on('disconnect', () => {
@@ -159,12 +160,23 @@ async function fetchAssignments() {
         const res = await fetch(`${backendUrl.value}/remote/assignments`);
         if (res.ok) {
             const data = await res.json();
-            // Only update if we don't have local selection? or simple sync
             if (data.nightmare) assignments.value.nightmare = data.nightmare;
             if (data.dream) assignments.value.dream = data.dream;
         }
     } catch (e) {
         console.error('Failed to fetch assignments:', e);
+    }
+}
+
+async function fetchDebugMode() {
+    try {
+        const res = await fetch(`${backendUrl.value}/remote/debug_mode`);
+        if (res.ok) {
+            const data = await res.json();
+            debugMode.value = data.debug_mode || false;
+        }
+    } catch (e) {
+        console.error('Failed to fetch debug mode:', e);
     }
 }
 

@@ -221,6 +221,24 @@ def handle_assign_device(data):
         socketio.emit('set_device', {'role': role, 'deviceId': device_id})
 
 
+# --- DEBUG MODE ---
+_debug_mode = False
+
+@app.route('/remote/debug_mode', methods=['GET'])
+def get_debug_mode():
+    return jsonify({'debug_mode': _debug_mode})
+
+@socketio.on('set_debug_mode')
+def handle_set_debug_mode(data):
+    """Admin toggles debug mode."""
+    global _debug_mode
+    _debug_mode = data.get('enabled', False)
+    print(f"[WebServer] Debug mode: {_debug_mode}")
+    
+    # Broadcast to ALL clients
+    socketio.emit('debug_mode_changed', {'enabled': _debug_mode})
+
+
 def start_server_headless(host='0.0.0.0', port=5010):
     """Start the web server in blocking mode."""
     service = _get_service()
