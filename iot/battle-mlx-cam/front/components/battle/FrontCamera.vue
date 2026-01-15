@@ -108,6 +108,39 @@ async function registerDevices() {
     }
 }
 
+function startCaptureLoop() {
+    if (captureInterval) clearInterval(captureInterval);
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    captureInterval = setInterval(() => {
+        if (!videoRef.value || !socket || !socket.connected) return;
+
+        try {
+            // Check if video is ready
+            if (videoRef.value.readyState < 2) return;
+
+            // Draw to canvas
+            canvas.width = videoRef.value.videoWidth;
+            canvas.height = videoRef.value.videoHeight;
+            ctx.drawImage(videoRef.value, 0, 0);
+
+            // Compress and send
+            const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+            const base64Data = dataUrl.split(',')[1];
+
+            socket.emit('process_frame', {
+                role: props.role,
+                image: base64Data
+            });
+
+        } catch (e) {
+            console.error('Capture frame error:', e);
+        }
+    }, CAPTURE_RATE_MS);
+}
+
 function connectSocket() {
     socket = io(props.backendUrl, { transports: ['websocket', 'polling'] });
     
