@@ -18,8 +18,20 @@
                 <div class="relative aspect-video bg-black rounded border border-neutral-700 overflow-hidden">
                     <video ref="videoRef" autoplay playsinline muted 
                         class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
-                    <div v-if="!stream" class="absolute inset-0 flex items-center justify-center text-neutral-500 animate-pulse">
-                        Starting camera...
+                        
+                    <!-- Loading State -->
+                    <div v-if="!stream && !cameraError" class="absolute inset-0 flex items-center justify-center text-neutral-500 animate-pulse">
+                        Waiting for camera permission...
+                    </div>
+                    
+                    <!-- Error State -->
+                    <div v-if="cameraError" class="absolute inset-0 flex flex-col items-center justify-center text-red-400 p-4 text-center">
+                        <span class="text-2xl mb-2">🚫</span>
+                        <div class="font-bold">Camera Access Denied</div>
+                        <div class="text-xs text-neutral-500 mb-4">{{ cameraError }}</div>
+                        <button @click="startCamera" class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 rounded border border-neutral-600 text-xs text-white">
+                            Retry Access
+                        </button>
                     </div>
                 </div>
 
@@ -102,7 +114,10 @@ const prediction = ref(null);
 
 const quickLabels = ['key', 'door', 'star', 'eye', 'cloud', 'sword', 'empty', 'bullshit'];
 
+const cameraError = ref(null);
+
 async function startCamera() {
+    cameraError.value = null;
     try {
         stream.value = await navigator.mediaDevices.getUserMedia({
             video: { width: { ideal: 640 }, height: { ideal: 480 } }
@@ -112,6 +127,7 @@ async function startCamera() {
         }
     } catch (e) {
         console.error('[Train] Camera error:', e);
+        cameraError.value = e.message || 'Unknown error';
     }
 }
 
