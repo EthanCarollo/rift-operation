@@ -42,5 +42,6 @@
     "battle_drawing_dream_image": null,
     "battle_drawing_nightmare_image": null,
     "end_system": null,
-    "reset_system": null
+    "reset_system": null,
+    "start_video": null
 }

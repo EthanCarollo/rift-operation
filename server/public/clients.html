@@ -363,6 +363,15 @@
                                             <div class="tri-state-btn" data-value="true">ON</div>
                                         </div>
                                     </div>
+                                    <div class="control-group" data-type="bool">
+                                        <label class="block text-[10px] uppercase font-bold mb-2 truncate">Battle Attack</label>
+                                        <input type="hidden" name="operator_launch_battle_attack" value="null">
+                                        <div class="tri-state-container">
+                                            <div class="tri-state-btn" data-value="null" data-active="true">N</div>
+                                            <div class="tri-state-btn" data-value="false">OFF</div>
+                                            <div class="tri-state-btn" data-value="true">ON</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 
@@ -547,7 +556,100 @@
                                 </div>
                             </section>
 
+                            <!-- 5. BATTLE -->
+                            <section class="section-box">
+                                <span class="section-title">04_Battle</span>
+                                <div class="space-y-6">
+                                    <!-- Battle State & HP -->
+                                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                        <div class="control-group" data-type="text">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Battle State</label>
+                                            <input type="text" name="battle_state" class="raw-input" placeholder="NULL">
+                                        </div>
+                                        <div class="control-group" data-type="int">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Boss HP</label>
+                                            <input type="number" name="battle_boss_hp" class="raw-input" placeholder="NULL">
+                                        </div>
+                                        <div class="control-group" data-type="text">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Boss Attack</label>
+                                            <input type="text" name="battle_boss_attack" class="raw-input" placeholder="NULL">
+                                        </div>
+                                        <div class="control-group" data-type="bool">
+                                            <label class="block text-xs font-bold mb-2 uppercase">Hit Confirmed</label>
+                                            <input type="hidden" name="battle_hit_confirmed" value="null">
+                                            <div class="tri-state-container">
+                                                <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                <div class="tri-state-btn" data-value="false">NO</div>
+                                                <div class="tri-state-btn" data-value="true">YES</div>
+                                            </div>
+                                        </div>
+                                    </div>
 
+                                    <!-- Drawing Recognition -->
+                                    <div class="border-t pt-4" style="border-color: var(--border);">
+                                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <div class="control-group" data-type="bool">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Dream Rec.</label>
+                                                <input type="hidden" name="battle_drawing_dream_recognised" value="null">
+                                                <div class="tri-state-container">
+                                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                    <div class="tri-state-btn" data-value="false">NO</div>
+                                                    <div class="tri-state-btn" data-value="true">YES</div>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-type="bool">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Nightmare Rec.</label>
+                                                <input type="hidden" name="battle_drawing_nightmare_recognised" value="null">
+                                                <div class="tri-state-container">
+                                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                    <div class="tri-state-btn" data-value="false">NO</div>
+                                                    <div class="tri-state-btn" data-value="true">YES</div>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-type="text">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Dream Image</label>
+                                                <input type="text" name="battle_drawing_dream_image" class="raw-input" placeholder="NULL">
+                                            </div>
+                                            <div class="control-group" data-type="text">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Nightmare Image</label>
+                                                <input type="text" name="battle_drawing_nightmare_image" class="raw-input" placeholder="NULL">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Cages -->
+                                    <div class="border-t pt-4" style="border-color: var(--border);">
+                                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <div class="control-group" data-type="bool">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Cage Dream</label>
+                                                <input type="hidden" name="battle_cage_dream" value="null">
+                                                <div class="tri-state-container">
+                                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                    <div class="tri-state-btn" data-value="false">OFF</div>
+                                                    <div class="tri-state-btn" data-value="true">ON</div>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-type="bool">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Cage Nightmare</label>
+                                                <input type="hidden" name="battle_cage_nightmare" value="null">
+                                                <div class="tri-state-container">
+                                                    <div class="tri-state-btn" data-value="null" data-active="true">NULL</div>
+                                                    <div class="tri-state-btn" data-value="false">OFF</div>
+                                                    <div class="tri-state-btn" data-value="true">ON</div>
+                                                </div>
+                                            </div>
+                                            <div class="control-group" data-type="text">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Video Play</label>
+                                                <input type="text" name="battle_video_play" class="raw-input" placeholder="NULL">
+                                            </div>
+                                            <div class="control-group" data-type="text">
+                                                <label class="block text-xs font-bold mb-2 uppercase">Music Play</label>
+                                                <input type="text" name="battle_music_play" class="raw-input" placeholder="NULL">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
                             <!-- 6. ENDING -->
                             <section class="section-box">
