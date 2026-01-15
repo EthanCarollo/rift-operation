@@ -84,32 +84,20 @@ def select_screens():
         log("⚠️ No screens detected (AppKit missing?). Using defaults.", Colors.WARNING)
         return None, None
 
-    # Auto-select if only one screen
-    if len(screens) == 1:
+    # Auto-select assignments
+    dream_screen = screens[0]
+    nightmare_screen = screens[0]
+    
+    if len(screens) >= 2:
+        log(f"🖥️  Multi-display detected. Auto-assigning:", Colors.CYAN)
+        dream_screen = screens[0]
+        nightmare_screen = screens[1]
+        log(f"   DREAM     -> Display 0 ({dream_screen['w']}x{dream_screen['h']})", Colors.GREEN)
+        log(f"   NIGHTMARE -> Display 1 ({nightmare_screen['w']}x{nightmare_screen['h']})", Colors.GREEN)
+    else:
         log(f"🖥️  Single display detected: {screens[0]['w']}x{screens[0]['h']}", Colors.CYAN)
-        log("   Auto-selecting for both DREAM and NIGHTMARE", Colors.GREEN)
-        return screens[0], screens[0]
+        log("   Auto-assigning both roles to Display 0", Colors.WARNING)
 
-    log("\n🖥️  Connected Displays:", Colors.HEADER)
-    for s in screens:
-        print(f"   [{s['index']}] {s['w']}x{s['h']} at ({s['x']},{s['y']})")
-    
-    print("")
-    
-    def ask(role):
-        while True:
-            try:
-                val = input(f"{Colors.BLUE}Select Display for {role} (0-{len(screens)-1}): {Colors.ENDC}")
-                idx = int(val)
-                if 0 <= idx < len(screens):
-                    return screens[idx]
-            except ValueError:
-                pass
-            print("Invalid selection.")
-
-    dream_screen = ask("DREAM")
-    nightmare_screen = ask("NIGHTMARE")
-    
     return dream_screen, nightmare_screen
 
 # Define paths
