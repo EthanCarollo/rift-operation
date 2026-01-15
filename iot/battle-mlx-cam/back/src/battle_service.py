@@ -231,6 +231,7 @@ class BattleService:
             print(f"[BattleService] Image bytes length: {len(image_bytes)}")
             
             try:
+                # Just verify the image is valid
                 img_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
                 print(f"[BattleService] Image opened: {img_pil.size}")
             except Exception as img_err:
@@ -239,9 +240,9 @@ class BattleService:
                 state.recognition_status = f"❌ Invalid image"
                 self._emit_status()
                 return
-            img_cv2 = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
-            res, _ = transform_image(img_cv2, state.prompt)
+            # Pass original image_bytes to transform (it handles compression internally)
+            res, _ = transform_image(image_bytes, state.prompt)
             
             # 3. Remove Background
             final_bytes, _ = remove_background(res)
