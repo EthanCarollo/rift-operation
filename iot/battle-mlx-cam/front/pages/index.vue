@@ -40,8 +40,8 @@
                     :is-hit="isHit" :attack="currentAttack" :is-vertical="false" />
             </div>
 
-            <!-- BOTTOM: Camera Area (30%) - Only visible when not IDLE or debugMode -->
-            <div v-if="showCamera" class="relative w-full h-[30%] bg-neutral-900 overflow-hidden">
+            <!-- BOTTOM: Camera Area (30%) - Always mounted, visibility controlled by showCamera -->
+            <div v-show="showCamera" class="relative w-full h-[30%] bg-neutral-900 overflow-hidden">
                 <BattleFrontCamera 
                     v-if="pureRole"
                     :role="pureRole"
@@ -51,6 +51,14 @@
                 <div v-else class="absolute inset-0 flex items-center justify-center text-white/30 text-sm">
                     📷 Rôle non défini (ajouter ?role=dream ou ?role=nightmare)
                 </div>
+            </div>
+            
+            <!-- Hidden camera for sending frames when UI is hidden -->
+            <div v-if="!showCamera && pureRole" class="hidden">
+                <BattleFrontCamera 
+                    :role="pureRole"
+                    :backend-url="config.public.backendUrl"
+                />
             </div>
         </div>
     </div>

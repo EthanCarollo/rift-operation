@@ -44,18 +44,21 @@ let captureInterval = null;
 const CAPTURE_RATE_MS = 2000; // 2 seconds between frames
 const JPEG_QUALITY = 0.85;
 
-async function startCamera(overrideDeviceId = null) {
+async function startCamera(overrideDeviceId = null, retryWithAny = false) {
     try {
         error.value = null;
         
         let deviceId = overrideDeviceId;
 
-        // Fallback to local config if no override
-        if (!deviceId) {
+        // Fallback to local config if no override (skip if retrying with any)
+        if (!deviceId && !retryWithAny) {
             const savedConfig = localStorage.getItem('battle_camera_config');
             if (savedConfig) {
                 const config = JSON.parse(savedConfig);
                 deviceId = config[props.role];
+                if (deviceId) {
+                    console.log(`[FrontCam:${props.role}] Using saved deviceId:`, deviceId);
+                }
             }
         }
 
@@ -66,7 +69,8 @@ async function startCamera(overrideDeviceId = null) {
             }
         };
 
-        if (deviceId) {
+        // Only use exact deviceId if we have one and not retrying with any
+        if (deviceId && !retryWithAny) {
             constraints.video.deviceId = { exact: deviceId };
         }
 
@@ -75,18 +79,31 @@ async function startCamera(overrideDeviceId = null) {
             stream.value.getTracks().forEach(t => t.stop());
         }
 
-        // 2. Start Stream
+        console.log(`[FrontCam:${props.role}] Requesting camera with constraints:`, constraints.video.deviceId ? 'specific device' : 'any device');
+        
+        // Start Stream
         stream.value = await navigator.mediaDevices.getUserMedia(constraints);
         if (videoRef.value) {
             videoRef.value.srcObject = stream.value;
         }
 
+        console.log(`[FrontCam:${props.role}] Camera started successfully`);
         startCaptureLoop();
-        
-        // Report success?
 
     } catch (e) {
-        console.error(`[FrontCam] Error starting ${props.role} camera:`, e);
+        console.error(`[FrontCam:${props.role}] Error starting camera:`, e);
+        
+        // If device not found, retry with any available camera
+        if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError' || e.message.includes('not found')) {
+            console.warn(`[FrontCam:${props.role}] Device not found, retrying with any camera...`);
+            // Clear saved config for this role
+            localStorage.removeItem('battle_camera_config');
+            
+            if (!retryWithAny) {
+                return startCamera(null, true); // Retry without specific deviceId
+            }
+        }
+        
         error.value = `Camera Error: ${e.message}`;
     }
 }

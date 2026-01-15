@@ -5,8 +5,12 @@ import os
 import signal
 import sys
 import webbrowser
+import argparse
 from datetime import datetime
 import json
+
+# Global debug mode flag
+DEBUG_MODE = False
 
 # Check for AppKit availability (will use subprocess to run via conda if needed, or import directly)
 try:
@@ -212,6 +216,8 @@ def start_frontend():
 
 def open_browser(dream_screen=None, nightmare_screen=None):
     log("🌐 Opening Chrome windows in kiosk mode...", Colors.HEADER)
+    if DEBUG_MODE:
+        log("🔧 DEBUG MODE: DevTools will open automatically", Colors.WARNING)
     
     url_dream = "http://localhost:3010/?role=dream"
     url_nightmare = "http://localhost:3010/?role=nightmare"
@@ -246,8 +252,13 @@ def open_browser(dream_screen=None, nightmare_screen=None):
             "--no-default-browser-check",
             "--use-fake-ui-for-media-stream",  # Auto-accept camera permission
             f"--unsafely-treat-insecure-origin-as-secure={url.split('/')[0]}//{url.split('/')[2]}", # Allow cam on HTTP
-            url
         ]
+        
+        # Add devtools flag if DEBUG_MODE is enabled
+        if DEBUG_MODE:
+            cmd.append("--auto-open-devtools-for-tabs")
+        
+        cmd.append(url)
         
         # Suppress Chrome stderr/stdout to avoid log spam
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -438,4 +449,10 @@ def main():
         log("💀 Backend and Frontend stopped.", Colors.FAIL)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Start Battle MLX Camera System")
+    parser.add_argument("--debug", action="store_true", help="Open Chrome with DevTools console visible")
+    args = parser.parse_args()
+    
+    DEBUG_MODE = args.debug
+    
     main()
