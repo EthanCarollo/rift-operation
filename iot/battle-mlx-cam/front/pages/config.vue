@@ -68,7 +68,19 @@
             </div>
         </div>
 
-        <div class="mt-8 p-4 bg-neutral-800/50 rounded text-center text-neutral-500 text-xs">
+        <!-- Debug Mode Toggle -->
+        <div class="mt-8 p-4 bg-neutral-800 rounded border border-neutral-700">
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" v-model="debugMode" @change="saveDebugMode"
+                    class="w-5 h-5 rounded bg-neutral-900 border-neutral-600 text-purple-500 focus:ring-purple-500" />
+                <div>
+                    <span class="font-bold text-white">Debug Mode</span>
+                    <p class="text-xs text-neutral-500">Show cameras on battle screens even when in IDLE state</p>
+                </div>
+            </label>
+        </div>
+
+        <div class="mt-4 p-4 bg-neutral-800/50 rounded text-center text-neutral-500 text-xs">
             <p>This page controls the cameras on the remote Battle Machine.</p>
             <p>Ensure the Battle Machine is running and connected (check logs for 'Client registered').</p>
         </div>
@@ -86,8 +98,14 @@ const connected = ref(false);
 const remoteDevices = ref([]);
 const assignments = ref({ nightmare: null, dream: null });
 const outputs = ref({ nightmare: null, dream: null });
+const debugMode = ref(false);
 
 let socket = null;
+
+function saveDebugMode() {
+    localStorage.setItem('battle_debug_mode', JSON.stringify(debugMode.value));
+    console.log('[Config] Debug mode:', debugMode.value);
+}
 
 function connect() {
     socket = io(backendUrl.value, { transports: ['websocket', 'polling'] });
@@ -151,6 +169,12 @@ async function fetchAssignments() {
 }
 
 onMounted(() => {
+    // Load debug mode
+    const savedDebug = localStorage.getItem('battle_debug_mode');
+    if (savedDebug) {
+        try { debugMode.value = JSON.parse(savedDebug); } catch {}
+    }
+    
     connect();
 });
 

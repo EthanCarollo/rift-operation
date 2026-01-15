@@ -15,11 +15,12 @@
             :is-vertical="false"
             class="hidden" />
 
-        <!-- Main Battle Layout: 70% Video Top, 30% Camera Bottom -->
+        <!-- Main Battle Layout: Dynamic height based on camera visibility -->
         <div class="flex flex-col w-full h-full">
             
-            <!-- TOP: Video/Boss Area (70%) -->
-            <div class="relative w-full h-[70%] bg-black overflow-hidden">
+            <!-- TOP: Video/Boss Area -->
+            <div class="relative w-full bg-black overflow-hidden" 
+                 :class="showCamera ? 'h-[70%]' : 'h-full'">
                 <!-- Video Layer -->
                 <video v-show="currentVideo && !videoError" ref="videoRef"
                     class="absolute inset-0 w-full h-full object-cover z-0" 
@@ -37,8 +38,8 @@
                     :is-hit="isHit" :attack="currentAttack" :is-vertical="false" />
             </div>
 
-            <!-- BOTTOM: Camera Area (30%) -->
-            <div class="relative w-full h-[30%] bg-neutral-900 overflow-hidden">
+            <!-- BOTTOM: Camera Area (30%) - Only visible when not IDLE or debugMode -->
+            <div v-if="showCamera" class="relative w-full h-[30%] bg-neutral-900 overflow-hidden">
                 <BattleFrontCamera 
                     v-if="pureRole"
                     :role="pureRole"
@@ -66,6 +67,9 @@ const route = useRoute();
 // Role from URL query param only (no selector screen)
 const selectedRole = ref(route.query.role || null);
 
+// Debug mode from localStorage
+const debugMode = ref(false);
+
 // Pure role name (without -dev suffix)
 const pureRole = computed(() => {
     if (!selectedRole.value) return null;
@@ -86,8 +90,19 @@ const isEndState = computed(() => {
     return battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
 });
 
+// Show camera when NOT idle, OR when debugMode is enabled
+const showCamera = computed(() => {
+    return battleState.value !== 'IDLE' || debugMode.value;
+});
+
 // --- LIFECYCLE ---
 onMounted(() => {
+    // Load debug mode from config
+    const savedDebug = localStorage.getItem('battle_debug_mode');
+    if (savedDebug) {
+        try { debugMode.value = JSON.parse(savedDebug); } catch {}
+    }
+    
     init();
 });
 </script>
