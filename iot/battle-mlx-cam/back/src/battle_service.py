@@ -52,6 +52,7 @@ class BattleService:
         self.current_attack = None
         self.attack_start_time = 0
         self.socketio = None # Set later
+        self._last_hit_confirmed = False  # Track hit confirmation state
         
         # Connect to WebSocket to Rift Server
         self.ws.connect()
@@ -118,13 +119,24 @@ class BattleService:
                 state = self.ws.last_state.get("battle_state", "IDLE")
                 attack = self.ws.last_state.get("battle_boss_attack")
                 
+                # Track attack changes
                 if attack != self.current_attack:
                     self.current_attack = attack
                     self.attack_start_time = time.time()
+                    self._last_hit_confirmed = False  # Reset on new attack
                     print(f"[BattleService] Boss Attack: {attack}")
                     # Broadcast status update via socketio
                     if self.socketio:
                         self.socketio.emit('status', self.get_status())
+                
+                # Handle battle_hit_confirmed from server
+                hit_confirmed = self.ws.last_state.get("battle_hit_confirmed", False)
+                if hit_confirmed and not self._last_hit_confirmed:
+                    self._last_hit_confirmed = True
+                    print(f"[BattleService] 💥 HIT CONFIRMED! Attack progressing...")
+                    # Emit event to frontend
+                    if self.socketio:
+                        self.socketio.emit('hit_confirmed', {'attack': self.current_attack})
             
             time.sleep(0.5)
 
@@ -180,7 +192,7 @@ class BattleService:
                 return
 
             # CRITICAL: If KNN says empty or bullshit, we skip generation entirely
-            if label_knn in ["empty", "bullshit"]:
+            if label_knn in ["empty", "bullshit", "Need Training"]:
                 print(f"[BattleService] ⛔ Drawing is '{label_knn}', skipping generation.")
                 state.recognition_status = f"⚠️ {label_knn.upper()}"
                 state.last_label = label_knn
@@ -188,33 +200,26 @@ class BattleService:
                 self._emit_status()
                 return
 
-            # Demo/Game Logic: Target label based on Current Attack
-            target_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
+            # USE KNN RECOGNITION RESULT FOR PROMPT SELECTION
+            # This means: if KNN recognizes "key", we transform it as a key
+            # regardless of what attack the boss is doing
+            label = label_knn
+            state.last_label = label
+            state.recognition_status = f"🧠 {label.upper()}"
+            state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
             
-            # TEST MODE: If no attack from WebSocket, cycle through test sequence
-            if target_label:
-                # For demo, we still use the target_label if it's there, 
-                # but we've already handled empty/bullshit skip above.
-                label = target_label
-                state.last_label = label
-                state.recognition_status = f"🎯 {label.upper()}"
-                state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
-            elif TEST_ATTACK_SEQUENCE:
-                # Get next item from test sequence
-                if not hasattr(self, '_test_index'):
-                    self._test_index = 0
-                label = TEST_ATTACK_SEQUENCE[self._test_index % len(TEST_ATTACK_SEQUENCE)]
-                self._test_index += 1
-                
-                state.last_label = label
-                state.recognition_status = f"🧪 TEST: {label.upper()}"
-                state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+            print(f"[BattleService] Using KNN label '{label}' for prompt")
+
+            # ========== COUNTER VALIDATION ==========
+            # Check if the detected label is the CORRECT counter for current attack
+            is_valid_counter = False
+            if self.current_attack:
+                required_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
+                is_valid_counter = (label_knn == required_label)
+                print(f"[BattleService] 🎯 Attack: {self.current_attack} requires '{required_label}', got '{label_knn}' → {'✅ VALID' if is_valid_counter else '❌ INVALID'}")
             else:
-                print(f"[BattleService] No attack detected, skipping (current_attack={self.current_attack})")
-                state.recognition_status = "⏳ Waiting attack..."
-                state.last_label = None
-                self._emit_status()
-                return
+                print(f"[BattleService] ⚠️ No current attack, counter validation skipped")
+            # ========================================
 
             self._emit_status()
 
@@ -265,11 +270,11 @@ class BattleService:
                 })
             
             # 5. Send to Rift Server
-            # We send bytes base64 encoded
+            # Only send recognised: true if counter is VALID
             b64_rift = base64.b64encode(final_bytes).decode('utf-8')
-            extra = {f"battle_drawing_{role}_recognised": True}
+            extra = {f"battle_drawing_{role}_recognised": is_valid_counter}
             if self.ws.send_image(b64_rift, role, extra):
-                print(f"[BattleService] Sent {role} to Rift Server")
+                print(f"[BattleService] Sent {role} to Rift Server (recognised: {is_valid_counter})")
 
         except Exception as e:
             print(f"[BattleService] Error processing {role}: {e}")
