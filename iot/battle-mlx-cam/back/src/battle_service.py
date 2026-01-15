@@ -227,7 +227,18 @@ class BattleService:
             import numpy as np
             import cv2
             
-            img_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            # Debug: Check image bytes
+            print(f"[BattleService] Image bytes length: {len(image_bytes)}")
+            
+            try:
+                img_pil = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+                print(f"[BattleService] Image opened: {img_pil.size}")
+            except Exception as img_err:
+                print(f"[BattleService] ❌ Failed to open image: {img_err}")
+                print(f"[BattleService] First 100 bytes: {image_bytes[:100]}")
+                state.recognition_status = f"❌ Invalid image"
+                self._emit_status()
+                return
             img_cv2 = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
             res, _ = transform_image(img_cv2, state.prompt)

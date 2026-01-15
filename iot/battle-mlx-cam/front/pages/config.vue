@@ -8,6 +8,9 @@
                     <span class="w-2 h-2 rounded-full" :class="connected ? 'bg-green-500' : 'bg-red-500'"></span>
                     {{ connected ? 'Connected' : 'Offline' }}
                 </span>
+                <NuxtLink to="/train" class="px-3 py-1 border border-green-600 text-green-400 rounded hover:bg-green-900/30">
+                    🧠 Train KNN
+                </NuxtLink>
                 <NuxtLink to="/" class="px-3 py-1 border border-neutral-600 rounded hover:bg-neutral-800">
                     ← Battle
                 </NuxtLink>
