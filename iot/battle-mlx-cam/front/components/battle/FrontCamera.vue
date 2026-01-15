@@ -1,5 +1,5 @@
 <template>
-    <div class="relative w-full h-full bg-black overflow-hidden rounded-lg border-2 border-white/30 shadow-2xl">
+    <div class="relative w-full h-full overflow-hidden">
         <!-- Local Video Feed (Mirrored) -->
         <video ref="videoRef" autoplay playsinline muted 
             class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1] z-0"></video>
