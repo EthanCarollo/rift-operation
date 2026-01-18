@@ -7,7 +7,10 @@ from dotenv import load_dotenv
 def check_key():
     # Load .env explicitly
     # Load .env explicitly from parent dir
-    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    import os
+    # Load .env explicitly from back dir
+    back_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "back")
+    env_path = os.path.join(back_dir, '.env')
     load_dotenv(env_path)
     
     key = os.getenv("FAL_KEY")

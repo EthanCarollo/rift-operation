@@ -9,7 +9,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 try:
     from dotenv import load_dotenv
     import os
-    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    # Point to back/.env from lab/checker/check_ws.py
+    # __file__ = lab/checker/check_ws.py
+    # dirname = lab/checker
+    # dirname*2 = lab
+    # dirname*3 = root
+    # root/back/.env
+    back_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "back")
+    env_path = os.path.join(back_dir, '.env')
     load_dotenv(env_path)
     WS_URL = os.getenv("WS_URL", "ws://127.0.0.1:8000/ws")
 except ImportError:

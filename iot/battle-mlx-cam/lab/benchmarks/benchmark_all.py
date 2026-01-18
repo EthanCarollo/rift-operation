@@ -24,20 +24,31 @@ class Colors:
     SILVER = '\033[37m'
     BRONZE = '\033[31m'
 
-# Add parent directory to path for src imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.transform import transform_image
+# Add back directory to path for src imports
+# lab/benchmarks -> lab -> root -> back
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+back_dir = os.path.join(root_dir, "back")
+sys.path.append(back_dir)
+
+from src.Core.Editors.FalFluxEditor import FalFluxEditor
+# Replicate logic is custom in this script, so we keep it.
 
 def run_fal_benchmark(model_slug, name, image_bytes, prompt, api_key):
     print(f"{Colors.OKCYAN}🚀 Testing Fal.ai: {Colors.BOLD}{name}{Colors.ENDC}...")
     try:
-        start = time.time()
-        # src.transform.transform_image already handles resizing and base64
-        # We'll just measure the call
-        _, elapsed_api = transform_image(image_bytes, prompt, model=model_slug, api_key=api_key)
-        total_time = time.time() - start
-        print(f"{Colors.OKGREEN}   ✓ Complete: {total_time:.2f}s{Colors.ENDC}")
-        return total_time
+        # Instantiate Editor with specific model
+        editor = FalFluxEditor(model=model_slug)
+        
+        # edit_image returns (bytes, elapsed)
+        # It handles resizing internally now.
+        _, elapsed_api = editor.edit_image(image_bytes, prompt)
+        
+        # Total time is roughly elapsed_api + overhead, but edit_image measures internal time.
+        # We can just trust edit_image's elapsed time for API latency, 
+        # or measure full wrapper time if we want network overhead included (FalFluxEditor includes it).
+        
+        print(f"{Colors.OKGREEN}   ✓ Complete: {elapsed_api:.2f}s{Colors.ENDC}")
+        return elapsed_api
     except Exception as e:
         print(f"{Colors.FAIL}   ❌ Error: {e}{Colors.ENDC}")
         return None
@@ -83,13 +94,15 @@ def run_replicate_benchmark(model_slug, name, image_bytes, prompt, api_token, in
         return None
 
 def main():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    load_dotenv(os.path.join(base_dir, ".env"))
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    back_dir = os.path.join(root_dir, "back")
+    
+    load_dotenv(os.path.join(back_dir, ".env"))
     
     fal_key = os.getenv("FAL_KEY")
     replicate_token = os.getenv("REPLICATE_URL_API")
     
-    image_path = os.path.join(base_dir, "original.png")
+    image_path = os.path.join(back_dir, "original.png")
     prompt = "Transform this drawing into a realistic image of a golden antique key, detailed metalwork, soft shadows"
     
     if not os.path.exists(image_path):
