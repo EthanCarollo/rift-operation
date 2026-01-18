@@ -9,7 +9,7 @@ from io import BytesIO
 
 
 # API Configuration
-FAL_API_URL = "https://queue.fal.run/fal-ai/flux-kontext/dev"
+FAL_API_URL = "https://queue.fal.run/fal-ai/flux-2/klein/4b/edit"
 # Persistent session for connection reuse
 _session = requests.Session()
 
@@ -25,7 +25,7 @@ def transform_image(
     api_key: str | None = None
 ) -> tuple[bytes | None, float]:
     """
-    Transform image using fal.ai Flux Kontext.
+    Transform image using fal.ai Flux-2 Klein.
     
     Returns:
         Tuple of (transformed_image_bytes, elapsed_time)
@@ -55,11 +55,7 @@ def transform_image(
     
     payload = {
         "prompt": prompt,
-        "image_url": data_uri,
-        "num_inference_steps": 10,
-        "guidance_scale": 2.5,
-        "num_images": 1,
-        "acceleration": "high",
+        "image_urls": [data_uri]
     }
     
     # Log inference start
