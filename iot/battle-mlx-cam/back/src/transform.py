@@ -8,8 +8,8 @@ from PIL import Image
 from io import BytesIO
 
 
-# API Configuration
-FAL_API_URL = "https://queue.fal.run/fal-ai/flux-2/klein/4b/edit"
+# Default API Configuration
+DEFAULT_MODEL = "fal-ai/flux-2/klein/4b/edit"
 # Persistent session for connection reuse
 _session = requests.Session()
 
@@ -22,10 +22,11 @@ def get_api_key() -> str | None:
 def transform_image(
     image_bytes: bytes,
     prompt: str,
+    model: str = DEFAULT_MODEL,
     api_key: str | None = None
 ) -> tuple[bytes | None, float]:
     """
-    Transform image using fal.ai Flux-2 Klein.
+    Transform image using fal.ai Flux models.
     
     Returns:
         Tuple of (transformed_image_bytes, elapsed_time)
@@ -35,6 +36,8 @@ def transform_image(
     key = api_key or get_api_key()
     if not key:
         raise ValueError("FAL_KEY not found in environment")
+    
+    api_url = f"https://queue.fal.run/{model}"
     
     # Compress input image (560x420 for speed)
     img = Image.open(BytesIO(image_bytes))
@@ -63,7 +66,7 @@ def transform_image(
     print(f"[FLUX] 🚀 Starting inference | Prompt: \"{prompt_preview}\"")
     
     # Submit request
-    response = _session.post(FAL_API_URL, headers=headers, json=payload, timeout=60)
+    response = _session.post(api_url, headers=headers, json=payload, timeout=60)
     
     if response.status_code != 200:
         print(f"[FLUX] ❌ API error {response.status_code}")
