@@ -3,8 +3,8 @@ import threading
 import time
 import base64
 
-from src import transform_image, remove_background, get_api_key, KNNService, RiftWebSocket, list_cameras
-from src.config import PROMPT_MAPPING, ATTACK_TO_COUNTER_LABEL
+from src import get_api_key, list_cameras
+from . import FalFluxEditor, VisionBackgroundRemover, KNNRecognizer, RiftWebSocket, Config
 
 # Configurable rate limit between AI generations (per role)
 GENERATION_RATE_LIMIT_S = 2.0  # 2 seconds between generations
@@ -30,7 +30,7 @@ class BattleRoleState:
         self.last_output = None # Bytes of the PNG output
         self.recognition_status = "Waiting..."
         self.last_label = None
-        self.prompt = PROMPT_MAPPING.get("sword", "Steel katana sword cartoon style")
+        self.prompt = Config.PROMPT_MAPPING.get("sword", "Steel katana sword cartoon style")
         self.processing = False
 
 class BattleService:
@@ -44,8 +44,10 @@ class BattleService:
         }
         
         # Services
-        self.knn = KNNService(dataset_name="default_dataset")
+        self.knn = KNNRecognizer(dataset_name="default_dataset")
         self.ws = RiftWebSocket()
+        self.editor = FalFluxEditor()  # Default model (Klein)
+        self.bg_remover = VisionBackgroundRemover()
         
         # State
         self.running = False
@@ -206,7 +208,7 @@ class BattleService:
             label = label_knn
             state.last_label = label
             state.recognition_status = f"🧠 {label.upper()}"
-            state.prompt = PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+            state.prompt = Config.PROMPT_MAPPING.get(label, f"{label} in cartoon style")
             
             print(f"[BattleService] Using KNN label '{label}' for prompt")
 
@@ -214,7 +216,7 @@ class BattleService:
             # Check if the detected label is the CORRECT counter for current attack
             is_valid_counter = False
             if self.current_attack:
-                required_label = ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
+                required_label = Config.ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
                 is_valid_counter = (label_knn == required_label)
                 print(f"[BattleService] 🎯 Attack: {self.current_attack} requires '{required_label}', got '{label_knn}' → {'✅ VALID' if is_valid_counter else '❌ INVALID'}")
             else:
@@ -254,10 +256,11 @@ class BattleService:
                 return
 
             # Pass original image_bytes to transform (it handles compression internally)
-            res, _ = transform_image(image_bytes, state.prompt)
+            res, _ = self.editor.edit_image(image_bytes, state.prompt)
+            
             
             # 3. Remove Background
-            final_bytes, _ = remove_background(res)
+            final_bytes, _ = self.bg_remover.remove_background(res)
             
             state.last_output = final_bytes
             

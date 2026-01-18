@@ -1,12 +1,13 @@
-"""
-KNN Service for Object Recognition using MobileNetV2.
-"""
+
 import os
 import json
 import numpy as np
 import time
 from PIL import Image
 import ssl
+from pathlib import Path
+
+from src.Framework.Recognition.AbstractRecognizer import AbstractRecognizer
 
 # Fix for MacOS SSL certificate verification error when downloading models
 try:
@@ -22,10 +23,17 @@ torch = None
 transforms = None
 models = None
 
-class KNNService:
+class KNNRecognizer(AbstractRecognizer):
+    """
+    KNN Service for Object Recognition using MobileNetV2.
+    """
     def __init__(self, dataset_name="default_dataset"):
-        from pathlib import Path
-        self.root_dir = Path(__file__).parent.parent
+        # Since this class is in src/Core/Recognition, parent.parent.parent is src/
+        # Adjust path dynamically based on file location
+        current_file = Path(__file__).resolve()
+        # back/src/Core/Recognition/KNNRecognizer.py
+        # root needed: back/
+        self.root_dir = current_file.parent.parent.parent.parent
         self.model_dir = self.root_dir / "model"
         self.model_dir.mkdir(exist_ok=True)
         
@@ -47,7 +55,7 @@ class KNNService:
             
         if self.model is None:
             # Load MobileNetV2 (pretrained)
-            print("[KNN] Loading MobileNetV2...")
+            print("[KNNRecognizer] Loading MobileNetV2...")
             base_model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT)
             # Remove classifier (last layer) to get features
             self.model = torch.nn.Sequential(*list(base_model.children())[:-1])
@@ -96,7 +104,7 @@ class KNNService:
             self.training_samples.append(sample)
             if save:
                 self._save_samples()
-            print(f"[KNN] Added sample '{label}' to {self.dataset_name} (Total: {len(self.training_samples)})")
+            print(f"[KNNRecognizer] Added sample '{label}' to {self.dataset_name} (Total: {len(self.training_samples)})")
             return True
         return False
         
@@ -104,7 +112,7 @@ class KNNService:
         """Force save to disk."""
         self._save_samples()
 
-    def predict(self, image_bytes):
+    def predict(self, image_bytes) -> tuple[str, float]:
         """Find nearest neighbor."""
         if not self.training_samples:
             return "Need Training", 0.0
@@ -136,7 +144,7 @@ class KNNService:
         """Remove all samples of a label."""
         self.training_samples = [s for s in self.training_samples if s['label'] != label]
         self._save_samples()
-        print(f"[KNN] Deleted label '{label}' from {self.dataset_name}")
+        print(f"[KNNRecognizer] Deleted label '{label}' from {self.dataset_name}")
         
     def get_counts(self):
         """Return count per label."""
@@ -164,7 +172,7 @@ class KNNService:
             return features[0].numpy()
             
         except Exception as e:
-            print(f"[KNN] Extraction error: {e}")
+            print(f"[KNNRecognizer] Extraction error: {e}")
             return None
 
     def _save_samples(self):
@@ -178,8 +186,8 @@ class KNNService:
             try:
                 with open(self.samples_file, 'r') as f:
                     self.training_samples = json.load(f)
-                print(f"[KNN] Loaded {len(self.training_samples)} samples from {self.dataset_name}")
+                # print(f"[KNNRecognizer] Loaded {len(self.training_samples)} samples from {self.dataset_name}")
             except Exception as e:
-                print(f"[KNN] Load error: {e}")
+                print(f"[KNNRecognizer] Load error: {e}")
         else:
             self.training_samples = []

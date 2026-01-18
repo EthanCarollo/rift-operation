@@ -7,8 +7,9 @@ import signal
 import sys
 from dotenv import load_dotenv
 
-from src.battle_service import init_service, get_service
-from src.web_server import start_server_headless
+from src.Core import init_service, get_service
+# Use new BattleWebServer from Core
+from src.Core import BattleWebServer
 
 load_dotenv()
 
@@ -29,16 +30,18 @@ def main():
     
     print("[Headless] Starting Battle Camera (Headless Mode)...")
     
-    # Initialize battle service with default cameras
-    # nightmare=0 (first camera), dream=1 (second camera)
-    service = init_service(nightmare_cam=0, dream_cam=1)
+    # Initialize battle service
+    service = init_service()
     
-    # Start the service (begins monitoring WebSocket)
+    # Start the service
     service.start()
     
-    # Start web server (blocking)
+    # Start web server
     print("[Headless] Starting web server on http://0.0.0.0:5010")
-    start_server_headless(host='0.0.0.0', port=5010)
+    
+    # Instantiate BattleWebServer with service provider callback
+    web_server = BattleWebServer(service_provider=get_service)
+    web_server.start(host='0.0.0.0', port=5010)
 
 
 if __name__ == "__main__":

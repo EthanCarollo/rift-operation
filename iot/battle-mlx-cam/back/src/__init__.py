@@ -1,17 +1,25 @@
-"""Package init for battle camera modules."""
+import os
+import sys
 
-from .camera import Camera, list_cameras
-from .transform import transform_image, get_api_key
-from .background import remove_background
-from .websocket_client import RiftWebSocket
-from .knn import KNNService
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-__all__ = [
-    'Camera',
-    'list_cameras', 
-    'transform_image',
-    'get_api_key',
-    'remove_background',
-    'RiftWebSocket',
-    'KNNService',
-]
+# Expose Framework and Core
+from .Framework import (
+    AbstractEditor, AbstractBackgroundRemover, AbstractRecognizer, AbstractCamera,
+    AbstractWebSocket, AbstractWebServer
+)
+
+from .Core import (
+    FalFluxEditor, VisionBackgroundRemover, KNNRecognizer, WebcamCamera, CameraScanner,
+    RiftWebSocket, BattleWebServer, Config,
+    get_camera_settings, update_camera_settings, reset_camera_settings
+)
+
+# Backward Compatibility (for now)
+def get_api_key():
+    return Config.get_api_key()
+
+def list_cameras(max_check=3):
+    return CameraScanner.list_cameras(max_check)
+
+Camera = WebcamCamera

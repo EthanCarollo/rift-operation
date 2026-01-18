@@ -1,30 +1,23 @@
-"""WebSocket client for Rift Operation server."""
-
-import ssl
 import json
 import threading
+import ssl
 import websocket
-import os
-from dotenv import load_dotenv
+from src.Framework.Network.AbstractWebSocket import AbstractWebSocket
+from src.Core.Config import Config
 
-# Load .env
-env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-load_dotenv(env_path)
-
-# Server URL
-WS_URL = os.getenv("WS_URL", "ws://127.0.0.1:8000/ws")
-
-class RiftWebSocket:
-    """WebSocket client for Rift Operation battle server."""
+class RiftWebSocket(AbstractWebSocket):
+    """
+    WebSocket client implementation for Rift Operation battle server.
+    """
     
-    def __init__(self, url: str = WS_URL):
-        self.url = url
+    def __init__(self, url: str = None):
+        self.url = url or Config.get_ws_url()
         self.ws = None
         self.connected = False
         self.last_state = {}
         self._on_connect = None
         self._on_disconnect = None
-    
+        
     def connect(self, on_connect=None, on_disconnect=None):
         """Connect to WebSocket server in background thread."""
         self._on_connect = on_connect
@@ -47,7 +40,7 @@ class RiftWebSocket:
                 self._on_disconnect()
         
         def on_error(ws, error):
-            print(f"WS Error: {error}")
+            print(f"[RiftWebSocket] WS Error: {error}")
         
         # Skip SSL verification for self-signed certs
         ssl_opts = {"cert_reqs": ssl.CERT_NONE}
@@ -65,8 +58,8 @@ class RiftWebSocket:
             daemon=True
         )
         thread.start()
-    
-    def send_image(self, image_base64: str, role: str, extra_data: dict = None):
+
+    def send_image(self, image_base64: str, role: str, extra_data: dict = None) -> bool:
         """Send transformed image to server."""
         if not self.connected or not self.ws:
             return False
@@ -90,9 +83,9 @@ class RiftWebSocket:
             return True
         
         except Exception as e:
-            print(f"Send error: {e}")
+            print(f"[RiftWebSocket] Send error: {e}")
             return False
-    
+
     def close(self):
         """Close WebSocket connection."""
         if self.ws:

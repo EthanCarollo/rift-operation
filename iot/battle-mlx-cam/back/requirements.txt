@@ -7,7 +7,6 @@ pyobjc-framework-Vision>=10.0
 pyobjc-framework-Quartz>=10.0
 
 rembg>=2.0.50
-onnxruntime>=1.15.0
 torch>=2.0.0
 torchvision>=0.15.0
 flask>=3.0.0
