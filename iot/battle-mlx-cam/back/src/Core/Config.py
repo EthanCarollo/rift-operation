@@ -47,6 +47,9 @@ class Config:
     CAPTURE_SCALE = 1.0         # 0.25-1.0
     DENOISE_STRENGTH = 0        # 0-10
 
+    # --- FEATURE FLAGS ---
+    ENABLE_KNN = True           # Master toggle for KNN recognition
+
     # --- GAME DATA ---
 
     # Key: Label defined in Training View
