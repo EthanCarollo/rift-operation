@@ -3,8 +3,8 @@ import threading
 import time
 import base64
 
-from src import get_api_key, list_cameras
-from . import FalFluxEditor, VisionBackgroundRemover, KNNRecognizer, RiftWebSocket, Config
+from .Config import Config
+from . import FalFluxEditor, VisionBackgroundRemover, KNNRecognizer, RiftWebSocket, CameraScanner
 
 # Configurable rate limit between AI generations (per role)
 GENERATION_RATE_LIMIT_S = 2.0  # 2 seconds between generations
@@ -97,7 +97,7 @@ class BattleService:
 
     def start(self):
         """Start battle processing."""
-        if not get_api_key():
+        if not Config.get_api_key():
             print("[BattleService] FAL_KEY missing - continuing without AI transform")
         
         self.running = True

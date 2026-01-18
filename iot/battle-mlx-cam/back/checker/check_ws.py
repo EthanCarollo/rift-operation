@@ -8,7 +8,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 try:
     from dotenv import load_dotenv
-    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    import os
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
     load_dotenv(env_path)
     WS_URL = os.getenv("WS_URL", "ws://127.0.0.1:8000/ws")
 except ImportError:
