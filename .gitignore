@@ -42,3 +42,4 @@ venv
 .DS_Store
 venv
 *.gguf
+iot/esp/src/Core/Controller/Depth/Dream/dream-depth
