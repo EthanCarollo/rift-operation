@@ -7,7 +7,7 @@ import signal
 import sys
 from dotenv import load_dotenv
 
-from src.Core import init_service, get_service
+from src.Core.Services.BattleService import init_service, get_service
 # Use new BattleWebServer from Core
 from src.Core import BattleWebServer
 

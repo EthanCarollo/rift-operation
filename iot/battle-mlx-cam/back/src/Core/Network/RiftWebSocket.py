@@ -59,6 +59,18 @@ class RiftWebSocket(AbstractWebSocket):
         )
         thread.start()
 
+    def send_raw(self, payload: dict) -> bool:
+        """Send raw dictionary payload to server as JSON."""
+        if not self.connected or not self.ws:
+            return False
+            
+        try:
+            self.ws.send(json.dumps(payload))
+            return True
+        except Exception as e:
+            print(f"[RiftWebSocket] Send Raw error: {e}")
+            return False
+
     def send_image(self, image_base64: str, role: str, extra_data: dict = None) -> bool:
         """Send transformed image to server."""
         if not self.connected or not self.ws:

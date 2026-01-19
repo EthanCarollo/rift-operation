@@ -49,6 +49,9 @@ def app_server(mock_dependencies):
     # Init Server
     server = BattleWebServer(service_provider=get_service)
     
+    # Inject socketio manually since we don't call server.start()
+    service.set_socketio(server.socketio)
+    
     # Start service (mock thread monitoring to avoid dangling threads if possible, 
     # but service.start() spawns a daemon thread which is fine for tests)
     service.start()

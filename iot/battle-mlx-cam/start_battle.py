@@ -111,41 +111,146 @@ def select_screens():
     
     return dream_screen, nightmare_screen
 
-def select_environment():
-    """Prompts user to select Development or Production environment."""
-    log("\n🌍 Select Environment:", Colors.HEADER)
-    print("   [1] Development (Backend -> Remote, Front -> Local)")
-    print("   [2] Production  (All -> 192.168.10.7)")
-    
-    choice = input(f"{Colors.BLUE}Enter choice (1/2): {Colors.ENDC}").strip()
-    
-    env_vars = os.environ.copy()
-    
-    if choice == "1":
-        log("✅ Selected: Development Mode", Colors.GREEN)
-        # Backend connects to Remote Rift Server
-        # User provided: ws://https://server.riftoperation.ethan-folio.fr/ws
-        # Correcting to wss:// for https (or ws:// if it was just http)
-        # Assuming wss:// based on 'https' presence
-        env_vars["WS_URL"] = "wss://server.riftoperation.ethan-folio.fr/ws"
-        
-        # Frontend Config
-        env_vars["NUXT_PUBLIC_BACKEND_URL"] = "http://localhost:5010"
-        env_vars["NUXT_PUBLIC_WS_URL"] = "ws://localhost:8000/ws"
-        
-    else:
-        log("✅ Selected: Production Mode", Colors.GREEN)
-        # All local network
-        env_vars["WS_URL"] = "ws://192.168.10.7:8000/ws"
-        
-        # Frontend Config
-        env_vars["NUXT_PUBLIC_BACKEND_URL"] = "http://192.168.10.7:5010"
-        env_vars["NUXT_PUBLIC_WS_URL"] = "ws://192.168.10.7:8000/ws"
+import sys
+import tty
+import termios
 
-    # Log the decision
-    log(f"   • Backend WS: {env_vars['WS_URL']}", Colors.CYAN)
-    log(f"   • Front API:  {env_vars['NUXT_PUBLIC_BACKEND_URL']}", Colors.CYAN)
-    log(f"   • Front WS:   {env_vars['NUXT_PUBLIC_WS_URL']}", Colors.CYAN)
+def get_key():
+    """Get a single keypress from stdin."""
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+        if ch == '\033': # Escape sequence
+            ch += sys.stdin.read(2)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
+def draw_menu(options, selected_index, last_line_count=0):
+    """Draw the selection menu with a detail panel."""
+    
+    # Move cursor up to overwrite previous draw
+    if last_line_count > 0:
+        sys.stdout.write(f"\033[{last_line_count}A")
+        
+    lines = []
+    
+    # 1. Draw Menu Options
+    lines.append(f"{Colors.HEADER}🌍 Select Environment (Arrow Keys to Move, Enter to Select):{Colors.ENDC}")
+    lines.append("") # Spacer
+    
+    for idx, (label, _) in enumerate(options):
+        prefix = "👉" if idx == selected_index else "  "
+        if idx == selected_index:
+            line = f"   {Colors.GREEN}{Colors.BOLD}{prefix} {label}{Colors.ENDC}"
+        else:
+            line = f"   {prefix} {label}"
+        lines.append(line)
+        
+    lines.append("") # Spacer
+    
+    # 2. Draw Detail Panel for Slected Option
+    _, vars_dict = options[selected_index]
+    
+    # Determine max dimensions
+    if vars_dict:
+        max_key_len = max([len(k) for k in vars_dict.keys()]) + 1 # +1 for colon
+        max_val_len = max([len(str(v)) for v in vars_dict.values()])
+    else:
+        max_key_len = 0
+        max_val_len = 0
+            
+    # Calculate box width: 2 chars (borders) + 2 chars (inner padding) + content + extra buffer
+    content_width = max_key_len + 1 + max_val_len # +1 for space between key/val
+    box_width = max(60, content_width + 4)
+    
+    # Box styles
+    H_LINE = "─"
+    V_LINE = "│"
+    TL_CORNER = "╭"
+    TR_CORNER = "╮"
+    BL_CORNER = "╰"
+    BR_CORNER = "╯"
+    
+    # Top Border
+    lines.append(f"  {Colors.CYAN}{TL_CORNER}{H_LINE * (box_width - 2)}{TR_CORNER}{Colors.ENDC}")
+    
+    for key, val in vars_dict.items():
+        # Prepare content parts
+        key_str = f"{key}:".ljust(max_key_len + 1) # Left align key
+        
+        # Calculate padding needed to reach right border
+        # Formula: box_width - 2 (borders) - 1 (left space) - len(key) - 1 (space) - len(val) - 1 (right space)
+        # Actually simpler: we construct the raw string inside the box and pad it
+        
+        raw_content_len = len(key_str) + 1 + len(str(val)) # key + space + val
+        padding = box_width - 2 - 1 - raw_content_len # -2 borders, -1 left indent
+        
+        if padding < 0: padding = 0 # Safety
+        
+        # Construct line: | Key: Val     |
+        pad_str = " " * padding
+        
+        line = (f"  {Colors.CYAN}{V_LINE}{Colors.ENDC} "
+                f"{Colors.BLUE}{key_str}{Colors.ENDC} "
+                f"{Colors.BOLD}{val}{Colors.ENDC}"
+                f"{pad_str}{Colors.CYAN}{V_LINE}{Colors.ENDC}")
+        lines.append(line)
+        
+    # Bottom Border
+    lines.append(f"  {Colors.CYAN}{BL_CORNER}{H_LINE * (box_width - 2)}{BR_CORNER}{Colors.ENDC}")
+    
+    # Print all lines
+    for line in lines:
+        sys.stdout.write(f"\033[K{line}\n")
+        
+    return len(lines)
+
+def select_environment():
+    """Prompts user to select Development or Production environment using arrow keys."""
+    # Hide cursor
+    sys.stdout.write("\033[?25l")
+    
+    options = [
+        ("Development", {
+            "WS_URL": "ws://server.riftoperation.ethan-folio.fr/ws",
+            "NUXT_PUBLIC_BACKEND_URL": "http://localhost:5010",
+            "NUXT_PUBLIC_WS_URL": "ws://server.riftoperation.ethan-folio.fr/ws"
+        }),
+        ("Production", {
+            "WS_URL": "ws://192.168.10.7:8000/ws",
+            "NUXT_PUBLIC_BACKEND_URL": "http://192.168.10.7:5010",
+            "NUXT_PUBLIC_WS_URL": "ws://192.168.10.7:8000/ws"
+        })
+    ]
+    
+    selected_index = 0
+    last_line_count = 0
+    
+    try:
+        while True:
+            last_line_count = draw_menu(options, selected_index, last_line_count)
+            
+            key = get_key()
+            
+            if key == '\033[A': # Up
+                selected_index = max(0, selected_index - 1)
+            elif key == '\033[B': # Down
+                selected_index = min(len(options) - 1, selected_index + 1)
+            elif key == '\r' or key == '\n': # Enter
+                break
+    finally:
+        # Show cursor again
+        sys.stdout.write("\033[?25h")
+        
+    name, vars_dict = options[selected_index]
+    log(f"\n✅ Selected: {name} Mode", Colors.GREEN)
+    
+    # Merge with current environment
+    env_vars = os.environ.copy()
+    env_vars.update(vars_dict)
     
     return env_vars
 
@@ -370,27 +475,9 @@ def check_fal_key():
         log(f"⚠️ Key check failed: {e}", Colors.WARNING)
     print("")
 
-def log_configuration(env_vars=None):
-    """Print current configuration URLs."""
-    log("\n📋 Configuration Summary:", Colors.HEADER)
-    
-    ws_url = "Unknown"
-    front_backend = "Unknown"
-    front_ws = "Unknown"
 
-    if env_vars:
-        ws_url = env_vars.get("WS_URL", "Unknown")
-        front_backend = env_vars.get("NUXT_PUBLIC_BACKEND_URL", "Unknown")
-        front_ws = env_vars.get("NUXT_PUBLIC_WS_URL", "Unknown")
-    else:
-        # Fallbacks (should not happen in new flow)
-        pass
-
-    print(f"   • Backend ➜ Rift Server:  {Colors.BOLD}{ws_url}{Colors.ENDC}")
-    print(f"   • Frontend ➜ Backend:     {Colors.BOLD}{front_backend}{Colors.ENDC}")
-    print(f"   • Frontend ➜ Rift Server: {Colors.BOLD}{front_ws}{Colors.ENDC}")
-    print(f"   • User Access ➜ Web App:  {Colors.BOLD}http://localhost:{FRONTEND_PORT}/config{Colors.ENDC}")
-    print("")
+    # Define log_configuration (stub to avoid errors if called elsewhere, or delete)
+    # Actually, we should just delete the call in main since select_environment logs everything.
 
 def check_ws_connection():
     """Run the WebSocket connection check."""
@@ -413,8 +500,6 @@ def main():
         # Select Environment
         env_vars = select_environment()
         
-        # Log config
-        log_configuration(env_vars)
         
         # 0. List cameras to help user debug
         list_connected_cameras()

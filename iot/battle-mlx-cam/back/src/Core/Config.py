@@ -89,3 +89,13 @@ class Config:
         Attack.CLOUD: Counter.EYE,
         Attack.KEY:   Counter.CLOUD,
     }
+
+    @staticmethod
+    def get_next_attack(hp: int) -> str | None:
+        """Determines the next attack based on current HP."""
+        if hp == 5: return Config.Attack.DOOR
+        if hp == 4: return Config.Attack.STAR
+        if hp == 3: return Config.Attack.EYE
+        if hp == 2: return Config.Attack.CLOUD
+        if hp == 1: return Config.Attack.KEY
+        return None

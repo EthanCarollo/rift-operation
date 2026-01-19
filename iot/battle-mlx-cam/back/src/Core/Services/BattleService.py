@@ -1,14 +1,19 @@
-"""Headless Battle Service - Core battle logic without GUI."""
+"""Headless Battle Service - Core battle logic using State Pattern."""
 import threading
 import time
 import base64
+from typing import Optional
 
-from .Config import Config
-from . import RiftWebSocket
-from .Utils import ImageProcessor
+from ..Config import Config
+from ..Network.RiftWebSocket import RiftWebSocket
+from ..Utils import ImageProcessor, ProcessingResult
 
-# Configurable rate limit between AI generations (per role)
+from .BattleState.BattleState import BattleState
+from .BattleState.IdleState import IdleState
+
+# --- Constants ---
 GENERATION_RATE_LIMIT_S = 2.0
+INITIAL_HP = 5
 
 class BattleRoleState:
     """Manages state for one role (Dream/Nightmare)."""
@@ -20,7 +25,7 @@ class BattleRoleState:
         self.prompt = None
         self.processing = False
         
-        # New result fields (cleaner than loose attributes)
+        # New result fields
         self.knn_label = None
         self.knn_distance = None
 
@@ -37,21 +42,30 @@ class BattleService:
         self.ws = RiftWebSocket()
         
         self.running = False
-        self.current_attack = None
-        self.attack_start_time = 0
         self.socketio = None
-        self._last_hit_confirmed = False
+        
+        # Game State
+        self.current_hp = INITIAL_HP
+        self.current_attack = None
+        self.state: BattleState = IdleState(self) # Initial State
         
         self.ws.connect()
-        print("[BattleService] Initialized (Refactored)")
+        print("[BattleService] Initialized (State Pattern / Services)")
     
     def set_socketio(self, socketio):
         self.socketio = socketio
+
+    def change_state(self, new_state: BattleState):
+        """Transition to a new state."""
+        self.state = new_state
+        self.state.enter()
 
     def get_status(self) -> dict:
         return {
             "running": self.running,
             "current_attack": self.current_attack,
+            "current_hp": self.current_hp,
+            "battle_state": type(self.state).__name__.replace("State", "").upper(), # IDLE, FIGHTING...
             "ws_connected": self.ws.connected if self.ws else False,
             "ws_state": self.ws.last_state,
             "cameras": {
@@ -73,6 +87,9 @@ class BattleService:
         self.running = True
         print("[BattleService] Started")
         
+        # Enter initial state
+        self.state.enter()
+        
         self._monitor_thread = threading.Thread(target=self._state_monitor, daemon=True)
         self._monitor_thread.start()
         return True
@@ -82,25 +99,9 @@ class BattleService:
         print("[BattleService] Stopped")
     
     def _state_monitor(self):
-        while True:
-            if self.ws.last_state:
-                state = self.ws.last_state.get("battle_state", "IDLE")
-                attack = self.ws.last_state.get("battle_boss_attack")
-                
-                if attack != self.current_attack:
-                    self.current_attack = attack
-                    self.attack_start_time = time.time()
-                    self._last_hit_confirmed = False
-                    print(f"[BattleService] Boss Attack: {attack}")
-                    self._emit_status()
-                
-                hit_confirmed = self.ws.last_state.get("battle_hit_confirmed", False)
-                if hit_confirmed and not self._last_hit_confirmed:
-                    self._last_hit_confirmed = True
-                    print(f"[BattleService] 💥 HIT CONFIRMED!")
-                    if self.socketio:
-                        self.socketio.emit('hit_confirmed', {'attack': self.current_attack})
-            
+        while self.running:
+            # Delegate to current state
+            self.state.handle_monitor()
             time.sleep(0.5)
 
     def process_client_frame(self, role: str, image_bytes: bytes):
@@ -128,9 +129,13 @@ class BattleService:
         try:
             print(f"[BattleService] ⚙️ Processing task for {role}...")
             
-            # Delegate to ImageProcessor - Clean & Simple!
-            result = self.processor.process_frame(image_bytes, self.current_attack)
+            # Delegate to Current State
+            result = self.state.process_frame(role, image_bytes)
             
+            if not result:
+                state.recognition_status = "Skipped (State)"
+                return
+
             # Update State
             state.knn_label = result.label
             state.knn_distance = result.distance
@@ -154,9 +159,9 @@ class BattleService:
                 
                 # Send to Rift Server
                 b64_rift = base64.b64encode(result.output_image).decode('utf-8')
-                # Only "recognised: true" if it was a valid counter
                 extra = {f"battle_drawing_{role}_recognised": result.is_valid_counter}
                 
+                # Proxy Send
                 if self.ws.send_image(b64_rift, role, extra):
                     print(f"[BattleService] Sent {role} to Rift Server (valid: {result.is_valid_counter})")
 
@@ -165,7 +170,26 @@ class BattleService:
             state.recognition_status = "❌ Error"
         finally:
             state.processing = False
+            print(f"[BattleService] ✅ Task finished for {role}")
             self._emit_status()
+
+    def broadcast_state(self, state_name: str, payload: dict = None):
+        """Helper to broadcast state changes to Frontend and Rift."""
+        data = {
+            "battle_state": state_name,
+            "battle_boss_hp": self.current_hp,
+            "battle_boss_attack": self.current_attack
+        }
+        if payload:
+            data.update(payload)
+            
+        # 1. Send to Frontend
+        if self.socketio:
+            self.socketio.emit('status', self.get_status())
+            self.socketio.emit('battle_state_update', data) # Explicit event might be useful
+            
+        # 2. Send to Rift (Proxy)
+        self.ws.send_raw(data)
 
     def _emit_status(self):
         if self.socketio:

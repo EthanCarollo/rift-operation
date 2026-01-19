@@ -42,6 +42,14 @@ class ImageProcessor:
             # 1. KNN Recognition
             label, distance = self.knn.predict(image_bytes)
             
+            if label == "Need Training":
+                 return ProcessingResult(
+                    label=label,
+                    distance=distance,
+                    status_message="⚠️ Need Training",
+                    should_skip=True
+                )
+            
             # 2. Check for invalid labels (empty, etc.)
             if label in Config.PROMPT_MAPPING and Config.PROMPT_MAPPING[label] is None:
                  return ProcessingResult(

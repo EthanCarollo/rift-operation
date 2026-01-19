@@ -1,72 +1,75 @@
-let globalSocket: WebSocket | null = null;
-let globalReconnectTimer: any = null;
+
+import { io, Socket } from 'socket.io-client';
+
+// Global singleton to reuse connection
+let globalSocket: Socket | null = null;
 
 export const useRiftSocket = () => {
     const config = useRuntimeConfig();
-    const WS_URL = (config.public.wsUrl as string) || 'ws://localhost:8000/ws';
+    const SOCKET_URL = (config.public.backendUrl as string) || 'http://localhost:5010';
 
-    const isConnected = useState('rift-socket-connected', () => false);
-    const lastPayload = useState('rift-socket-payload', () => null);
+    const isConnected = useState<boolean>('rift-socket-connected', () => false);
+    const lastPayload = useState<any>('rift-socket-payload', () => null);
 
     const connect = () => {
-        if (Date.now() - 0 < 0) return;
-        if (globalSocket && (globalSocket.readyState === WebSocket.OPEN || globalSocket.readyState === WebSocket.CONNECTING)) {
+        if (globalSocket && globalSocket.connected) {
+            isConnected.value = true;
             return;
         }
 
-        console.log(`[RiftSocket] Connecting to ${WS_URL}...`);
-        globalSocket = new WebSocket(WS_URL);
-        globalSocket.onopen = () => {
-            console.log('[RiftSocket] Connected');
+        console.log(`[BattleSocket] Connecting to Local Backend @ ${SOCKET_URL}...`);
+        
+        globalSocket = io(SOCKET_URL, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+        });
+
+        globalSocket.on('connect', () => {
+            console.log('[BattleSocket] Connected to Backend');
             isConnected.value = true;
-        };
+        });
 
-        globalSocket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                lastPayload.value = data;
-            } catch (e) {
-                console.error('[RiftSocket] Parse error:', e);
-            }
-        };
-
-        globalSocket.onclose = () => {
-            console.log('[RiftSocket] Disconnected');
+        globalSocket.on('disconnect', () => {
+            console.log('[BattleSocket] Disconnected from Backend');
             isConnected.value = false;
-            globalSocket = null;
-            // Auto reconnect
-            scheduleReconnect();
-        };
+        });
 
-        globalSocket.onerror = (err) => {
-            console.error('[RiftSocket] Error:', err);
-            if (globalSocket) globalSocket.close();
-        };
-    };
+        // Backend acts as a proxy, forwarding Rift events as 'rift_state_update'
+        // or potentially broadcasting 'status' which contains everything.
+        // Let's listen for 'status' as it's what BattleService emits currently.
+        globalSocket.on('status', (data: any) => {
+            // BattleService emits 'status' with local state + ws_state (Rift State)
+            if (data && data.ws_state) {
+                // Determine if we should use the raw ws_state (Rift payload) 
+                // or if we need to map it. 
+                // The existing code expects the Raw Rift Payload structure.
+                lastPayload.value = data.ws_state;
+            }
+        });
 
-    const scheduleReconnect = () => {
-        if (globalReconnectTimer) clearTimeout(globalReconnectTimer);
-        globalReconnectTimer = setTimeout(() => {
-            connect();
-        }, 3000);
+        // Also listen for direct 'rift_proxy_message' if we add that later
+        globalSocket.on('rift_proxy_message', (data: any) => {
+             lastPayload.value = data;
+        });
     };
 
     const disconnect = () => {
-        if (globalReconnectTimer) clearTimeout(globalReconnectTimer);
         if (globalSocket) {
-            globalSocket.close();
+            globalSocket.disconnect();
             globalSocket = null;
         }
         isConnected.value = false;
     };
 
     const send = (payload: any) => {
-        console.log('[RiftSocket] Attempting to send:', payload);
-        if (globalSocket && globalSocket.readyState === WebSocket.OPEN) {
-            globalSocket.send(JSON.stringify(payload));
-            console.log('[RiftSocket] Sent successfully');
+        if (globalSocket && isConnected.value) {
+            console.log('[BattleSocket] Proxying payload to Rift via Backend:', payload);
+            // new event 'proxy_to_rift' that BattleWebServer will handle
+            globalSocket.emit('proxy_to_rift', payload);
         } else {
-            console.warn('[RiftSocket] Cannot send, socket not open. State:', globalSocket?.readyState);
+            console.warn('[BattleSocket] Not connected, cannot send:', payload);
         }
     };
 

@@ -199,6 +199,15 @@ class BattleWebServer(AbstractWebServer):
         def handle_connect():
             print(f"[BattleWebServer] Client connected: {request.sid}")
 
+        @self.socketio.on('trigger_attack')
+        def handle_trigger_attack(data):
+            """Allow frontend/debug to manually trigger an attack."""
+            service = self._get_service()
+            if service and service.state:
+                print(f"[BattleWebServer] Manual Attack Triggered")
+                service.state.trigger_attack()
+
+
         @self.socketio.on('disconnect')
         def handle_disconnect():
             print(f"[BattleWebServer] Client disconnected: {request.sid}")
@@ -260,3 +269,24 @@ class BattleWebServer(AbstractWebServer):
             self._debug_mode = data.get('enabled', False)
             print(f"[BattleWebServer] Debug mode: {self._debug_mode}")
             self.socketio.emit('debug_mode_changed', {'enabled': self._debug_mode})
+            
+        @self.socketio.on('proxy_to_rift')
+        def handle_proxy_to_rift(data):
+            """Forward payload from Frontend to Rift Server via BattleService."""
+            service = self._get_service()
+            if service and service.ws:
+                # Assuming data is the full payload
+                # Use service.ws.send_json or similar if available, or raw send
+                # RiftWebSocket expects dictionary for send() typically? 
+                # Let's check RiftWebSocket implementation. 
+                # For now assuming send_custom_payload exists or we add it.
+                # Actually checking RiftWebSocket usage in BattleService:
+                # self.ws.send_image uses self.ws.send(payload)
+                
+                try:
+                    # We need to ensure we don't accidentally double-wrap if send() wraps it
+                    # But RiftWebSocket.send takes a dict and sends it as JSON string
+                    service.ws.send_raw(data) 
+                    print(f"[BattleWebServer] Proxied to Rift: {data.get('battle_state', 'Unknown')}")
+                except Exception as e:
+                    print(f"[BattleWebServer] Proxy failed: {e}")
