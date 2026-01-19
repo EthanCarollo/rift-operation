@@ -2,7 +2,7 @@ from src.Framework.Rfid.RfidDelegate import RFIDDelegate
 
 class CosmoRFIDDelegate(RFIDDelegate) :
 
-    DARK_COSMO_RFID = "03-AC-89-0F-29"
+    DARK_COSMO_RFID = "03-CD-14-AC-76"
 
     def __init__(self, callback=None):
         self.callback = callback

@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Audio Router</string>
+    <string name="app_title">🎧 Audio Router</string>
+    <string name="app_subtitle">Communication Intermédiaire</string>
+    
+    <string name="btn_left_text">👈\nPersonne A\n(Gauche)</string>
+    <string name="btn_right_text">👉\nPersonne C\n(Droite)</string>
+    
+    <string name="start_stop_description">Démarrer ou arrêter la capture audio</string>
+    <string name="start_label">Appuyez pour démarrer</string>
+    
+    <string name="vu_meter_label">Niveau audio</string>
+    
+    <string name="permission_required">Permission microphone requise</string>
+    <string name="bluetooth_required">Connectez des écouteurs Bluetooth</string>
+</resources>

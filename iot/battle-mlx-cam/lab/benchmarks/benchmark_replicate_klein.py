@@ -23,7 +23,7 @@ class Colors:
 
 def main():
     # Load environment variables
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     env_path = os.path.join(base_dir, ".env")
     load_dotenv(env_path)
     

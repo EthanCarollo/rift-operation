@@ -28,6 +28,7 @@ class DepthController:
         self.device_id = DEVICE_ID
         self.last_log_time = 0
         self.partition_started = False  # Only gate the very first note
+        self.depth_active_sent = False  # Track if we sent "active" state
         
         # Helper for thread safety with WS
         self.ws_app = None
@@ -321,12 +322,21 @@ class DepthController:
             if self.partition_started:
                 self.partition_started = False
                 self.logger.info("🔄 Reset active - Pausing system")
+            if self.depth_active_sent:
+                self.depth_active_sent = False
             time.sleep(1)
             return
 
         if not self.depth_started():
             time.sleep(0.1)
             return
+
+        # Send depth_state = active when game starts (rift_part_count == 2)
+        if not self.depth_active_sent:
+            self.state["depth_state"] = "active"
+            self.send_state()
+            self.logger.info("🎮 Depth state: ACTIVE")
+            self.depth_active_sent = True
 
         if self.is_playing:
             return
@@ -362,8 +372,9 @@ class DepthController:
             # Success - check if finished
             if self.depth_finished():
                 self.logger.info("🏁 DEPTH FINISHED!")
-                self.state["depth_state"] = "complete"
+                self.state["depth_state"] = "inactive"
                 self.send_state()
+                self.logger.info("🎮 Depth state: INACTIVE")
 
         self.is_playing = False
 
