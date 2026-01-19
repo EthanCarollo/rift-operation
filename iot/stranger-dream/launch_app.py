@@ -116,6 +116,23 @@ def ensure_chromium_installed():
         log(f"Failed to install chromium: {e}", "ERROR")
         log("Please install Chromium manually: sudo apt install chromium-browser", "WARNING")
 
+def configure_display_env():
+    """Sets DISPLAY and XAUTHORITY if missing."""
+    if "DISPLAY" not in os.environ:
+        log("DISPLAY environment variable not detected. Defaulting to ':0'.", "WARNING")
+        os.environ["DISPLAY"] = ":0"
+    
+    if "XAUTHORITY" not in os.environ:
+        # Try to find common Xauthority paths
+        user_home = os.path.expanduser("~")
+        xauth_path = os.path.join(user_home, ".Xauthority")
+        
+        if os.path.exists(xauth_path):
+            log(f"Found Xauthority at {xauth_path}. Exporting env var.", "SUCCESS")
+            os.environ["XAUTHORITY"] = xauth_path
+        else:
+            log(f"Could not find .Xauthority at {xauth_path}. Graphical operations might fail.", "WARNING")
+
 def wake_screen():
     """Attempts to wake the screen and disable sleep."""
     log("Phase 0: Environment Prep", "SECTION")
@@ -126,9 +143,11 @@ def wake_screen():
         "xset -dpms",         # Disable energy star features
         "xset s noblank"      # Don't blank the video device
     ]
+    
+    # We pass the current environment (including newly set DISPLAY/XAUTHORITY) to subprocess
     for cmd in commands:
         try:
-            subprocess.run(cmd, shell=True, check=False)
+            run_command(cmd, env=os.environ, background=False)
         except Exception:
             pass
     log("Screen settings updated.", "SUCCESS")
@@ -168,12 +187,10 @@ def main():
     print(f"{Colors.HEADER}{Colors.BOLD}║      Stranger Dream Launch System        ║{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}╚══════════════════════════════════════════╝{Colors.ENDC}")
     
-    # Fix for "Missing X server or $DISPLAY"
-    if "DISPLAY" not in os.environ:
-        log("DISPLAY environment variable not detected. Defaulting to ':0'.", "WARNING")
-        os.environ["DISPLAY"] = ":0"
+    # Fix for Display/Auth
+    configure_display_env()
     
-    # 0. Wake Screen
+    # 0. Wake Screen (now uses the configured env)
     wake_screen()
     
     # Check/Install Chromium (Ubuntu logic included)
@@ -205,7 +222,8 @@ def main():
     browser_cmd = f'{chromium_bin} --kiosk --app={url} --noerrdialogs --disable-infobars'
     
     log(f"Launching Kiosk Mode at {url}...", "INFO")
-    browser_process = run_command(browser_cmd, background=True)
+    # Pass os.environ to ensure DISPLAY/XAUTHORITY are passed to Chromium
+    browser_process = run_command(browser_cmd, background=True, env=os.environ)
     
     log("System Fully Operational.", "SUCCESS")
     log("Press Ctrl+C to shutdown system safely.", "WARNING")
