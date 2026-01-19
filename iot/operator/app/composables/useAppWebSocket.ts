@@ -1,5 +1,3 @@
-import { config } from '../../config.js'
-
 export const useAppWebSocket = () => {
   const isConnected = useState<boolean>('websocket-connected', () => false)
   const lastMessage = useState<any>('websocket-last-message', () => null)
@@ -12,10 +10,11 @@ export const useAppWebSocket = () => {
     // Avoid multiple connections
     if (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN)) return
 
-    console.log('Connecting to WebSocket...', config.websocketUrl)
-    
+    const config = useRuntimeConfig()
+    console.log('Connecting to WebSocket...', config.public.wsUrl)
+
     try {
-      socket = new WebSocket(config.websocketUrl)
+      socket = new WebSocket(config.public.wsUrl)
 
       socket.onopen = () => {
         isConnected.value = true
@@ -55,7 +54,7 @@ export const useAppWebSocket = () => {
         console.error('WebSocket Error:', error)
         // Ensure close is called to trigger onclose and reconnection logic
         if (socket && socket.readyState !== WebSocket.CLOSED) {
-             socket.close()
+          socket.close()
         }
       }
     } catch (e) {

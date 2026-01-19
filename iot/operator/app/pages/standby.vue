@@ -16,7 +16,8 @@ const router = useRouter()
 const { lastMessage } = useAppWebSocket()
 
 watch(lastMessage, (newData) => {
-  if (newData && newData.operator_start_system === true) {
+  console.log('WebSocket Message Received:', newData)
+  if (newData && (newData.start_system === true)) {
     router.push('/monitor')
   }
 }, { deep: true, immediate: true })
