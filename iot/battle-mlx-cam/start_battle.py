@@ -111,6 +111,45 @@ def select_screens():
     
     return dream_screen, nightmare_screen
 
+def select_environment():
+    """Prompts user to select Development or Production environment."""
+    log("\n🌍 Select Environment:", Colors.HEADER)
+    print("   [1] Development (Backend -> Remote, Front -> Local)")
+    print("   [2] Production  (All -> 192.168.10.7)")
+    
+    choice = input(f"{Colors.BLUE}Enter choice (1/2): {Colors.ENDC}").strip()
+    
+    env_vars = os.environ.copy()
+    
+    if choice == "1":
+        log("✅ Selected: Development Mode", Colors.GREEN)
+        # Backend connects to Remote Rift Server
+        # User provided: ws://https://server.riftoperation.ethan-folio.fr/ws
+        # Correcting to wss:// for https (or ws:// if it was just http)
+        # Assuming wss:// based on 'https' presence
+        env_vars["WS_URL"] = "wss://server.riftoperation.ethan-folio.fr/ws"
+        
+        # Frontend Config
+        env_vars["NUXT_PUBLIC_BACKEND_URL"] = "http://localhost:5010"
+        env_vars["NUXT_PUBLIC_WS_URL"] = "ws://localhost:8000/ws"
+        
+    else:
+        log("✅ Selected: Production Mode", Colors.GREEN)
+        # All local network
+        env_vars["WS_URL"] = "ws://192.168.10.7:8000/ws"
+        
+        # Frontend Config
+        env_vars["NUXT_PUBLIC_BACKEND_URL"] = "http://192.168.10.7:5010"
+        env_vars["NUXT_PUBLIC_WS_URL"] = "ws://192.168.10.7:8000/ws"
+
+    # Log the decision
+    log(f"   • Backend WS: {env_vars['WS_URL']}", Colors.CYAN)
+    log(f"   • Front API:  {env_vars['NUXT_PUBLIC_BACKEND_URL']}", Colors.CYAN)
+    log(f"   • Front WS:   {env_vars['NUXT_PUBLIC_WS_URL']}", Colors.CYAN)
+    
+    return env_vars
+
+
 # Define paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BACK_DIR = os.path.join(BASE_DIR, "back")
@@ -203,17 +242,17 @@ def setup_environment():
     subprocess.run(["npm", "run", "build"], cwd=FRONT_DIR, check=True, capture_output=True)
     log("✅ Frontend built", Colors.GREEN)
 
-def start_backend():
+def start_backend(env_vars):
     log("🚀 Starting Backend (headless) on port 5010...", Colors.BLUE)
     # Use -u for unbuffered output so logs appear immediately
     cmd = ["conda", "run", "-n", CONDA_ENV_NAME, "--no-capture-output", "python", "-u", "main_headless.py"]
-    return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid)
+    return subprocess.Popen(cmd, cwd=BACK_DIR, preexec_fn=os.setsid, env=env_vars)
 
-def start_frontend():
+def start_frontend(env_vars):
     log("🚀 Starting Frontend (production) on port 3010...", Colors.CYAN)
     # Use preview to serve the built app
     cmd = ["npx", "nuxi", "preview", "--port", "3010", "--host", "0.0.0.0"]
-    return subprocess.Popen(cmd, cwd=FRONT_DIR, preexec_fn=os.setsid)
+    return subprocess.Popen(cmd, cwd=FRONT_DIR, preexec_fn=os.setsid, env=env_vars)
 
 def open_browser(dream_screen=None, nightmare_screen=None):
     log("🌐 Opening Chrome windows in kiosk mode...", Colors.HEADER)
@@ -331,34 +370,20 @@ def check_fal_key():
         log(f"⚠️ Key check failed: {e}", Colors.WARNING)
     print("")
 
-def log_configuration():
+def log_configuration(env_vars=None):
     """Print current configuration URLs."""
     log("\n📋 Configuration Summary:", Colors.HEADER)
     
-    # 1. Extract Backend WS URL
     ws_url = "Unknown"
-    try:
-        env_file = os.path.join(BACK_DIR, ".env")
-        with open(env_file, "r") as f:
-            for line in f:
-                if line.strip().startswith("WS_URL="):
-                    ws_url = line.strip().split("=", 1)[1]
-                    break
-    except Exception as e:
-        ws_url = f"Error reading .env: {e}"
-        
-    # 2. Extract Frontend->Backend URL and Frontend WS URL
-    front_backend = f"http://localhost:{BACKEND_PORT} (default)"
-    front_ws = "ws://localhost:8000/ws (default)"
-    try:
-        front_env = os.path.join(FRONT_DIR, ".env")
-        with open(front_env, "r") as f:
-             for line in f:
-                if line.strip().startswith("NUXT_PUBLIC_BACKEND_URL="):
-                    front_backend = line.strip().split("=", 1)[1]
-                if line.strip().startswith("NUXT_PUBLIC_WS_URL="):
-                    front_ws = line.strip().split("=", 1)[1]
-    except:
+    front_backend = "Unknown"
+    front_ws = "Unknown"
+
+    if env_vars:
+        ws_url = env_vars.get("WS_URL", "Unknown")
+        front_backend = env_vars.get("NUXT_PUBLIC_BACKEND_URL", "Unknown")
+        front_ws = env_vars.get("NUXT_PUBLIC_WS_URL", "Unknown")
+    else:
+        # Fallbacks (should not happen in new flow)
         pass
 
     print(f"   • Backend ➜ Rift Server:  {Colors.BOLD}{ws_url}{Colors.ENDC}")
@@ -385,8 +410,11 @@ def main():
         # Setup environment first
         setup_environment()
         
+        # Select Environment
+        env_vars = select_environment()
+        
         # Log config
-        log_configuration()
+        log_configuration(env_vars)
         
         # 0. List cameras to help user debug
         list_connected_cameras()
@@ -395,10 +423,10 @@ def main():
         check_fal_key()
         
         # 0c. Check WebSocket Config
-        check_ws_connection()
+        # check_ws_connection() # Skip for now as direct script use might not match env vars
         
-        back_proc = start_backend()
-        front_proc = start_frontend()
+        back_proc = start_backend(env_vars)
+        front_proc = start_frontend(env_vars)
 
         log("⏳ Waiting 10 seconds for services to come up...", Colors.WARNING)
         time.sleep(10)
