@@ -6,7 +6,6 @@ const props = defineProps<{
 const isVisible = ref(false)
 
 onMounted(() => {
-  // Trigger pop animation after a brief delay
   setTimeout(() => {
     isVisible.value = true
   }, 100)
@@ -20,7 +19,7 @@ onMounted(() => {
   >
     <button 
       @click="onStart"
-      class="relative pink-600 text-white font-bold text-sm uppercase tracking-widest px-6 py-3 rounded-lg overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
+      class="relative bg-pink-600 text-white font-bold text-sm uppercase tracking-widest px-6 py-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-pink-700 hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
     >
       <span class="relative z-10 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

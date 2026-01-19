@@ -5,7 +5,34 @@ const props = defineProps<{
   status: OperatorStatus | null
 }>()
 
-// Determine current layout based on mission state
+// Internal briefing state tracker (matches MissionBriefing.vue logic)
+const briefingState = ref(0)
+let stateTimer: ReturnType<typeof setTimeout> | null = null
+
+onMounted(() => {
+  // case 0 → case 1 after 30s
+  stateTimer = setTimeout(() => {
+    briefingState.value = 1
+    // case 1 → case 2 after another 30s
+    stateTimer = setTimeout(() => {
+      briefingState.value = 2
+    }, 30000)
+  }, 30000)
+})
+
+// Watch for stranger_state to trigger case 2 → case 3
+watch(() => props.status?.stranger_state, (newState) => {
+  if (newState === 'inactive' && briefingState.value === 2) {
+    if (stateTimer) clearTimeout(stateTimer)
+    briefingState.value = 3
+  }
+})
+
+onUnmounted(() => {
+  if (stateTimer) clearTimeout(stateTimer)
+})
+
+// Determine current layout based on briefing state and operator steps
 const currentLayout = computed(() => {
   const status = props.status
   
@@ -24,35 +51,35 @@ const currentLayout = computed(() => {
     return 2
   }
   
-  // Layout 1: After stranger becomes inactive (case 2 in MissionBriefing)
-  if (status?.stranger_state === 'inactive') {
+  // Layout 1: When MissionBriefing is in case 2 (DIRECTIVE)
+  if (briefingState.value >= 2) {
     return 1
   }
   
-  // Layout 0: Default - before case 2
+  // Layout 0: Default
   return 0
 })
 
 // Agent positions based on layout
 const agent1Position = computed(() => {
   switch (currentLayout.value) {
-    case 0: return { top: '50%', left: '33%' } // Center-left (image 0)
-    case 1: return { top: '65%', left: '33%' } // Lower center-left (image 1)
-    case 2: return { top: '35%', left: '25%' } // Upper left (image 2)
-    case 3:
-    case 4: return { bottom: '15%', left: '30%' } // Bottom (images 3, 4)
-    default: return { top: '50%', left: '33%' }
+    case 0: return { bottom: '1%', left: '20%' }
+    case 1: return { bottom: '5%', left: '15%' } 
+    case 2: return { top: '20%', left: '15%' } 
+    case 3: return { top: '20%', left: '40%' } 
+    case 4: return { top: '50%', left: '40%' } 
+    default: return { top: '50%', left: '40%' } 
   }
 })
 
 const agent2Position = computed(() => {
   switch (currentLayout.value) {
-    case 0: return { top: '50%', right: '33%' }
-    case 1: return { top: '65%', right: '33%' }
-    case 2: return { top: '35%', right: '25%' }
-    case 3:
-    case 4: return { bottom: '15%', right: '30%' }
-    default: return { top: '50%', right: '33%' }
+    case 0: return { bottom: '1%', right: '10%' } 
+    case 1: return { bottom: '5%', right: '5%' } 
+    case 2: return { top: '20%', right: '5%' } 
+    case 3: return { top: '20%', right: '28%' } 
+    case 4: return { top: '50%', right: '28%' } 
+    default: return { top: '50%', right: '28%' }
   }
 })
 
@@ -109,7 +136,7 @@ const agent2Health = computed(() => {
           class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group transition-all duration-1000 ease-in-out"
           :style="agent1Position"
         >
-          <div class="relative w-10 h-10">
+          <div class="relative w-8 h-8">
             <!-- Radar ping rings -->
             <div class="absolute inset-0 rounded-full border-2 border-pink-500 animate-radar-ping"></div>
             <div class="absolute inset-0 rounded-full border-2 border-pink-500 animate-radar-ping animation-delay-700"></div>
@@ -135,7 +162,7 @@ const agent2Health = computed(() => {
           class="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 group transition-all duration-1000 ease-in-out"
           :style="agent2Position"
         >
-          <div class="relative w-10 h-10">
+          <div class="relative w-8 h-8">
             <!-- Radar ping rings -->
             <div class="absolute inset-0 rounded-full border-2 border-[#00FFF0] animate-radar-ping"></div>
             <div class="absolute inset-0 rounded-full border-2 border-[#00FFF0] animate-radar-ping animation-delay-700"></div>
