@@ -10,6 +10,11 @@ from ..Utils import ImageProcessor, ProcessingResult
 
 from .BattleState.BattleState import BattleState
 from .BattleState.IdleState import IdleState
+from .BattleState.AppearingState import AppearingState
+from .BattleState.FightingState import FightingState
+from .BattleState.HitState import HitState
+from .BattleState.WeakenedState import WeakenedState
+from .BattleState.CapturedState import CapturedState
 
 # --- Constants ---
 GENERATION_RATE_LIMIT_S = 2.0
@@ -127,50 +132,12 @@ class BattleService:
 
     def _process_image_task(self, role: str, state: BattleRoleState, image_bytes: bytes):
         try:
-            print(f"[BattleService] ⚙️ Processing task for {role}...")
-            
-            # Delegate to Current State
-            result = self.state.process_frame(role, image_bytes)
-            
-            if not result:
-                state.recognition_status = "Skipped (State)"
-                return
-
-            # Update State
-            state.knn_label = result.label
-            state.knn_distance = result.distance
-            state.last_label = result.label
-            state.recognition_status = result.status_message
-            state.prompt = result.prompt
-            
-            self._emit_status()
-            
-            if result.should_skip:
-                return
-
-            if result.output_image:
-                # Emit Output to Frontend
-                if self.socketio:
-                    b64 = base64.b64encode(result.output_image).decode('utf-8')
-                    self.socketio.emit('output_frame', {
-                        'role': role,
-                        'frame': b64
-                    })
-                
-                # Send to Rift Server
-                b64_rift = base64.b64encode(result.output_image).decode('utf-8')
-                extra = {f"battle_drawing_{role}_recognised": result.is_valid_counter}
-                
-                # Proxy Send
-                if self.ws.send_image(b64_rift, role, extra):
-                    print(f"[BattleService] Sent {role} to Rift Server (valid: {result.is_valid_counter})")
-
+            # Delegate entirely to the Current State
+            self.state.on_image_task(role, state, image_bytes)
         except Exception as e:
-            print(f"[BattleService] Error processing {role}: {e}")
-            state.recognition_status = "❌ Error"
+            print(f"[BattleService] Error in task wrapper: {e}")
         finally:
             state.processing = False
-            print(f"[BattleService] ✅ Task finished for {role}")
             self._emit_status()
 
     def broadcast_state(self, state_name: str, payload: dict = None):

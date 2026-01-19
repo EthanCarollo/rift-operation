@@ -13,10 +13,5 @@ class WeakenedState(BattleState):
     def handle_monitor(self):
         pass
         
-    def process_frame(self, role: str, image_bytes: bytes):
-        result = super().process_frame(role, image_bytes)
-        # Verify capture condition if needed here
-        return result
-        
     def capture(self):
         self.service.change_state(CapturedState(self.service))

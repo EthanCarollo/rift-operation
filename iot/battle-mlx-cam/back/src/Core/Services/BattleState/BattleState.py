@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ...Core.Utils import ProcessingResult
-    from ..BattleService import BattleService
+    from ...Utils import ProcessingResult
+    from ..BattleService import BattleService, BattleRoleState
 
 class BattleState(ABC):
     """Abstract base class for Battle States."""
@@ -22,14 +22,15 @@ class BattleState(ABC):
         """Called periodically by the monitor loop."""
         pass
 
-    def process_frame(self, role: str, image_bytes: bytes) -> Optional['ProcessingResult']:
+    def on_image_task(self, role: str, state: 'BattleRoleState', image_bytes: bytes):
         """
-        Process a frame. Default behavior delegates to service.processor.
+        Full pipeline for processing an image task.
+        States can override to do nothing or handle specifically.
         """
-        # Default behavior: Process via ImageProcessor
-        result = self.service.processor.process_frame(image_bytes, self.service.current_attack)
-        return result
-    
+        # Default implementation: Do nothing / Log skip
+        state.recognition_status = "Skipped (Wrong State)"
+        return
+
     def trigger_attack(self):
         """Handle manual attack trigger."""
         pass

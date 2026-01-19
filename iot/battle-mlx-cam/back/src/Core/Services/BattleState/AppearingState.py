@@ -1,12 +1,6 @@
 import time
 from .BattleState import BattleState
 
-# Circular import prevention usually handled by imports inside methods or if TYPE_CHECKING
-# But here we need FightingState class for transition.
-# We will import it inside handle_monitor to avoid circular dependency at module level if needed,
-# or just rely on Python handling it if structure allows.
-# For simplicity, let's use local import if safe.
-
 INITIAL_HP = 5
 APPEARING_DURATION = 10.0
 
@@ -22,7 +16,7 @@ class AppearingState(BattleState):
         self.start_time = time.time()
         # Reset Game Variables
         self.service.current_hp = INITIAL_HP
-        self.service.current_attack = None # Will set first attack in Fighting
+        self.service.current_attack = None
         self.service.broadcast_state("APPEARING", {"battle_boss_hp": INITIAL_HP})
 
     def handle_monitor(self):
