@@ -93,7 +93,7 @@ watch(() => props.status?.operator_launch_close_rift_step_1, (launched) => {
 })
 
 watch(() => props.status?.reset_system, (reset) => {
-  if (reset === true || reset === 'true' || reset === 'TRUE') {
+  if (reset === true) {
     if (stateTimer) clearTimeout(stateTimer)
     briefingState.value = 0
     highestStateReached.value = 0
