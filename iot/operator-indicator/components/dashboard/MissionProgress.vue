@@ -19,23 +19,38 @@ const updateTimer = () => {
   elapsedTime.value = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-// Fragment tracking
+// Fragment tracking with no-rollback
+const highestPartCount = ref(0)
+
 const partsCollected = computed(() => {
-  return props.status?.rift_part_count || 0
+  const newCount = props.status?.rift_part_count || 0
+  // Only update if moving forward
+  if (newCount > highestPartCount.value) {
+    highestPartCount.value = newCount
+  }
+  return highestPartCount.value
 })
 
 const partsRemaining = computed(() => {
-  return 6 - (props.status?.rift_part_count || 0)
+  return 6 - partsCollected.value
 })
 
 // Rift width calculation (starts at 2m, reduces by 33% each time)
 const riftWidth = computed(() => {
-  const count = props.status?.rift_part_count || 0
+  const count = partsCollected.value
   if (count === 0) return '2,00m'
-  if (count === 2) return '1,34m' // 2m - 33% = 1.34m
-  if (count === 4) return '0,67m' // 1.34m - 33% = 0.67m (arrondi)
+  if (count === 2) return '1,34m'
+  if (count === 4) return '0,67m'
   if (count >= 6) return '0,00m'
   return '2,00m'
+})
+
+// Listen for reset_system
+watch(() => props.status?.reset_system, (reset) => {
+  if (reset === true || reset === 'true' || reset === 'TRUE') {
+    highestPartCount.value = 0
+    startTime = Date.now()
+  }
 })
 
 onMounted(() => {

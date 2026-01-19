@@ -7,6 +7,7 @@ const props = defineProps<{
 
 // Internal briefing state tracker (matches MissionBriefing.vue logic)
 const briefingState = ref(0)
+const highestLayoutReached = ref(0) // Track highest layout to prevent rollback
 let stateTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(() => {
@@ -28,6 +29,15 @@ watch(() => props.status?.stranger_state, (newState) => {
   }
 })
 
+// Listen for reset_system
+watch(() => props.status?.reset_system, (reset) => {
+  if (reset === true || reset === 'true' || reset === 'TRUE') {
+    if (stateTimer) clearTimeout(stateTimer)
+    briefingState.value = 0
+    highestLayoutReached.value = 0
+  }
+})
+
 onUnmounted(() => {
   if (stateTimer) clearTimeout(stateTimer)
 })
@@ -35,29 +45,27 @@ onUnmounted(() => {
 // Determine current layout based on briefing state and operator steps
 const currentLayout = computed(() => {
   const status = props.status
+  let proposedLayout = 0
   
-  // Layout 4: After step 3
+  // Determine proposed layout based on status
   if (status?.operator_launch_close_rift_step_3) {
-    return 4
+    proposedLayout = 4
+  } else if (status?.operator_launch_close_rift_step_2) {
+    proposedLayout = 3
+  } else if (status?.operator_launch_close_rift_step_1) {
+    proposedLayout = 2
+  } else if (briefingState.value >= 2) {
+    proposedLayout = 1
+  } else {
+    proposedLayout = 0
   }
   
-  // Layout 3: After step 2
-  if (status?.operator_launch_close_rift_step_2) {
-    return 3
+  // Only allow forward progression
+  if (proposedLayout > highestLayoutReached.value) {
+    highestLayoutReached.value = proposedLayout
   }
   
-  // Layout 2: After step 1
-  if (status?.operator_launch_close_rift_step_1) {
-    return 2
-  }
-  
-  // Layout 1: When MissionBriefing is in case 2 (DIRECTIVE)
-  if (briefingState.value >= 2) {
-    return 1
-  }
-  
-  // Layout 0: Default
-  return 0
+  return highestLayoutReached.value
 })
 
 // Agent positions based on layout

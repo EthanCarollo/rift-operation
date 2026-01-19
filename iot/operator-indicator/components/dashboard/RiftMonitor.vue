@@ -5,10 +5,16 @@ const props = defineProps<{
   status: OperatorStatus | null
 }>()
 
-// Calculate progress percentage based on fragments collected
+// Calculate progress percentage based on fragments collected (no rollback)
+const highestPartCount = ref(0)
+
 const progressPercentage = computed(() => {
-  const count = props.status?.rift_part_count || 0
-  return Math.round((count / 6) * 100)
+  const newCount = props.status?.rift_part_count || 0
+  // Only update if moving forward
+  if (newCount > highestPartCount.value) {
+    highestPartCount.value = newCount
+  }
+  return Math.round((highestPartCount.value / 6) * 100)
 })
 
 const progressWidth = computed(() => {
@@ -16,7 +22,7 @@ const progressWidth = computed(() => {
 })
 
 const stageText = computed(() => {
-  const count = props.status?.rift_part_count || 0
+  const count = highestPartCount.value
   if (count === 0) return 'Étape 1/3'
   if (count === 2) return 'Étape 2/3'
   if (count === 4) return 'Étape 3/3'
@@ -24,7 +30,7 @@ const stageText = computed(() => {
   return 'Étape 1/3'
 })
 
-// Animated gradient offset for smooth transitions
+// SVG gradient offset (0 to 1)
 const animatedGradientOffset = ref(0)
 let animationFrame: number | null = null
 
@@ -57,6 +63,13 @@ const animateGradient = (targetValue: number) => {
 watch(() => progressPercentage.value, (newValue) => {
   animateGradient(newValue / 100)
 }, { immediate: true })
+
+// Listen for reset_system
+watch(() => props.status?.reset_system, (reset) => {
+  if (reset === true || reset === 'true' || reset === 'TRUE') {
+    highestPartCount.value = 0
+  }
+})
 
 onUnmounted(() => {
   if (animationFrame) cancelAnimationFrame(animationFrame)
