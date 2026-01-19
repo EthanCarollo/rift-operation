@@ -320,7 +320,12 @@ const refreshDevices = async () => {
 const startStream = async (deviceId: string) => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: deviceId } }
+      video: { 
+        deviceId: { exact: deviceId },
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        frameRate: { ideal: 15 } // Lower framerate also helps
+      }
     })
     streams.value.set(deviceId, stream)
     const videoEl = videoRefs.value.get(deviceId)
