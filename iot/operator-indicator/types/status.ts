@@ -7,5 +7,7 @@ export interface OperatorStatus {
     stranger_state: string | null
     start_system: boolean
     operator_launch_close_rift_step_1: boolean | null
+    operator_launch_close_rift_step_2: boolean | null
+    operator_launch_close_rift_step_3: boolean | null
     [key: string]: any // Allow additional properties
 }

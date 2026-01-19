@@ -24,9 +24,46 @@ const stageText = computed(() => {
   return 'Étape 1/3'
 })
 
-// SVG gradient offset (0 to 1) - fills from LEFT to RIGHT
-const gradientOffset = computed(() => {
-  return (progressPercentage.value / 100).toFixed(2)
+// Animated gradient offset for smooth transitions
+const animatedGradientOffset = ref(0)
+let animationFrame: number | null = null
+
+const animateGradient = (targetValue: number) => {
+  const duration = 1500 // 1.5 seconds
+  const startValue = animatedGradientOffset.value
+  const startTime = performance.now()
+
+  const animate = (currentTime: number) => {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+    
+    // Easing function (ease-in-out)
+    const easeInOut = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2
+    
+    animatedGradientOffset.value = startValue + (targetValue - startValue) * easeInOut
+    
+    if (progress < 1) {
+      animationFrame = requestAnimationFrame(animate)
+    }
+  }
+  
+  if (animationFrame) cancelAnimationFrame(animationFrame)
+  animationFrame = requestAnimationFrame(animate)
+}
+
+// Watch for changes in progress and animate
+watch(() => progressPercentage.value, (newValue) => {
+  animateGradient(newValue / 100)
+}, { immediate: true })
+
+onUnmounted(() => {
+  if (animationFrame) cancelAnimationFrame(animationFrame)
+})
+
+const gradientOffsetFormatted = computed(() => {
+  return animatedGradientOffset.value.toFixed(2)
 })
 </script>
 
@@ -42,7 +79,7 @@ const gradientOffset = computed(() => {
     
     <!-- Progress Bar -->
     <div class="w-full h-2 bg-gray-800 rounded-full mb-6 overflow-hidden border border-gray-700">
-      <div class="h-full bg-[#00FFC2] shadow-[0_0_10px_#00FFC2] transition-all duration-500" :style="{ width: progressWidth }"></div>
+      <div class="h-full bg-[#00FFC2] shadow-[0_0_10px_#00FFC2] transition-all duration-[1500ms] ease-in-out" :style="{ width: progressWidth }"></div>
     </div>
 
     <!-- SVG Burst Area -->
@@ -53,8 +90,8 @@ const gradientOffset = computed(() => {
           <!-- Gradient fills from LEFT to RIGHT with pink -->
           <linearGradient id="paint0_linear_progress" x1="0" y1="124.309" x2="372.935" y2="124.309" gradientUnits="userSpaceOnUse">
             <stop stop-color="#FF00CF"/>
-            <stop :offset="gradientOffset" stop-color="#FF00CF"/>
-            <stop :offset="gradientOffset" stop-color="#00FFC4"/>
+            <stop :offset="gradientOffsetFormatted" stop-color="#FF00CF"/>
+            <stop :offset="gradientOffsetFormatted" stop-color="#00FFC4"/>
             <stop offset="1" stop-color="#00FFC4"/>
           </linearGradient>
         </defs>
@@ -62,7 +99,6 @@ const gradientOffset = computed(() => {
         <path 
           d="M292.576 221.581L260.574 187.563L235.713 185.254L227.162 196.814L193.216 168.977L179.749 187.411L172.89 183.837L163.668 186.146L152.053 204.282L153.73 188.637L146.223 190.52L137.679 201.082L114.663 216.627L61.207 248.618L99.5804 196.837L63.562 193.271C63.562 193.271 104.115 172.505 105.281 171.057C106.447 169.601 64.8271 165.753 64.8271 165.753L54.9346 166.172L44.6915 157.348L0 148.638L12.8953 139.28L14.0385 131.537L73.0734 113.835L72.0369 104.34L85.7934 99.8588L19.6783 27.2889L125.92 76.0981L117.102 10.4629L184.223 60.7886L194.809 40.7391L238.312 61.5125L322.916 0L300.921 65.399L303.863 70.9467L293.742 89.0758L312.3 93.0842L305.341 100.956L363.408 115.374L338.121 119.146L337.328 125.486L372.935 132.627L362.433 145.14L340.994 150.23C340.994 150.23 367.067 175.683 367.425 176.064C368.553 177.268 314.998 185.399 314.998 185.399L342.922 227.814L317.657 218.997L284.215 184.332" 
           fill="url(#paint0_linear_progress)"
-          class="transition-all duration-700"
         />
       </svg>
       
