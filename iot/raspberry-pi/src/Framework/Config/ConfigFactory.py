@@ -57,7 +57,7 @@ class WebsocketConfigFactory:
     @staticmethod
     def create_prod():
         return WebsocketConfig(
-            server="ws://192.168.10.5:8000",
+            server="ws://192.168.10.7:8000",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
@@ -84,7 +84,7 @@ class ConfigFactory:
     def create_rift_config():
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
-            websocket=WebsocketConfigFactory.create_dev(),
+            websocket=WebsocketConfigFactory.create_prod(),
             device_id="RIFT-TABLE-PI",
             debug_mode=True,
             heartbeat_interval=15
