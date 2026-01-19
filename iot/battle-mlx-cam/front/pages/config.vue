@@ -132,6 +132,10 @@ const remoteDevices = ref([]);
 const assignments = ref({ nightmare: null, dream: null });
 const outputs = ref({ nightmare: null, dream: null });
 const cameraPreviews = ref({ nightmare: null, dream: null });
+const knnStatus = ref({
+    nightmare: { label: 'Waiting...', distance: 0 },
+    dream: { label: 'Waiting...', distance: 0 }
+});
 const debugMode = ref(false);
 
 let socket = null;
@@ -179,6 +183,21 @@ function connect() {
             dream: data.cameras?.dream,
             nightmare: data.cameras?.nightmare
         }, null, 2));
+
+        if (data.cameras) {
+            if (data.cameras.nightmare) {
+                knnStatus.value.nightmare = {
+                    label: data.cameras.nightmare.knn_label || 'Need Training',
+                    distance: data.cameras.nightmare.knn_distance || 0
+                };
+            }
+            if (data.cameras.dream) {
+                knnStatus.value.dream = {
+                    label: data.cameras.dream.knn_label || 'Need Training',
+                    distance: data.cameras.dream.knn_distance || 0
+                };
+            }
+        }
     });
 
     // Listen for camera preview frames

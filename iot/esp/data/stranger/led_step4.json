@@ -1,34 +1,45 @@
 {
     "name": "My Animation",
-    "brightness": 1,
     "frames": [
         {
-            "time": 500,
+            "time": 1200,
             "colors": [
                 {
-                    "color": "156,255,102",
-                    "position": 61
+                    "color": "0,98,255",
+                    "position": 64
                 },
                 {
-                    "color": "112,240,138,0.35",
+                    "color": "0,0,0",
+                    "position": 83
+                },
+                {
+                    "color": "0,0,0",
                     "position": 100
                 },
                 {
-                    "color": "255,255,255,0.28",
-                    "position": 91
+                    "color": "55,43,233",
+                    "position": 7
                 }
             ]
         },
         {
-            "time": 500,
+            "time": 1200,
             "colors": [
                 {
-                    "color": "123,249,138",
-                    "position": 62
+                    "color": "0,0,255",
+                    "position": 60
                 },
                 {
-                    "color": "255,255,255,0",
-                    "position": 93
+                    "color": "0,0,0",
+                    "position": 83
+                },
+                {
+                    "color": "0,0,0",
+                    "position": 100
+                },
+                {
+                    "color": "52,25,148",
+                    "position": 7
                 }
             ]
         }

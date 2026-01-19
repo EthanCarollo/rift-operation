@@ -10,6 +10,8 @@ import json
 import sys
 from dotenv import load_dotenv
 
+load_dotenv()
+
 # ANSI Colors
 class Colors:
     HEADER = '\033[95m'

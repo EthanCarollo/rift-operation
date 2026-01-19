@@ -19,15 +19,12 @@ class StrangerStep4State(StrangerControllerState):
         pass
 
     async def finish_sequence(self):
-        await asyncio.sleep(5)
         self.recognize_stranger()
 
     def recognize_stranger(self):
-        self.controller.logger.debug("Transitions to Inactive and Open Lock")
-        from src.Core.Stranger.State.StrangerInactiveState import StrangerInactiveState
-        self.controller.swap_state(StrangerInactiveState(self.controller))
-        # Open lock using servo on controller
-        self.controller.servo_motor.set_angle(120)
+        self.controller.logger.debug("Transitions to Recognized")
+        from src.Core.Stranger.State.StrangerRecognizedState import StrangerRecognizedState
+        self.controller.swap_state(StrangerRecognizedState(self.controller))
 
     def update(self):
         if self.is_finishing:
