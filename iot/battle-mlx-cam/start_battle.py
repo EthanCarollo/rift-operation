@@ -226,7 +226,7 @@ def select_environment():
         })
     ]
     
-    selected_index = 0
+    selected_index = 1
     last_line_count = 0
     
     try:
@@ -253,6 +253,18 @@ def select_environment():
     env_vars.update(vars_dict)
     
     return env_vars
+
+
+def ask_kiosk_mode():
+    """Ask user if they want to run in Kiosk mode."""
+    while True:
+        val = input(f"{Colors.BLUE}Launch in Kiosk Mode (fullscreen)? (y/n): {Colors.ENDC}").lower().strip()
+        if val in ['y', 'yes']:
+            return True
+        elif val in ['n', 'no']:
+            return False
+        else:
+            print("Please enter 'y' or 'n'.")
 
 
 # Define paths
@@ -359,8 +371,11 @@ def start_frontend(env_vars):
     cmd = ["npx", "nuxi", "preview", "--port", "3010", "--host", "0.0.0.0"]
     return subprocess.Popen(cmd, cwd=FRONT_DIR, preexec_fn=os.setsid, env=env_vars)
 
-def open_browser(dream_screen=None, nightmare_screen=None):
-    log("🌐 Opening Chrome windows in kiosk mode...", Colors.HEADER)
+def open_browser(dream_screen=None, nightmare_screen=None, kiosk_mode=True):
+
+    mode_str = "kiosk" if kiosk_mode else "windowed"
+    log(f"🌐 Opening Chrome windows in {mode_str} mode...", Colors.HEADER)
+
     if DEBUG_MODE:
         log("🔧 DEBUG MODE: DevTools will open automatically", Colors.WARNING)
     
@@ -369,10 +384,15 @@ def open_browser(dream_screen=None, nightmare_screen=None):
     
     chrome_exe = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     
-    def launch_kiosk(url, screen, role_name):
+    def launch_kiosk(url, screen, role_name, use_kiosk):
+
         """Launch Chrome in kiosk mode on specific screen."""
         if not screen:
-            subprocess.Popen(["open", "-na", "Google Chrome", "--args", "--kiosk", url])
+            args = ["open", "-na", "Google Chrome", "--args"]
+            if use_kiosk:
+                args.append("--kiosk")
+            args.append(url)
+            subprocess.Popen(args)
             return
         
         # Chrome kiosk mode with window position
@@ -392,7 +412,6 @@ def open_browser(dream_screen=None, nightmare_screen=None):
             f"--window-position={target_x},{target_y}",
             f"--window-size={screen['w']},{screen['h']}",
             f"--window-size={screen['w']},{screen['h']}",
-            "--kiosk",
             "--no-first-run",
             "--no-default-browser-check",
             "--use-fake-ui-for-media-stream",  # Auto-accept camera permission
@@ -403,15 +422,18 @@ def open_browser(dream_screen=None, nightmare_screen=None):
         if DEBUG_MODE:
             cmd.append("--auto-open-devtools-for-tabs")
         
+        if use_kiosk:
+            cmd.append("--kiosk")
+
         cmd.append(url)
         
         # Suppress Chrome stderr/stdout to avoid log spam
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
     # Launch both windows (swapped: nightmare uses dream_screen, dream uses nightmare_screen)
-    launch_kiosk(url_nightmare, dream_screen, "NIGHTMARE")
+    launch_kiosk(url_nightmare, dream_screen, "NIGHTMARE", kiosk_mode)
     time.sleep(0.5)
-    launch_kiosk(url_dream, nightmare_screen, "DREAM")
+    launch_kiosk(url_dream, nightmare_screen, "DREAM", kiosk_mode)
         
     log("✅ Browser windows launched", Colors.GREEN)
 
@@ -518,8 +540,11 @@ def main():
 
         # Select screens
         dream_s, nightmare_s = select_screens()
+
+        # Ask for Kiosk Mode
+        run_kiosk = ask_kiosk_mode()
         
-        open_browser(dream_s, nightmare_s)
+        open_browser(dream_s, nightmare_s, run_kiosk)
 
         log("✅ All Services running. Press Ctrl+C to stop.", Colors.GREEN)
         
