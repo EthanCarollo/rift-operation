@@ -1,19 +1,14 @@
 <template>
-  <div 
-    class="fixed inset-0 overflow-hidden select-none bg-gradient-to-b from-[#1a0a2e] via-[#16213e] to-[#0f0f23]"
+  <div
+    class="fixed inset-0 overflow-hidden select-none"
     ref="containerRef"
   >
-    <!-- Background stars effect -->
-    <div class="absolute inset-0 overflow-hidden opacity-30">
-      <div v-for="i in 50" :key="i" 
-           class="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-           :style="{
-             left: `${Math.random() * 100}%`,
-             top: `${Math.random() * 100}%`,
-             animationDelay: `${Math.random() * 3}s`
-           }"
-      ></div>
-    </div>
+    <!-- Background from Figma -->
+    <img
+      src="/depth-diapo/background.svg"
+      alt=""
+      class="absolute inset-0 w-full h-full object-cover"
+    />
 
     <!-- Main Content -->
     <div class="relative z-10 h-full flex flex-col items-center justify-center">
@@ -335,16 +330,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Twinkle animation for stars */
-@keyframes twinkle {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
-}
-
-.animate-twinkle {
-  animation: twinkle 3s ease-in-out infinite;
-}
-
 /* Slow spin */
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
