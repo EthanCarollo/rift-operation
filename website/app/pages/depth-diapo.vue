@@ -1,11 +1,11 @@
 <template>
   <div
-    class="fixed inset-0 overflow-hidden select-none"
+    class="fixed inset-0 overflow-hidden select-none bg-[#150059]" 
     ref="containerRef"
   >
     <!-- Background from Figma -->
     <img
-      src="/depth-diapo/background.svg"
+      src="/depth-diapo/background.png"
       alt=""
       class="absolute inset-0 w-full h-full object-cover"
     />
@@ -29,58 +29,122 @@
         Position: {{ localPosition }} / {{ partition.length }}
       </div>
 
+      <!-- DEBUG Panel -->
+      <div v-if="debugMode" class="absolute top-16 left-6 bg-black/80 p-4 rounded-lg text-white text-xs font-mono space-y-2 z-50">
+        <div class="text-yellow-400 font-bold mb-2">🛠 DEBUG MODE</div>
+        <div class="flex gap-2">
+          <button @click="state.rift_part_count = 2" class="px-2 py-1 bg-green-600 rounded hover:bg-green-500">
+            rift=2 (start)
+          </button>
+          <button @click="state.rift_part_count = 0" class="px-2 py-1 bg-red-600 rounded hover:bg-red-500">
+            rift=0
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button @click="gameStarted = true" class="px-2 py-1 bg-blue-600 rounded hover:bg-blue-500">
+            Game Started
+          </button>
+          <button @click="gameStarted = false" class="px-2 py-1 bg-gray-600 rounded hover:bg-gray-500">
+            Reset Game
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button @click="localPosition = Math.max(0, localPosition - 1)" class="px-2 py-1 bg-purple-600 rounded hover:bg-purple-500">
+            Pos -
+          </button>
+          <button @click="localPosition++" class="px-2 py-1 bg-purple-600 rounded hover:bg-purple-500">
+            Pos +
+          </button>
+          <button @click="localPosition = 0" class="px-2 py-1 bg-orange-600 rounded hover:bg-orange-500">
+            Reset Pos
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button @click="localPosition = partition.length" class="px-2 py-1 bg-pink-600 rounded hover:bg-pink-500">
+            → Écran Fin
+          </button>
+        </div>
+        <div class="text-white/50 mt-2">
+          rift: {{ state.rift_part_count }} | pos: {{ localPosition }} | started: {{ gameStarted }}
+        </div>
+        <div class="text-white/50">
+          Note: {{ currentNote }} | Dream: {{ isDreamTurn }} | Nightmare: {{ isNightmareTurn }}
+        </div>
+      </div>
+
+      <!-- Debug toggle button -->
+      <button
+        @click="debugMode = !debugMode"
+        class="absolute bottom-6 left-6 px-3 py-1 bg-black/50 text-white/50 text-xs rounded hover:bg-black/70 z-50"
+      >
+        {{ debugMode ? 'Hide Debug' : 'Debug' }}
+      </button>
+
+      <!-- COMPLETED -->
+      <div v-if="isCompleted" class="flex flex-col items-center gap-[86px] text-center">
+        <div class="flex flex-col items-center gap-2">
+          <p class="text-[#FF00CF] text-3xl uppercase font-bold">
+            Félicitations !
+          </p>
+          <p class="text-[#FFFF00] text-2xl leading-[1.2] max-w-[600px]">
+            Vous avez réussi la musique sans fautes et cela a fait fuir l'inconnu qui hantait le cauchemar !
+          </p>
+        </div>
+        <p class="text-[#FFFF00] text-3xl font-bold leading-[1.2] max-w-[500px]">
+          Récupérez vite vos morceaux de faille !
+        </p>
+      </div>
+
       <!-- START INSTRUCTION: Only at the very beginning (position 0 and not started) -->
-      <div v-if="riftReady && isDreamTurn && !gameStarted" class="flex flex-col items-center gap-8">
-        <h2 class="text-white/70 text-2xl font-light tracking-widest uppercase">
-          PRÊT À COMMENCER ?
-        </h2>
-        
-        <!-- Instruction animation -->
-        <div class="relative w-64 h-64 flex items-center justify-center">
-          <!-- Pulsing sphero icon -->
-          <div class="text-8xl animate-bounce">🔮</div>
-          <div class="absolute inset-0 bg-[#ff1493]/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
+      <div v-else-if="riftReady && isDreamTurn && !gameStarted" class="flex flex-col items-center gap-12">
+        <!-- Consigne Box with wavy border -->
+        <div class="relative px-12 py-8 flex flex-col items-center gap-1 w-full max-w-[580px]">
+          <!-- Wavy border SVG -->
+          <img
+            src="/depth-diapo/consigne-border.svg"
+            alt=""
+            class="absolute inset-0 w-full h-full"
+            preserveAspectRatio="none"
+          />
+          <p class="relative text-[#FF00CF] text-xl uppercase font-bold text-center">
+            Consigne :
+          </p>
+          <p class="relative text-[#FFFF00] text-2xl text-center leading-tight">
+            Avant de commencer, demande la consigne à l'opérateur
+          </p>
         </div>
 
-        <div class="text-[#ff1493] text-3xl font-bold tracking-wider text-center">
-          SECOUE UN SPHERO
-        </div>
-        
-        <div class="text-white/50 text-lg text-center">
-          pour lancer la partition
+        <!-- Shake instruction -->
+        <div class="flex flex-col items-center gap-6">
+          <p class="text-[#FFFF00] text-xl text-center leading-[1.2] max-w-[500px]">
+            Quand tu sera prêt, secoue un des poissons pour commencer la mission
+          </p>
+
+          <!-- Shake Sphero illustration -->
+          <img
+            src="/depth-diapo/shake-sphero.svg"
+            alt="Secouer le sphero"
+            class="w-[150px] h-[175px] object-contain"
+          />
         </div>
       </div>
 
       <!-- DREAM Content: Show note to play -->
-      <div v-else-if="riftReady && isDreamTurn && gameStarted" class="flex flex-col items-center gap-8">
-        <h2 class="text-white/70 text-2xl font-light tracking-widest uppercase">
-          JOUE CETTE NOTE
-        </h2>
-        
+      <div v-else-if="riftReady && isDreamTurn && gameStarted" class="flex flex-col items-center gap-[53px]">
+        <!-- Instruction text -->
+        <p class="text-[#FFFF00] text-2xl font-bold text-center leading-tight max-w-[500px]">
+          Sois réactif et secoue les bons poissons au bon moment !
+        </p>
+
         <!-- Note Image -->
-        <div class="relative">
-          <transition name="note-pop" mode="out-in">
-            <img 
-              :key="currentNote + '-' + currentPosition"
-              :src="getNoteImage(currentNote)"
-              class="w-64 h-64 object-contain drop-shadow-2xl"
-              :alt="`Note ${currentNote}`"
-            />
-          </transition>
-          
-          <!-- Glow effect -->
-          <div class="absolute inset-0 bg-[#ff1493]/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
-        </div>
-
-        <!-- Note name -->
-        <div class="text-[#ff1493] text-4xl font-bold tracking-wider">
-          {{ getNoteName(currentNote) }}
-        </div>
-
-        <!-- Sphero indicator -->
-        <div class="text-white/50 text-lg">
-          🔮 Secoue le Sphero {{ getSpheroName(currentNote) }}
-        </div>
+        <transition name="note-pop" mode="out-in">
+          <img
+            :key="'note-' + localPosition"
+            :src="getNoteImage(currentNote)"
+            class="w-[200px] h-[300px] object-contain"
+            :alt="`Note ${currentNote}`"
+          />
+        </transition>
       </div>
 
       <!-- NIGHTMARE Content: Show waiting message -->
@@ -117,16 +181,6 @@
         <div class="w-16 h-16 border-4 border-white/20 border-t-[#ff1493] rounded-full animate-spin"></div>
       </div>
 
-      <!-- COMPLETED -->
-      <div v-if="isCompleted" class="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-        <div class="flex flex-col items-center gap-6">
-          <div class="text-6xl">🎉</div>
-          <div class="text-[#ff1493] text-4xl font-bold tracking-wider">
-            PARTITION TERMINÉE !
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </template>
@@ -136,6 +190,9 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
 // No layout for fullscreen experience
 definePageMeta({ layout: false });
+
+// Debug mode
+const debugMode = ref(false);
 
 // WebSocket state
 const ws = ref(null);
@@ -197,11 +254,11 @@ watch(currentPosition, (newPos, oldPos) => {
 // Note images (1, 2, 3 for Dream)
 function getNoteImage(note) {
   const noteImages = {
-    1: '/depth-diapo/DO.png',
-    2: '/depth-diapo/RE.png',
-    3: '/depth-diapo/MI.png',
+    1: '/depth-diapo/DO.svg',
+    2: '/depth-diapo/RE.svg',
+    3: '/depth-diapo/MI.svg',
   };
-  return noteImages[note] || '/depth-diapo/DO.png';
+  return noteImages[note] || '/depth-diapo/DO.svg';
 }
 
 // Note names
@@ -228,7 +285,8 @@ function getSpheroName(note) {
 
 // WebSocket connection
 function connectWebSocket() {
-  const wsUrl = 'ws://192.168.10.7:8000/ws';
+  // const wsUrl = 'ws://192.168.10.7:8000/ws';
+  const wsUrl = 'ws://localhost:8000/ws';
   
   try {
     ws.value = new WebSocket(wsUrl);
