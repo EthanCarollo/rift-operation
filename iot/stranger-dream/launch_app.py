@@ -5,15 +5,21 @@ import sys
 import shutil
 import signal
 
-def run_command(command, cwd=None, background=False):
+def run_command(command, cwd=None, background=False, env=None):
     print(f"Running: {command}")
+    
+    # Merge current environment with provided env
+    command_env = os.environ.copy()
+    if env:
+        command_env.update(env)
+
     try:
         if background:
             # start_new_session=True sets the child process as a new process group leader
             # This allows us to kill the whole group later
-            return subprocess.Popen(command, shell=True, cwd=cwd, start_new_session=True)
+            return subprocess.Popen(command, shell=True, cwd=cwd, env=command_env, start_new_session=True)
         else:
-            subprocess.run(command, shell=True, check=True, cwd=cwd)
+            subprocess.run(command, shell=True, check=True, cwd=cwd, env=command_env)
             return None
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {e}")
@@ -133,16 +139,19 @@ def main():
     # 1 & 2. Install and Build (with auto-recovery)
     install_and_build(script_dir)
     
-    print("\n--- 3. Starting Server ---")
+    print("\n--- 3. Starting Server on Port 3098 ---")
+    # Set PORT and NITRO_PORT to 3098
+    env_vars = {"PORT": "3098", "NITRO_PORT": "3098"}
+    
     # 'npm run preview' runs the built application
-    server_process = run_command("npm run preview", cwd=script_dir, background=True)
+    server_process = run_command("npm run preview", cwd=script_dir, background=True, env=env_vars)
     
     print("Waiting 5 seconds for server to start...")
     time.sleep(5)
     
     print("\n--- 4. Launching Chromium in Kiosk Mode ---")
     chromium_bin = find_chromium()
-    url = "http://localhost:3000"
+    url = "http://localhost:3098"
     
     # --kiosk for full screen
     # --app to look like an app
