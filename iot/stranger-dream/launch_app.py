@@ -168,6 +168,11 @@ def main():
     print(f"{Colors.HEADER}{Colors.BOLD}║      Stranger Dream Launch System        ║{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}╚══════════════════════════════════════════╝{Colors.ENDC}")
     
+    # Fix for "Missing X server or $DISPLAY"
+    if "DISPLAY" not in os.environ:
+        log("DISPLAY environment variable not detected. Defaulting to ':0'.", "WARNING")
+        os.environ["DISPLAY"] = ":0"
+    
     # 0. Wake Screen
     wake_screen()
     
