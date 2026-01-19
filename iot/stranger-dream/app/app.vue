@@ -94,6 +94,7 @@ body {
   font-family: 'Lineal', 'Montserrat', sans-serif;
   background-color: #00FFC4;
   overflow-x: hidden;
+  cursor: none;
 }
 
 ::-webkit-scrollbar {

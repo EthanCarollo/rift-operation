@@ -4,6 +4,9 @@ import os
 import sys
 import shutil
 import signal
+import glob
+import pwd
+import re
 
 # ANSI Color Codes
 class Colors:
@@ -35,10 +38,13 @@ def log(message, level="INFO"):
     elif level == "ERROR":
         color = Colors.FAIL
         prefix = "❌ "
+    elif level == "DEBUG":
+        color = Colors.CYAN
+        prefix = "🔍 "
     
     print(f"{color}{prefix}{message}{Colors.ENDC}")
 
-def run_command(command, cwd=None, background=False, env=None):
+def run_command(command, cwd=None, background=False, env=None, allow_failure=False):
     log(f"Executing: {command}", "INFO")
     
     # Merge current environment with provided env
@@ -54,8 +60,12 @@ def run_command(command, cwd=None, background=False, env=None):
             subprocess.run(command, shell=True, check=True, cwd=cwd, env=command_env)
             return None
     except subprocess.CalledProcessError as e:
-        log(f"Command failed with error: {e}", "ERROR")
-        raise e
+        if allow_failure:
+            log(f"Command failed (non-critical): {e}", "WARNING")
+            return None
+        else:
+            log(f"Command failed with error: {e}", "ERROR")
+            raise e
 
 def clean_and_recover(script_dir):
     log("Error detected during install/build process.", "ERROR")
@@ -116,6 +126,126 @@ def ensure_chromium_installed():
         log(f"Failed to install chromium: {e}", "ERROR")
         log("Please install Chromium manually: sudo apt install chromium-browser", "WARNING")
 
+def get_real_user_info():
+    """Gets the real user ID and home directory, even if running as sudo."""
+    uid = os.getuid()
+    username = os.environ.get("SUDO_USER")
+    
+    if username:
+        try:
+            pw = pwd.getpwnam(username)
+            uid = pw.pw_uid
+            home = pw.pw_dir
+            return uid, home, username
+        except KeyError:
+            pass
+            
+    home = os.path.expanduser("~")
+    try:
+        username = os.getlogin()
+    except Exception:
+        username = "unknown"
+    return uid, home, username
+
+def detect_display(uid):
+    """Attempts to find the active X display."""
+    # 1. Existing Env
+    if "DISPLAY" in os.environ:
+        return os.environ["DISPLAY"]
+    
+    # 2. Check /tmp/.X11-unix
+    try:
+        sockets = glob.glob("/tmp/.X11-unix/X*")
+        if sockets:
+            # Sort to find the lowest number (usually X0)
+            sockets.sort()
+            display_num = sockets[0].split("X")[-1]
+            return f":{display_num}"
+    except Exception:
+        pass
+        
+    # 3. Check 'w' command for user login (useful for SSH)
+    try:
+        output = subprocess.check_output("w -h", shell=True).decode()
+        for line in output.splitlines():
+            parts = line.split()
+            if len(parts) >= 3:
+                # Check detection logic: USER TTY FROM ...
+                 # if detected FROM is a display like :0 or :1
+                 display_candidate = parts[2]
+                 if display_candidate.startswith(":") and len(display_candidate) < 5:
+                     return display_candidate
+    except Exception:
+        pass
+
+    return ":0" # Final fallback
+
+def find_xauth_from_processes():
+    """Attempts to find the -auth argument in running X processes."""
+    try:
+        # Search for Xorg or Xwayland processes
+        # Check running processes
+        cmd = "ps aux | grep -v grep | grep -E 'Xorg|Xwayland|X11'"
+        output = subprocess.check_output(cmd, shell=True).decode()
+        
+        for line in output.splitlines():
+            # Look for -auth <path> pattern
+            match = re.search(r'-auth\s+(\S+)', line)
+            if match:
+                path = match.group(1)
+                # Verify it exists
+                if os.path.exists(path):
+                    return path
+    except Exception:
+        pass
+    return None
+
+def configure_display_env():
+    """Sets DISPLAY, XAUTHORITY, and DBUS_SESSION_BUS_ADDRESS."""
+    uid, user_home, username = get_real_user_info()
+    log(f"Configuring environment for user: {username} (UID: {uid})", "SECTION")
+    
+    # 1. DISPLAY
+    display = detect_display(uid)
+    os.environ["DISPLAY"] = display
+    log(f"Set DISPLAY={display}", "DEBUG")
+    
+    # 2. XAUTHORITY
+    if "XAUTHORITY" not in os.environ:
+        found_auth = None
+        
+        # Strategy A: Check standard paths
+        possible_auths = []
+        possible_auths.append(os.path.join(user_home, ".Xauthority"))
+        possible_auths.append(f"/run/user/{uid}/gdm/Xauthority")
+        possible_auths.append(f"/run/user/{uid}/Xauthority")
+        possible_auths.extend(glob.glob(f"/run/user/{uid}/Xauthority*"))
+        
+        for path in possible_auths:
+            if os.path.exists(path):
+                found_auth = path
+                break
+        
+        # Strategy B: Check running processes (Aggressive Fallback)
+        if not found_auth:
+            log("Standard Xauthority paths failed. Scanning process list...", "DEBUG")
+            found_auth = find_xauth_from_processes()
+
+        if found_auth:
+            os.environ["XAUTHORITY"] = found_auth
+            log(f"Set XAUTHORITY={found_auth}", "DEBUG")
+        else:
+            log(f"Could not find Xauthority. Candidates: {possible_auths}", "WARNING")
+
+    # 3. DBUS SESSION for Chromium
+    if "DBUS_SESSION_BUS_ADDRESS" not in os.environ:
+        dbus_addr = f"unix:path=/run/user/{uid}/bus"
+        if os.path.exists(f"/run/user/{uid}/bus"):
+            os.environ["DBUS_SESSION_BUS_ADDRESS"] = dbus_addr
+            log(f"Set DBUS_SESSION_BUS_ADDRESS={dbus_addr}", "DEBUG")
+        else:
+            log("Could not find /run/user/<uid>/bus. Chromium detection might fail.", "WARNING")
+
 def wake_screen():
     """Attempts to wake the screen and disable sleep."""
     log("Phase 0: Environment Prep", "SECTION")
@@ -126,12 +256,14 @@ def wake_screen():
         "xset -dpms",         # Disable energy star features
         "xset s noblank"      # Don't blank the video device
     ]
+    
     for cmd in commands:
         try:
-            subprocess.run(cmd, shell=True, check=False)
+            run_command(cmd, env=os.environ, background=False, allow_failure=True)
         except Exception:
             pass
-    log("Screen settings updated.", "SUCCESS")
+            
+    log("Screen settings update attempt complete.", "INFO")
 
 def find_chromium():
     # First check standard binaries
@@ -168,7 +300,10 @@ def main():
     print(f"{Colors.HEADER}{Colors.BOLD}║      Stranger Dream Launch System        ║{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}╚══════════════════════════════════════════╝{Colors.ENDC}")
     
-    # 0. Wake Screen
+    # Fix for Display/Auth/DBus
+    configure_display_env()
+    
+    # 0. Wake Screen (now uses the configured env)
     wake_screen()
     
     # Check/Install Chromium (Ubuntu logic included)
@@ -200,7 +335,8 @@ def main():
     browser_cmd = f'{chromium_bin} --kiosk --app={url} --noerrdialogs --disable-infobars'
     
     log(f"Launching Kiosk Mode at {url}...", "INFO")
-    browser_process = run_command(browser_cmd, background=True)
+    # Pass os.environ to ensure DISPLAY/XAUTHORITY/DBUS are passed to Chromium
+    browser_process = run_command(browser_cmd, background=True, env=os.environ, allow_failure=True)
     
     log("System Fully Operational.", "SUCCESS")
     log("Press Ctrl+C to shutdown system safely.", "WARNING")
