@@ -4,6 +4,7 @@ import os
 import sys
 import shutil
 import signal
+import glob
 
 # ANSI Color Codes
 class Colors:
@@ -38,7 +39,7 @@ def log(message, level="INFO"):
     
     print(f"{color}{prefix}{message}{Colors.ENDC}")
 
-def run_command(command, cwd=None, background=False, env=None):
+def run_command(command, cwd=None, background=False, env=None, allow_failure=False):
     log(f"Executing: {command}", "INFO")
     
     # Merge current environment with provided env
@@ -54,8 +55,12 @@ def run_command(command, cwd=None, background=False, env=None):
             subprocess.run(command, shell=True, check=True, cwd=cwd, env=command_env)
             return None
     except subprocess.CalledProcessError as e:
-        log(f"Command failed with error: {e}", "ERROR")
-        raise e
+        if allow_failure:
+            log(f"Command failed (non-critical): {e}", "WARNING")
+            return None
+        else:
+            log(f"Command failed with error: {e}", "ERROR")
+            raise e
 
 def clean_and_recover(script_dir):
     log("Error detected during install/build process.", "ERROR")
@@ -117,21 +122,39 @@ def ensure_chromium_installed():
         log("Please install Chromium manually: sudo apt install chromium-browser", "WARNING")
 
 def configure_display_env():
-    """Sets DISPLAY and XAUTHORITY if missing."""
+    """Sets DISPLAY and XAUTHORITY search."""
     if "DISPLAY" not in os.environ:
         log("DISPLAY environment variable not detected. Defaulting to ':0'.", "WARNING")
         os.environ["DISPLAY"] = ":0"
     
     if "XAUTHORITY" not in os.environ:
-        # Try to find common Xauthority paths
-        user_home = os.path.expanduser("~")
-        xauth_path = os.path.join(user_home, ".Xauthority")
+        # Search strategy for Xauthority
+        possible_auths = []
         
-        if os.path.exists(xauth_path):
-            log(f"Found Xauthority at {xauth_path}. Exporting env var.", "SUCCESS")
-            os.environ["XAUTHORITY"] = xauth_path
+        # 1. Standard home location
+        possible_auths.append(os.path.join(os.path.expanduser("~"), ".Xauthority"))
+        
+        # 2. Runtime directories (common in modern GDM/Ubuntu)
+        try:
+            uid = os.getuid()
+            possible_auths.append(f"/run/user/{uid}/gdm/Xauthority")
+            possible_auths.append(f"/run/user/{uid}/Xauthority")
+            # Also check for any Xauthority file in /run/user/{uid}/
+            possible_auths.extend(glob.glob(f"/run/user/{uid}/Xauthority*"))
+        except Exception:
+            pass
+
+        found_auth = None
+        for path in possible_auths:
+            if os.path.exists(path):
+                found_auth = path
+                break
+        
+        if found_auth:
+            log(f"Found Xauthority at {found_auth}. Exporting env var.", "SUCCESS")
+            os.environ["XAUTHORITY"] = found_auth
         else:
-            log(f"Could not find .Xauthority at {xauth_path}. Graphical operations might fail.", "WARNING")
+            log("Could not find a valid Xauthority file. GUI operations may fail.", "WARNING")
 
 def wake_screen():
     """Attempts to wake the screen and disable sleep."""
@@ -145,9 +168,10 @@ def wake_screen():
     ]
     
     # We pass the current environment (including newly set DISPLAY/XAUTHORITY) to subprocess
+    # We allow failure because xset might fail if we are headless or if X isn't ready, but we don't want to abort
     for cmd in commands:
         try:
-            run_command(cmd, env=os.environ, background=False)
+            run_command(cmd, env=os.environ, background=False, allow_failure=True)
         except Exception:
             pass
     log("Screen settings updated.", "SUCCESS")
@@ -223,7 +247,7 @@ def main():
     
     log(f"Launching Kiosk Mode at {url}...", "INFO")
     # Pass os.environ to ensure DISPLAY/XAUTHORITY are passed to Chromium
-    browser_process = run_command(browser_cmd, background=True, env=os.environ)
+    browser_process = run_command(browser_cmd, background=True, env=os.environ, allow_failure=True)
     
     log("System Fully Operational.", "SUCCESS")
     log("Press Ctrl+C to shutdown system safely.", "WARNING")
