@@ -180,6 +180,26 @@ def detect_display(uid):
 
     return ":0" # Final fallback
 
+def find_xauth_from_processes():
+    """Attempts to find the -auth argument in running X processes."""
+    try:
+        # Search for Xorg or Xwayland processes
+        # Check running processes
+        cmd = "ps aux | grep -v grep | grep -E 'Xorg|Xwayland|X11'"
+        output = subprocess.check_output(cmd, shell=True).decode()
+        
+        for line in output.splitlines():
+            # Look for -auth <path> pattern
+            match = re.search(r'-auth\s+(\S+)', line)
+            if match:
+                path = match.group(1)
+                # Verify it exists
+                if os.path.exists(path):
+                    return path
+    except Exception:
+        pass
+    return None
+
 def configure_display_env():
     """Sets DISPLAY, XAUTHORITY, and DBUS_SESSION_BUS_ADDRESS."""
     uid, user_home, username = get_real_user_info()
@@ -192,18 +212,25 @@ def configure_display_env():
     
     # 2. XAUTHORITY
     if "XAUTHORITY" not in os.environ:
+        found_auth = None
+        
+        # Strategy A: Check standard paths
         possible_auths = []
         possible_auths.append(os.path.join(user_home, ".Xauthority"))
         possible_auths.append(f"/run/user/{uid}/gdm/Xauthority")
         possible_auths.append(f"/run/user/{uid}/Xauthority")
         possible_auths.extend(glob.glob(f"/run/user/{uid}/Xauthority*"))
         
-        found_auth = None
         for path in possible_auths:
             if os.path.exists(path):
                 found_auth = path
                 break
         
+        # Strategy B: Check running processes (Aggressive Fallback)
+        if not found_auth:
+            log("Standard Xauthority paths failed. Scanning process list...", "DEBUG")
+            found_auth = find_xauth_from_processes()
+
         if found_auth:
             os.environ["XAUTHORITY"] = found_auth
             log(f"Set XAUTHORITY={found_auth}", "DEBUG")
