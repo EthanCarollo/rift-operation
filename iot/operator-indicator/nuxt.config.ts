@@ -16,7 +16,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      wsUrl: 'ws://192.168.10.7:8000/ws'
+      wsUrl: 'ws://server.riftoperation.ethan-folio.fr/ws',
+      //wsUrl: 'ws://192.168.10.7:8000/ws'
     }
   },
   ssr: false

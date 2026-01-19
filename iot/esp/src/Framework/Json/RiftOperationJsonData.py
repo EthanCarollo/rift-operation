@@ -40,8 +40,6 @@ class RiftOperationJsonData:
                 battle_drawing_dream_recognised=None,
                 battle_drawing_nightmare_recognised=None,
                 battle_hit_confirmed=None,
-                battle_cage_nightmare=None,
-                battle_cage_dream=None,
                 battle_video_play=None,
                 battle_music_play=None,
                 battle_boss_hp=None,
