@@ -41,7 +41,7 @@ const isDev = config.public.isDev
 const { isConnected, strangerState, wsUrl, reconnectWithUrl } = useStrangerSocket()
 
 // Available states for dev navigation
-const availableStates = ['inactive', 'active', 'step_2', 'step_3', 'step_4']
+const availableStates = ['inactive', 'active', 'step_2', 'step_3', 'step_4', 'recognized']
 
 // Local state for URL input
 const urlInput = ref(wsUrl.value)

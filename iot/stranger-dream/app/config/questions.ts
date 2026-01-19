@@ -49,4 +49,11 @@ export const questions: Record<string, Question> = {
     text: "Ramenez Dark Cosmo à la lumière dans son foyer.",
     images: ['/images/stranger/dark-cosmo.png', '/images/stranger/cosmo.png']
   },
+  recognized: {
+    type: 'text',
+    step: 5,
+    text: "Paul a été reconnu !",
+    image: '/images/stranger/cosmo.png',
+    imagePosition: 'bottom'
+  }
 }
