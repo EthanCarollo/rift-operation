@@ -5,6 +5,7 @@ import sys
 import shutil
 import signal
 import glob
+import pwd
 
 # ANSI Color Codes
 class Colors:
@@ -121,29 +122,51 @@ def ensure_chromium_installed():
         log(f"Failed to install chromium: {e}", "ERROR")
         log("Please install Chromium manually: sudo apt install chromium-browser", "WARNING")
 
+def get_real_user_info():
+    """Gets the real user ID and home directory, even if running as sudo."""
+    uid = os.getuid()
+    username = os.environ.get("SUDO_USER")
+    
+    if username:
+        # Running as sudo, get info for the original user
+        try:
+            pw = pwd.getpwnam(username)
+            uid = pw.pw_uid
+            home = pw.pw_dir
+            return uid, home, username
+        except KeyError:
+            pass
+            
+    # Fallback to current user
+    home = os.path.expanduser("~")
+    try:
+        username = os.getlogin()
+    except Exception:
+        username = "unknown"
+    return uid, home, username
+
 def configure_display_env():
     """Sets DISPLAY and XAUTHORITY search."""
+    # 1. DISPLAY
     if "DISPLAY" not in os.environ:
         log("DISPLAY environment variable not detected. Defaulting to ':0'.", "WARNING")
         os.environ["DISPLAY"] = ":0"
     
+    # 2. XAUTHORITY
     if "XAUTHORITY" not in os.environ:
-        # Search strategy for Xauthority
+        uid, user_home, username = get_real_user_info()
+        log(f"Detecting Xauthority for user: {username} (UID: {uid})", "INFO")
+        
         possible_auths = []
         
         # 1. Standard home location
-        possible_auths.append(os.path.join(os.path.expanduser("~"), ".Xauthority"))
+        possible_auths.append(os.path.join(user_home, ".Xauthority"))
         
-        # 2. Runtime directories (common in modern GDM/Ubuntu)
-        try:
-            uid = os.getuid()
-            possible_auths.append(f"/run/user/{uid}/gdm/Xauthority")
-            possible_auths.append(f"/run/user/{uid}/Xauthority")
-            # Also check for any Xauthority file in /run/user/{uid}/
-            possible_auths.extend(glob.glob(f"/run/user/{uid}/Xauthority*"))
-        except Exception:
-            pass
-
+        # 2. Runtime directories
+        possible_auths.append(f"/run/user/{uid}/gdm/Xauthority")
+        possible_auths.append(f"/run/user/{uid}/Xauthority")
+        possible_auths.extend(glob.glob(f"/run/user/{uid}/Xauthority*"))
+        
         found_auth = None
         for path in possible_auths:
             if os.path.exists(path):
@@ -154,7 +177,7 @@ def configure_display_env():
             log(f"Found Xauthority at {found_auth}. Exporting env var.", "SUCCESS")
             os.environ["XAUTHORITY"] = found_auth
         else:
-            log("Could not find a valid Xauthority file. GUI operations may fail.", "WARNING")
+            log(f"Could not find Xauthority in searched paths: {possible_auths}", "WARNING")
 
 def wake_screen():
     """Attempts to wake the screen and disable sleep."""
@@ -167,14 +190,13 @@ def wake_screen():
         "xset s noblank"      # Don't blank the video device
     ]
     
-    # We pass the current environment (including newly set DISPLAY/XAUTHORITY) to subprocess
-    # We allow failure because xset might fail if we are headless or if X isn't ready, but we don't want to abort
     for cmd in commands:
         try:
             run_command(cmd, env=os.environ, background=False, allow_failure=True)
         except Exception:
             pass
-    log("Screen settings updated.", "SUCCESS")
+            
+    log("Screen settings update attempt complete.", "INFO")
 
 def find_chromium():
     # First check standard binaries
@@ -215,6 +237,7 @@ def main():
     configure_display_env()
     
     # 0. Wake Screen (now uses the configured env)
+    # Even if this fails, we proceed
     wake_screen()
     
     # Check/Install Chromium (Ubuntu logic included)
