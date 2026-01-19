@@ -11,6 +11,14 @@ struct WebsocketView: View {
     @EnvironmentObject var wsManager: WebSocketManager
     
     var body: some View {
+        let statusColor: Color = {
+            switch wsManager.connectionStatus {
+            case .connected: return .green
+            case .connecting: return .yellow
+            case .disconnected: return .red
+            }
+        }()
+
         ZStack {
             // Background
             Color.black.ignoresSafeArea()
@@ -25,13 +33,13 @@ struct WebsocketView: View {
                     
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(wsManager.isConnected ? Color.green : Color.red)
+                            .fill(statusColor)
                             .frame(width: 8, height: 8)
-                            .shadow(color: wsManager.isConnected ? .green : .red, radius: 4)
+                            .shadow(color: statusColor, radius: 4)
                         
-                        Text(wsManager.isConnected ? "CONNECTED" : "DISCONNECTED")
+                        Text(wsManager.connectionStatus.rawValue)
                             .font(.custom("Menlo", size: 12))
-                            .foregroundColor(wsManager.isConnected ? .green : .red)
+                            .foregroundColor(statusColor)
                     }
                     .padding(6)
                     .background(Color.white.opacity(0.1))

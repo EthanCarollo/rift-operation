@@ -15,9 +15,22 @@
 		33FC66AD2F1EF4B800AD564E /* operator-rover.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "operator-rover.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		33FC67742F1EFAAB00AD564E /* Exceptions for "operator-rover" folder in "operator-rover" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 33FC66AC2F1EF4B800AD564E /* operator-rover */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		33FC66AF2F1EF4B800AD564E /* operator-rover */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				33FC67742F1EFAAB00AD564E /* Exceptions for "operator-rover" folder in "operator-rover" target */,
+			);
 			path = "operator-rover";
 			sourceTree = "<group>";
 		};
@@ -277,6 +290,8 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "operator-rover/Info.plist";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Méthode de connexion aux périphériques robotiques";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -331,6 +346,8 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "operator-rover/Info.plist";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Méthode de connexion aux périphériques robotiques";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
