@@ -31,7 +31,7 @@ watch(() => props.status?.stranger_state, (newState) => {
 
 // Listen for reset_system
 watch(() => props.status?.reset_system, (reset) => {
-  if (reset === true || reset === 'true' || reset === 'TRUE') {
+  if (reset === true) {
     if (stateTimer) clearTimeout(stateTimer)
     briefingState.value = 0
     highestLayoutReached.value = 0

@@ -295,9 +295,7 @@ const refreshDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices()
     const videoInputs = devices.filter(d => d.kind === 'videoinput')
     
-    // Stop all streams first if refreshing list (optional, might flicker)
-    // For stability in selection mode, we might want to keep running streams
-    // But for simplicity let's stop/start to ensure clean state
+    // Stop all streams first to ensure clean state
     stopAllStreams()
     
     webcams.value = videoInputs.map(d => ({
@@ -306,8 +304,13 @@ const refreshDevices = async () => {
     }))
 
     const toStart = props.mode === 'view' ? displayList.value : webcams.value
+    
+    // Start streams SEQUENTIALLY to prevent USB bandwidth issues on Windows
     for (const cam of toStart) {
-      startStream(cam.deviceId)
+      console.log(`Starting stream for ${cam.label || cam.deviceId}...`)
+      await startStream(cam.deviceId)
+      // Add delay between starts to allow USB bus to settle
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
   } catch (err) {
     console.error('Error refreshing devices:', err)
@@ -317,7 +320,12 @@ const refreshDevices = async () => {
 const startStream = async (deviceId: string) => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: deviceId } }
+      video: { 
+        deviceId: { exact: deviceId },
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        frameRate: { ideal: 15 } // Lower framerate also helps
+      }
     })
     streams.value.set(deviceId, stream)
     const videoEl = videoRefs.value.get(deviceId)
