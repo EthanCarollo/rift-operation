@@ -1,7 +1,4 @@
-import threading
 import base64
-import io
-from PIL import Image
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
@@ -34,7 +31,6 @@ class BattleWebServer(AbstractWebServer):
         
         self._remote_devices_map = {}
         self._assignments = {'dream': None, 'nightmare': None}
-        self._crops = {'dream': None, 'nightmare': None}
         self._debug_mode = False
 
         self._register_routes()
@@ -198,7 +194,10 @@ class BattleWebServer(AbstractWebServer):
 
         @self.app.route('/remote/crops', methods=['GET'])
         def get_crops():
-            return jsonify(self._crops)
+            service = self._get_service()
+            if service:
+                return jsonify({role: p.crop for role, p in service.roles.items()})
+            return jsonify({})
 
 
     def _register_socket_events(self):
@@ -235,26 +234,6 @@ class BattleWebServer(AbstractWebServer):
             if service:
                 try:
                     image_bytes = base64.b64decode(image_b64)
-
-                    # Apply crop if exists
-                    if self._crops.get(role):
-                        crop = self._crops[role]
-                        try:
-                            img = Image.open(io.BytesIO(image_bytes))
-                            w, h = img.size
-                            left = int(crop['x'] * w)
-                            top = int(crop['y'] * h)
-                            width = int(crop['w'] * w)
-                            height = int(crop['h'] * h)
-                            
-                            if width > 0 and height > 0:
-                                img = img.crop((left, top, left + width, top + height))
-                                buf = io.BytesIO()
-                                img.save(buf, format='JPEG')
-                                image_bytes = buf.getvalue()
-                        except Exception as e:
-                            print(f"[BattleWebServer] Crop failed for {role}: {e}")
-
                     service.process_client_frame(role, image_bytes)
                 except Exception as e:
                     print(f"[BattleWebServer] Frame processing failed: {e}")
@@ -295,10 +274,9 @@ class BattleWebServer(AbstractWebServer):
         def handle_update_crop(data):
             role = data.get('role')
             crop = data.get('crop')
-            if role in self._crops:
-                print(f"[BattleWebServer] Updating crop for {role}: {crop}")
-                self._crops[role] = crop
-                self.socketio.emit('crop_updated', {'role': role, 'crop': crop})
+            from src.Core.Services.BattleService import update_crop
+            update_crop(role, crop)
+            self.socketio.emit('crop_updated', {'role': role, 'crop': crop})
 
         @self.socketio.on('set_debug_mode')
         def handle_set_debug_mode(data):

@@ -2,11 +2,14 @@
 import threading
 import time
 import base64
+import io
+from PIL import Image
 from typing import Optional
 
 from ..Config import Config
 from ..Network.RiftWebSocket import RiftWebSocket
 from ..Utils import ImageProcessor, ProcessingResult
+from ..Recognition.KNNRecognizer import KNNRecognizer
 
 from .BattleState.BattleState import BattleState
 from .BattleState.IdleState import IdleState
@@ -33,6 +36,9 @@ class BattleRoleState:
         # New result fields
         self.knn_label = None
         self.knn_distance = None
+        
+        # Crop settings (x, y, w, h) normalized
+        self.crop = None
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""
@@ -45,6 +51,7 @@ class BattleService:
         
         self.processor = ImageProcessor()
         self.ws = RiftWebSocket()
+        self.knn = KNNRecognizer()
         
         self.running = False
         self.socketio = None
@@ -79,7 +86,8 @@ class BattleService:
                     "label": p.last_label,
                     "knn_label": p.knn_label,
                     "knn_distance": p.knn_distance,
-                    "processing": p.processing
+                    "processing": p.processing,
+                    "crop": p.crop
                 }
                 for role, p in self.roles.items()
             }
@@ -114,6 +122,24 @@ class BattleService:
             return
             
         state = self.roles[role]
+        
+        # Apply crop if exists
+        if state.crop:
+            try:
+                img = Image.open(io.BytesIO(image_bytes))
+                w, h = img.size
+                left = int(state.crop['x'] * w)
+                top = int(state.crop['y'] * h)
+                width = int(state.crop['w'] * w)
+                height = int(state.crop['h'] * h)
+                
+                if width > 0 and height > 0:
+                    img = img.crop((left, top, left + width, top + height))
+                    buf = io.BytesIO()
+                    img.save(buf, format='JPEG')
+                    image_bytes = buf.getvalue()
+            except Exception as e:
+                print(f"[BattleService] Crop failed for {role}: {e}")
         
         if time.time() - state.last_gen_time < GENERATION_RATE_LIMIT_S:
             return
@@ -178,3 +204,8 @@ def init_service(nightmare_cam: int = 0, dream_cam: int = 1) -> BattleService:
     global _service
     _service = BattleService()
     return _service
+
+def update_crop(role: str, crop: dict):
+    if _service and role in _service.roles:
+        _service.roles[role].crop = crop
+        print(f"[BattleService] Updated crop for {role}: {crop}")
