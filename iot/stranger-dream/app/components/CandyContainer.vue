@@ -12,7 +12,7 @@
         </div>
 
         <!-- Pagination (fixed at absolute bottom) -->
-        <div class="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-full px-[18%]">
+        <div class="absolute bottom-[6%] left-1/2 -translate-x-1/2 w-full px-[18%]">
             <slot name="pagination"></slot>
         </div>
     </div>
