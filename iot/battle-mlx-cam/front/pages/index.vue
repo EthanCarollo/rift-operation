@@ -29,9 +29,9 @@
                 <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" :is-hit="isHit" :attack="currentAttack"
                     :is-vertical="false" />
 
-                <!-- Narrative Text Overlay - At top, not over enemy -->
+                <!-- Narrative Text Overlay - Lower position, below top area -->
                 <div v-if="showNarrativeText"
-                    class="absolute top-0 left-0 right-0 z-20 flex justify-center pointer-events-none pt-8">
+                    class="absolute top-[15%] left-0 right-0 z-20 flex justify-center pointer-events-none">
                     <div class="bg-black/80 px-8 py-4 rounded-lg max-w-2xl text-center">
                         <p class="text-white text-lg md:text-xl font-medium leading-relaxed animate-fade-in">
                             {{ narrativeText }}
@@ -39,12 +39,22 @@
                     </div>
                 </div>
 
-                <!-- Drawing Validation Feedback -->
-                <div v-if="showDrawingFeedback"
-                    class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300">
-                    <div class="px-6 py-3 rounded-full text-lg font-bold"
+                <!-- Drawing Validation Feedback + Loading Bar -->
+                <div v-if="showDrawingFeedback || isGenerating"
+                    class="absolute bottom-[35%] left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300">
+                    
+                    <!-- Validation Badge -->
+                    <div v-if="showDrawingFeedback && !isGenerating" class="px-6 py-3 rounded-full text-lg font-bold animate-bounce"
                         :class="isDrawingValid ? 'bg-green-500 text-white' : 'bg-red-500/80 text-white'">
-                        {{ isDrawingValid ? '✓ Bon dessin !' : '✗ Essayez autre chose...' }}
+                        {{ isDrawingValid ? '✓ Dessin validé !' : '✗ Essayez autre chose...' }}
+                    </div>
+                    
+                    <!-- Loading Bar for AI Generation -->
+                    <div v-if="isGenerating" class="flex flex-col items-center gap-3">
+                        <div class="text-white text-lg font-medium animate-pulse">🎨 Génération en cours...</div>
+                        <div class="w-64 h-2 bg-neutral-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-full animate-loading-bar"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -52,7 +62,7 @@
                 <div v-if="flyingImage" ref="flyingImageRef"
                     class="absolute z-40 fly-to-enemy pointer-events-none"
                     :style="flyingImageStyle">
-                    <img :src="flyingImage" class="w-32 h-32 object-contain drop-shadow-2xl" />
+                    <img :src="flyingImage" class="w-40 h-40 object-contain drop-shadow-2xl" />
                 </div>
 
                 <!-- Victory Typewriter Message -->
@@ -168,6 +178,7 @@ const showDrawingFeedback = ref(false);
 const isDrawingValid = ref(false);
 const bothSidesValid = ref(false);
 const waitingForImage = ref(false);
+const isGenerating = ref(false);
 let feedbackTimeout = null;
 
 // Watch for counter validity changes - require BOTH sides
@@ -184,9 +195,16 @@ watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid])
     
     // Check if BOTH sides are now valid
     if (dreamValid && nightmareValid) {
-        console.log('[Battle] 🎯 BOTH sides detected correct counter! Waiting for generated image...');
+        console.log('[Battle] 🎯 BOTH sides detected correct counter! Showing loading bar...');
         bothSidesValid.value = true;
         waitingForImage.value = true;
+        
+        // Show validation feedback briefly, then switch to loading bar
+        showDrawingFeedback.value = true;
+        setTimeout(() => {
+            showDrawingFeedback.value = false;
+            isGenerating.value = true;
+        }, 1000);
     }
 });
 
@@ -201,9 +219,14 @@ watch([dreamDrawingImage, nightmareDrawingImage], ([dreamImg, nightmareImg]) => 
     
     // Only proceed if both sides detected correct counter AND we have a generated image
     if (img && bothSidesValid.value && waitingForImage.value) {
-        console.log('[Battle] 🎨 Generated image received! Launching flying animation...');
+        console.log('[Battle] 🎨 Generated image received! Waiting 1s then launching animation...');
         waitingForImage.value = false;
-        triggerFlyingAnimation(img);
+        isGenerating.value = false;
+        
+        // Wait 1 second before starting the flying animation
+        setTimeout(() => {
+            triggerFlyingAnimation(img);
+        }, 1000);
     }
 });
 
@@ -324,7 +347,15 @@ onUnmounted(() => {
 }
 
 .fly-to-enemy {
-    transition: all 1s ease-in-out;
+    transition: all 1.5s ease-in-out;
+}
+
+@keyframes loadingBar {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+.animate-loading-bar {
+    animation: loadingBar 3s ease-in-out infinite;
 }
 </style>
-
