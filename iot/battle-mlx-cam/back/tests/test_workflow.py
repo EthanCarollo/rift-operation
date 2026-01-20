@@ -19,9 +19,9 @@ def mock_dependencies():
          patch('src.Core.Utils.VisionBackgroundRemover') as MockBG, \
          patch('src.Core.RiftWebSocket') as MockRift:
         
-        # Configure KNN to recognize "key"
+        # Configure KNN to recognize "sword"
         knn_instance = MockKNN.return_value
-        knn_instance.predict.return_value = ("key", 0.5)
+        knn_instance.predict.return_value = ("sword", 0.5)
         
         # Configure Editor to return success
         editor_instance = MockEditor.return_value
@@ -75,10 +75,10 @@ def test_workflow_image_roundtrip(app_server, mock_dependencies):
     client = socketio.test_client(flask_app)
     assert client.is_connected()
     
-    # Set current attack to "PORTE" (DOOR) so "key" is a valid counter
+    # Set current attack to "BOUCLIER" (SHIELD) so "sword" is a valid counter
     # This ensures is_valid_counter=True in logic
     service = get_service()
-    service.current_attack = Config.Attack.DOOR 
+    service.current_attack = Config.Attack.SHIELD 
     
     # Send Frame
     client.emit('process_frame', {

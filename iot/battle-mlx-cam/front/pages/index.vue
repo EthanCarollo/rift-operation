@@ -29,6 +29,40 @@
                 <!-- Boss Overlay -->
                 <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" :is-hit="isHit" :attack="currentAttack"
                     :is-vertical="false" />
+
+                <!-- Narrative Text Overlay -->
+                <div v-if="showNarrativeText"
+                    class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                    <div class="bg-black/70 px-8 py-6 rounded-lg max-w-2xl text-center">
+                        <p class="text-white text-xl md:text-2xl font-medium leading-relaxed animate-fade-in">
+                            {{ narrativeText }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Drawing Validation Feedback -->
+                <div v-if="showDrawingFeedback"
+                    class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300">
+                    <div class="px-6 py-3 rounded-full text-lg font-bold"
+                        :class="isDrawingValid ? 'bg-green-500 text-white' : 'bg-red-500/80 text-white'">
+                        {{ isDrawingValid ? '✓ Bon dessin !' : '✗ Essayez autre chose...' }}
+                    </div>
+                </div>
+
+                <!-- Flying Generated Image Animation -->
+                <div v-if="flyingImage" ref="flyingImageRef"
+                    class="absolute z-40 fly-to-enemy pointer-events-none"
+                    :style="flyingImageStyle">
+                    <img :src="flyingImage" class="w-32 h-32 object-contain drop-shadow-2xl" />
+                </div>
+
+                <!-- Victory Typewriter Message -->
+                <div v-if="showVictoryMessage"
+                    class="absolute inset-0 z-50 flex items-center justify-center bg-black/80">
+                    <p class="text-green-400 text-2xl md:text-3xl font-medium text-center px-8 max-w-3xl">
+                        {{ displayedVictoryText }}
+                    </p>
+                </div>
             </div>
 
             <!-- BOTTOM: Camera Area (30%) - Always mounted, visibility controlled by showCamera -->
@@ -49,11 +83,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import { io } from 'socket.io-client';
 import BattleBoss from '~/components/battle/BattleBoss.vue';
 import BattleHUD from '~/components/battle/BattleHUD.vue';
 import { useBattleState } from '~/composables/useBattleState';
+import { BATTLE_NARRATIVE, ATTACK_NARRATIVE } from '~/utils/battleConstants';
 
 // --- CONFIG ---
 const config = useRuntimeConfig();
@@ -97,6 +132,118 @@ watch(currentVideo, (newSrc) => {
         lastVideoSrc = newSrc;
     }
 });
+
+// --- NARRATIVE TEXT ---
+const narrativeText = ref('');
+const showNarrativeText = ref(false);
+const narrativeTimeout = ref(null);
+
+// Show narrative intro on APPEARING
+watch(battleState, (newState, oldState) => {
+    if (newState === 'APPEARING' && oldState === 'IDLE') {
+        showNarrative(BATTLE_NARRATIVE.intro, 5000);
+    }
+});
+
+// Show phase narrative on FIGHTING based on current attack
+watch([battleState, currentAttack], ([state, attack]) => {
+    if (state === 'FIGHTING' && attack && ATTACK_NARRATIVE[attack]) {
+        showNarrative(ATTACK_NARRATIVE[attack], 4000);
+    }
+});
+
+function showNarrative(text, duration) {
+    // Clear previous timeout
+    if (narrativeTimeout.value) {
+        clearTimeout(narrativeTimeout.value);
+    }
+    narrativeText.value = text;
+    showNarrativeText.value = true;
+    narrativeTimeout.value = setTimeout(() => {
+        showNarrativeText.value = false;
+    }, duration);
+}
+
+// --- DRAWING FEEDBACK ---
+const showDrawingFeedback = ref(false);
+const isDrawingValid = ref(false);
+let feedbackTimeout = null;
+
+// Watch for counter validity changes
+watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid]) => {
+    if (dreamValid || nightmareValid) {
+        isDrawingValid.value = true;
+        showDrawingFeedback.value = true;
+        clearTimeout(feedbackTimeout);
+        feedbackTimeout = setTimeout(() => {
+            showDrawingFeedback.value = false;
+        }, 2000);
+    }
+});
+
+// --- FLYING IMAGE ANIMATION ---
+const flyingImage = ref(null);
+const flyingImageRef = ref(null);
+const flyingImageStyle = ref({ left: '50%', bottom: '35%' });
+
+// Watch for generated images to trigger flying animation
+watch([dreamDrawingImage, nightmareDrawingImage], ([dreamImg, nightmareImg]) => {
+    const img = dreamImg || nightmareImg;
+    if (img && (dreamCounterValid.value || nightmareCounterValid.value)) {
+        triggerFlyingAnimation(img);
+    }
+});
+
+function triggerFlyingAnimation(imageSrc) {
+    flyingImage.value = imageSrc.startsWith('data:') ? imageSrc : `data:image/png;base64,${imageSrc}`;
+    flyingImageStyle.value = { left: '50%', bottom: '35%', transform: 'translateX(-50%) scale(1)', opacity: '1' };
+    
+    nextTick(() => {
+        setTimeout(() => {
+            // Animate to center of screen (towards enemy)
+            flyingImageStyle.value = { 
+                left: '50%', 
+                top: '30%', 
+                transform: 'translateX(-50%) scale(0.3)', 
+                opacity: '0',
+                transition: 'all 1s ease-in-out'
+            };
+        }, 100);
+        
+        // Clear after animation
+        setTimeout(() => {
+            flyingImage.value = null;
+        }, 1200);
+    });
+}
+
+// --- VICTORY MESSAGE ---
+const showVictoryMessage = ref(false);
+const displayedVictoryText = ref('');
+const victoryFullText = BATTLE_NARRATIVE.victory;
+
+watch(battleState, (newState) => {
+    if (newState === 'WEAKENED') {
+        showVictoryMessage.value = true;
+        typewriterEffect(victoryFullText);
+    } else {
+        showVictoryMessage.value = false;
+        displayedVictoryText.value = '';
+    }
+});
+
+function typewriterEffect(text) {
+    displayedVictoryText.value = '';
+    let i = 0;
+    const interval = setInterval(() => {
+        if (i < text.length) {
+            displayedVictoryText.value += text.charAt(i);
+            i++;
+        } else {
+            clearInterval(interval);
+        }
+    }, 50);
+}
 
 // --- COMPUTED ---
 const isEndState = computed(() => {
@@ -144,5 +291,23 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (socket) socket.disconnect();
+    if (narrativeTimeout.value) clearTimeout(narrativeTimeout.value);
+    if (feedbackTimeout) clearTimeout(feedbackTimeout);
 });
 </script>
+
+<style scoped>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+.fly-to-enemy {
+    transition: all 1s ease-in-out;
+}
+</style>
+
