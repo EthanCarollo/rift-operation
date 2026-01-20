@@ -71,7 +71,7 @@
                         </div>
 
                         <!-- Confirm/Cancel Actions -->
-                        <div class="absolute top-2 right-2 flex gap-2 pointer-events-auto">
+                        <div class="absolute top-2 right-2 flex gap-2 pointer-events-auto" @mousedown.stop>
                             <button @click.stop="saveCrop('nightmare')"
                                 class="bg-green-600 text-white px-3 py-1 rounded text-xs">Save</button>
                             <button @click.stop="cancelCrop"
@@ -172,7 +172,7 @@
                         </div>
 
                         <!-- Confirm/Cancel Actions -->
-                        <div class="absolute top-2 right-2 flex gap-2 pointer-events-auto">
+                        <div class="absolute top-2 right-2 flex gap-2 pointer-events-auto" @mousedown.stop>
                             <button @click.stop="saveCrop('dream')"
                                 class="bg-green-600 text-white px-3 py-1 rounded text-xs">Save</button>
                             <button @click.stop="cancelCrop"
@@ -309,6 +309,11 @@ function resetCrop(role) {
 }
 
 function saveCrop(role) {
+    // Validate crop dimensions - must have some size
+    if (tempCrop.value.w < 0.01 || tempCrop.value.h < 0.01) {
+        alert('Please draw a valid crop area by clicking and dragging.');
+        return;
+    }
     crops.value[role] = { ...tempCrop.value };
     socket.emit('update_crop', { role, crop: crops.value[role] });
     editingCrop.value = null;

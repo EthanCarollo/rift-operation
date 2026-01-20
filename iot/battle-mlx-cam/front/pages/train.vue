@@ -13,23 +13,41 @@
             <!-- LEFT: Camera + Capture -->
             <div class="space-y-4">
                 <h2 class="font-bold text-green-500">📷 Capture Training Data</h2>
-                
+
+                <!-- Camera Selection -->
+                <div class="flex gap-2">
+                    <select v-model="selectedDeviceId" @change="switchCamera"
+                        class="flex-1 bg-neutral-800 border border-neutral-700 rounded px-3 py-2 text-white text-sm">
+                        <option :value="null">-- Select Camera --</option>
+                        <option v-for="device in videoDevices" :key="device.deviceId" :value="device.deviceId">
+                            {{ device.label || `Camera ${videoDevices.indexOf(device) + 1}` }}
+                        </option>
+                    </select>
+                    <button @click="refreshDevices"
+                        class="px-3 py-2 bg-neutral-700 hover:bg-neutral-600 rounded border border-neutral-600 text-xs">
+                        🔄
+                    </button>
+                </div>
+
                 <!-- Camera Preview -->
                 <div class="relative aspect-video bg-black rounded border border-neutral-700 overflow-hidden">
-                    <video ref="videoRef" autoplay playsinline muted 
+                    <video ref="videoRef" autoplay playsinline muted
                         class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
-                        
+
                     <!-- Loading State -->
-                    <div v-if="!stream && !cameraError" class="absolute inset-0 flex items-center justify-center text-neutral-500 animate-pulse">
-                        Waiting for camera permission...
+                    <div v-if="!stream && !cameraError"
+                        class="absolute inset-0 flex items-center justify-center text-neutral-500 animate-pulse">
+                        {{ selectedDeviceId ? 'Starting camera...' : 'Select a camera above' }}
                     </div>
-                    
+
                     <!-- Error State -->
-                    <div v-if="cameraError" class="absolute inset-0 flex flex-col items-center justify-center text-red-400 p-4 text-center">
+                    <div v-if="cameraError"
+                        class="absolute inset-0 flex flex-col items-center justify-center text-red-400 p-4 text-center">
                         <span class="text-2xl mb-2">🚫</span>
                         <div class="font-bold">Camera Access Denied</div>
                         <div class="text-xs text-neutral-500 mb-4">{{ cameraError }}</div>
-                        <button @click="startCamera" class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 rounded border border-neutral-600 text-xs text-white">
+                        <button @click="switchCamera"
+                            class="px-3 py-1 bg-neutral-800 hover:bg-neutral-700 rounded border border-neutral-600 text-xs text-white">
                             Retry Access
                         </button>
                     </div>
@@ -70,7 +88,7 @@
                         No samples yet. Capture some training data!
                     </div>
                     <div v-else class="space-y-2">
-                        <div v-for="(count, label) in samples" :key="label" 
+                        <div v-for="(count, label) in samples" :key="label"
                             class="flex justify-between items-center text-sm">
                             <span>{{ label }}</span>
                             <div class="flex items-center gap-2">
@@ -89,7 +107,8 @@
                 </button>
 
                 <div v-if="prediction" class="p-4 bg-neutral-800 rounded border border-neutral-700">
-                    <div class="text-2xl font-bold" :class="prediction.label === 'Unknown' ? 'text-red-400' : 'text-green-400'">
+                    <div class="text-2xl font-bold"
+                        :class="prediction.label === 'Unknown' ? 'text-red-400' : 'text-green-400'">
                         {{ prediction.label }}
                     </div>
                     <div class="text-neutral-400 text-xs">Distance: {{ prediction.distance.toFixed(2) }}</div>
@@ -112,19 +131,57 @@ const lastCapture = ref(null);
 const samples = ref({});
 const prediction = ref(null);
 
+// Camera device selection
+const videoDevices = ref([]);
+const selectedDeviceId = ref(null);
+
 const quickLabels = ['key', 'door', 'star', 'eye', 'cloud', 'sword', 'empty', 'bullshit'];
 
 const cameraError = ref(null);
 
-async function startCamera() {
+async function refreshDevices() {
+    try {
+        // Request permission first (needed to get device labels)
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        tempStream.getTracks().forEach(t => t.stop());
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        videoDevices.value = devices.filter(d => d.kind === 'videoinput');
+        console.log('[Train] Found cameras:', videoDevices.value.length);
+
+        // Auto-select first camera if none selected
+        if (!selectedDeviceId.value && videoDevices.value.length > 0) {
+            selectedDeviceId.value = videoDevices.value[0].deviceId;
+            await switchCamera();
+        }
+    } catch (e) {
+        console.error('[Train] Failed to enumerate devices:', e);
+        cameraError.value = e.message || 'Failed to access cameras';
+    }
+}
+
+async function switchCamera() {
+    // Stop existing stream
+    if (stream.value) {
+        stream.value.getTracks().forEach(t => t.stop());
+        stream.value = null;
+    }
+
+    if (!selectedDeviceId.value) return;
+
     cameraError.value = null;
     try {
         stream.value = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 640 }, height: { ideal: 480 } }
+            video: {
+                deviceId: { exact: selectedDeviceId.value },
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            }
         });
         if (videoRef.value) {
             videoRef.value.srcObject = stream.value;
         }
+        console.log('[Train] Switched to camera:', selectedDeviceId.value);
     } catch (e) {
         console.error('[Train] Camera error:', e);
         cameraError.value = e.message || 'Unknown error';
@@ -211,7 +268,7 @@ async function deleteLabel(label) {
 }
 
 onMounted(() => {
-    startCamera();
+    refreshDevices();
     fetchSamples();
 });
 
