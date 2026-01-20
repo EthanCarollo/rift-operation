@@ -41,7 +41,7 @@ class FightingState(BattleState):
                 return
             
             # Check for attack confirmation from Rift Server
-            if self.service.ws.last_state.get("attack_confirm") is True:
+            if self.service.ws.last_state.get("battle_hit_confirmed") is True:
                 print(f"[BattleState] Attack Confirm received from Server! Triggering HIT.")
                 self.trigger_attack()
                 return
