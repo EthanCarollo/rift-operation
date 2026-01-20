@@ -84,8 +84,14 @@ class Config:
 
     @staticmethod
     def get_next_attack(hp: int) -> str | None:
-        """Determines the next attack based on current HP (3 phases)."""
-        if hp == 3: return Config.Attack.SHIELD
+        """Determines the next attack based on current HP (3 phases).
+        
+        HP >= 3 -> SHIELD (first attack)
+        HP == 2 -> RAIN
+        HP == 1 -> MOON (final attack)
+        HP <= 0 -> None (battle over)
+        """
+        if hp >= 3: return Config.Attack.SHIELD
         if hp == 2: return Config.Attack.RAIN
         if hp == 1: return Config.Attack.MOON
         return None
