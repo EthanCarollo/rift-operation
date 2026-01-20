@@ -1,7 +1,7 @@
 <template>
-    <div class="flex justify-center gap-3 p-2">
+    <div class="flex justify-center gap-[1vw] p-[0.5vw]">
         <div v-for="step in totalSteps" :key="step"
-            class="relative w-[70px] h-[35px] flex items-center justify-center transition-transform duration-300 hover:scale-110">
+            class="relative w-[5vw] h-[2.5vw] flex items-center justify-center transition-transform duration-300 hover:scale-110">
             <!-- Candy shape with double spikes -->
             <svg viewBox="0 0 100 50" class="absolute inset-0 w-full h-full drop-shadow-md">
                 <!-- Left spikes -->
@@ -19,7 +19,7 @@
             </svg>
 
             <!-- Step number -->
-            <span class="relative z-10 font-bold text-xl text-stranger-blue">{{ step }}</span>
+            <span class="relative z-10 font-bold text-[1.5vw] text-stranger-blue">{{ step }}</span>
         </div>
     </div>
 </template>

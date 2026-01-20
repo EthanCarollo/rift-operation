@@ -1,12 +1,12 @@
 <template>
-    <div class="relative flex items-start justify-center w-full max-w-5xl mx-auto">
+    <div class="relative flex items-start justify-center w-[90vw] mx-auto">
         <!-- Candy image background -->
         <img src="/images/stranger/question-container-candy.png" alt="" class="relative w-full h-auto block" />
 
         <!-- Content -->
-        <div class="absolute inset-0 z-10 flex flex-col items-center px-16 h-full justify-start text-center">
+        <div class="absolute inset-0 z-10 flex flex-col items-center px-[4vw] h-full justify-start text-center">
             <!-- Main content (centered) -->
-            <div class=" flex-1 flex flex-col items-center justify-center w-full px-48 pb-16 pt-0">
+            <div class=" flex-1 flex flex-col items-center justify-center w-full px-[12vw] pb-[4vw] pt-0">
                 <slot></slot>
             </div>
         </div>

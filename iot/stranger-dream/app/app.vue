@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat"
+  <div class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat cursor-none"
     :style="{ backgroundImage: 'url(/images/stranger/bg-candy-land.png)' }">
     <!-- Main content area -->
     <main class="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">

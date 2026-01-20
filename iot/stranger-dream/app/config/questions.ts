@@ -21,7 +21,7 @@ export const questions: Record<string, Question> = {
     type: 'puzzle',
     step: 1,
     title: "QUESTION 1 :",
-    subtitle: "Pour trouver la première lettre, trouve le chapeau de l'étranger qui hante le cauchemar.",
+    subtitle: "<b>Pour trouver la première lettre</b>, trouve le chapeau de l'inconnu qui hante le cauchemar.",
     puzzleItems: [
       { image: '/images/stranger/hat-star.png', symbol: '➤', letter: 'B' },
       { image: '/images/stranger/hat-stripe.png', symbol: '➤', letter: 'i' },
@@ -32,21 +32,21 @@ export const questions: Record<string, Question> = {
     type: 'text',
     step: 2,
     title: "QUESTION 2 :",
-    text: "Pour trouver la 2ème lettre, trouve le point faible du pingouin Dark Cosmo et dis-le lui.",
+    text: "<b>Pour trouver la 2ème lettre</b>, trouve le point faible du pingouin <b>Dark Cosmo</b> et dis-le lui.",
     image: '/images/stranger/dark-cosmo.png',
     imagePosition: 'bottom'
   },
   step_3: {
     type: 'text',
     step: 3,
-    text: "Demandez gentiment la lettre à Cosmo le pingouin.",
+    text: "<b>Pour trouver la 3ème lettre</b>, demande gentiment la lettre à <b>Cosmo</b> le pingouin en lui parlant.",
     image: '/images/stranger/cosmo.png',
     imagePosition: 'bottom'
   },
   step_4: {
     type: 'text',
     step: 4,
-    text: "Ramenez Dark Cosmo à la lumière dans son foyer.",
+    text: "<b>Pour trouver la dernière lettre</b>, ramène <b>Dark Cosmo</b> au près de son frère <b>Cosmo</b>.",
     images: ['/images/stranger/dark-cosmo.png', '/images/stranger/cosmo.png']
   },
   recognized: {
