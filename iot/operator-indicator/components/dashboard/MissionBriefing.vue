@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, onMounted } from 'vue'
 import type { OperatorStatus } from '~/types/status'
 
 const props = defineProps<{
@@ -16,6 +16,7 @@ const highestStateReached = ref(0)
 const title = ref('BRIEFING DE MISSION')
 const message = ref('')
 let stateTimer: ReturnType<typeof setTimeout> | null = null
+const audio = new Audio('/sounds/notification.mp3')
 
 // Briefing content configuration
 const briefingContent: Record<number, { title: string; message: string; nextState?: number; delay?: number }> = {
@@ -74,45 +75,33 @@ Vous pouvez placer les fragments sur le socle pour initier le processus de stabi
   },
   10: {
     title: 'DIRECTIVE',
-    message: `<strong class="text-green-400">Excellent travail !</strong><br><br>Transition vers le <strong class="text-3xl">Monde 3</strong> : affrontez l'inconnu directement pour l'affaiblir et ainsi le capturer définitivement !`,
+    message: `<strong class="text-green-400">Excellent travail !</strong><br><br>Transition vers le <strong class="text-5xl">Monde 3</strong> : affrontez l'inconnu directement pour l'affaiblir et ainsi le capturer définitivement !`,
     nextState: 11,
     delay: 15000
   },
   11: {
     title: 'SUPPORT TACTIQUE',
-    message: `Regardez les notes laissées par les agents précédents pour savoir comment combattre l'inconnu`
+    message: `Regardez les notes laissées par les agents précédents pour savoir comment combattre l'inconnu`,
+    nextState: 15,
+    delay: 15000
   },
   12: {
-    title: 'ARMEMENT PRÊT',
-    message: `Les armes dessinées par vos agents semblent pouvoir contrer l'attaque de l'inconnu.<br><br>Appuyer sur le <strong>bouton lumineux</strong> pour lancer le contre contre l'inconnu !`
-  },
-  13: {
-    title: 'IMPACT CONFIRMÉ',
-    message: `<strong class="text-green-400">Bravo !</strong> Le contre semble efficace !<br>Continuez comme ça pour l'affaiblir suffisamment afin de le capturer`,
-    nextState: 11,
-    delay: 5000
-  },
-  14: {
-    title: 'CIBLE AFFAIBLIE',
-    message: `<strong class="text-3xl text-red-500 animate-pulse">ATTENTION !</strong><br><br>L'inconnu est assez affaibli pour être capturé !<br><strong>ALLEZ-Y OPÉRATEUR : PLACEZ LA CAGE SUR LA BOÎTE POUR LE CAPTURER !</strong>`
-  },
-  15: {
     title: 'VICTOIRE',
-    message: `<strong class="text-4xl text-green-400">FÉLICITATIONS !</strong><br><br>L'inconnu a été capturé avec succès !`,
+    message: `<strong class="text-6xl text-green-400">FÉLICITATIONS !</strong><br><br>L'inconnu a été capturé avec succès !`,
     nextState: 16,
     delay: 10000
   },
-  16: {
+  13: {
     title: 'LOCALISATION FINALE',
     message: `<strong>Derniers fragments de faille localisés :</strong><br><br>Les deux se trouvent sous la petite excroissance de la souche d'arbre`
   },
-  17: {
+  14: {
     title: 'STABILISATION FINALE',
-    message: `La faille est en cours de fermeture définitive.<br><br><strong class="text-3xl">Opérateur</strong>, initiez la procédure de verrouillage finale !`
+    message: `La faille est en cours de fermeture définitive.<br><br><strong class="text-5xl">Opérateur</strong>, initiez la procédure de verrouillage finale !`
   },
-  18: {
+  15: {
     title: 'MISSION ACCOMPLIE',
-    message: `<strong class="text-4xl text-purple-400">BRAVO LES AGENTS !</strong><br><br>La faille est complètement refermée ! C'est du beau boulot pour des nouveaux !<br>Agents sur le terrain, vous pouvez revenir dans le sas pour le discord du directeur et le débriefing`
+    message: `<strong class="text-6xl text-purple-400">BRAVO LES AGENTS !</strong><br><br>La faille est complètement refermée ! C'est du beau boulot pour des nouveaux !<br>Agents sur le terrain, vous pouvez revenir dans le sas pour le discord du directeur et le débriefing`
   }
 }
 
@@ -123,6 +112,10 @@ const updateContent = (state: number) => {
 
   title.value = content.title
   message.value = content.message
+
+  // Play sound
+  audio.currentTime = 0
+  audio.play().catch(e => console.log('Audio play failed (interaction needed?):', e))
 
   if (content.nextState !== undefined && content.delay !== undefined) {
     if (stateTimer) clearTimeout(stateTimer)
@@ -146,31 +139,7 @@ watch(() => props.status?.stranger_state, (newStrangerState) => {
   }
 })
 
-watch(() => [props.status?.battle_drawing_dream_recognised, props.status?.battle_drawing_nightmare_recognised], ([dream, nightmare]) => {
-  if (dream && nightmare && briefingState.value === 11 && highestStateReached.value <= 11) {
-    briefingState.value = 12
-  }
-})
-
-watch(() => props.status?.battle_hit_confirmed, (hit) => {
-  // If we are in "Weapons Ready" (12), go to "Hit Confirmed" (13)
-  if (hit === true && briefingState.value === 12 && highestStateReached.value <= 12) {
-    briefingState.value = 13
-  }
-})
-
-watch(() => props.status?.battle_state, (state) => {
-  // Weakened logic
-  if ((state === 'Weakened' || state === 'WEAKENED') && briefingState.value < 14) {
-    // Jump to Weakened regardless of loop state
-    briefingState.value = 14
-    highestStateReached.value = 14 // Force update
-  }
-  // Captured logic
-  if ((state === 'Captured' || state === 'CAPTURED') && briefingState.value === 14 && highestStateReached.value <= 14) {
-    briefingState.value = 15
-  }
-})
+// Battle logic removed as per request for simplified World 3
 
 watch(() => props.status?.rift_part_count, (newCount) => {
   if (newCount === 2 && briefingState.value === 4 && highestStateReached.value <= 4) {
@@ -232,14 +201,14 @@ onUnmounted(() => {
     <div class="absolute bottom-0 left-0 p-2 border-b border-l border-[#00FFC2]/40 w-6 h-6 rounded-bl-xl"></div>
 
     <h2
-      class="flex items-center gap-2 text-lg font-semibold uppercase tracking-wider mb-5 text-[#00FFC2] font-orbitron">
-      <span class="text-xl">⚠</span>
+      class="flex items-center gap-2 text-3xl font-semibold uppercase tracking-wider mb-5 text-[#00FFC2] font-orbitron">
+      <span class="text-4xl">⚠</span>
       {{ title }}
     </h2>
 
     <div class="flex flex-col justify-center h-[calc(100%-3rem)]">
       <div v-html="message"
-        class="text-3xl md:text-4xl font-medium text-yellow-400 leading-relaxed tracking-normal glowing-text-yellow font-inter">
+        class="text-5xl md:text-6xl font-medium text-yellow-400 leading-relaxed tracking-normal glowing-text-yellow font-inter">
       </div>
       
       <!-- End Briefing Button (appears at state 18) -->
@@ -249,10 +218,10 @@ onUnmounted(() => {
       >
         <button 
           @click="emit('showOutro')"
-          class="relative bg-pink-600 text-white font-bold text-lg uppercase tracking-widest px-6 py-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-pink-700 hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
+          class="relative bg-pink-600 text-white font-bold text-2xl uppercase tracking-widest px-8 py-4 rounded-lg overflow-hidden transition-all duration-300 hover:bg-pink-700 hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
         >
           <span class="relative z-10 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
             BRIEFING DE FIN

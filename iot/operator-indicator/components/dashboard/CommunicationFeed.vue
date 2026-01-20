@@ -22,7 +22,7 @@ const displayMessages = computed(() => props.messages || defaultMessages)
 <template>
   <div class="col-span-5 row-span-6 border border-[#00FFC2]/30 rounded-xl p-5 flex flex-col relative overflow-hidden bg-[#050809]">
     <div class="flex justify-between items-center mb-5 pb-2 border-b border-[#00FFC2]/20">
-      <h2 class="text-lg font-semibold uppercase tracking-wider flex items-center gap-2 text-[#00FFC2] font-inter">
+      <h2 class="text-3xl font-semibold uppercase tracking-wider flex items-center gap-2 text-[#00FFC2] font-inter">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse">
           <path d="M5 22h14"/>
           <path d="M5 2h14"/>
@@ -31,7 +31,7 @@ const displayMessages = computed(() => props.messages || defaultMessages)
         </svg>
         Flux de Communication
       </h2>
-      <div class="flex items-center gap-2 text-[10px] tracking-widest text-[#00FFC2] uppercase px-2 py-1 bg-[#00FFC2]/10 rounded border border-[#00FFC2]/20 font-inter">
+      <div class="flex items-center gap-2 text-sm tracking-widest text-[#00FFC2] uppercase px-2 py-1 bg-[#00FFC2]/10 rounded border border-[#00FFC2]/20 font-inter">
         <span class="w-1.5 h-1.5 rounded-full bg-[#00FFC2] animate-ping"></span>
         Direct
       </div>
@@ -49,15 +49,15 @@ const displayMessages = computed(() => props.messages || defaultMessages)
         <div class="flex justify-between text-sm mb-1">
           <span 
             :class="[
-              'font-bold tracking-wider font-orbitron',
+              'font-bold tracking-wider font-orbitron text-lg',
               msg.color === 'cyan' ? 'text-[#00FFF0]' : 'text-pink-500'
             ]"
           >
             {{ msg.agent }}
           </span>
-          <span class="text-gray-500 font-mono">{{ msg.time }}</span>
+          <span class="text-gray-500 font-mono text-base">{{ msg.time }}</span>
         </div>
-        <div class="text-gray-300 text-lg font-light font-inter">{{ msg.text }}</div>
+        <div class="text-gray-300 text-xl font-light font-inter">{{ msg.text }}</div>
       </div>
     </div>
   </div>

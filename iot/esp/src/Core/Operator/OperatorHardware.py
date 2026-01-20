@@ -1,86 +1,132 @@
-from machine import Pin, SPI
+from machine import Pin
 try:
     from src.Framework.Button.Button import Button
     from src.Framework.Button.ButtonDelegate import ButtonDelegate
-    from src.Framework.Rfid.RfidReader import RFIDReader
-    from src.Core.Operator.OperatorDelegate import OperatorButtonDelegate, OperatorRfidDelegate
 except ImportError:
-    # If imports fail, let it crash to see error
     raise
-
-class LedButton:
-    def __init__(self, button_pin, led_pin, delegate, name="LedButton", debounce_delay=50):
-        self.name = name
-        self.led = Pin(led_pin, Pin.OUT)
-        self.led.off()
-        self.button = Button(pin_id=button_pin, delegate=delegate, debounce_delay=debounce_delay)
-        self.is_led_on = False
-
-    def turn_on(self):
-        self.led.on()
-        self.is_led_on = True
-
-    def turn_off(self):
-        self.led.off()
-        self.is_led_on = False
 
 class OperatorHardware:
     def __init__(self, controller):
         self.controller = controller
         self.logger = controller.logger
         self.workshop = None
-
+        
+        # Hardware components
+        self.button = None
+        self.led_prompt = None  # Blinks when ready
+        self.led_step_1 = None  # Lights up after step 1
+        self.led_step_2 = None  # Lights up after step 2
+        self.led_step_3 = None  # Lights up after step 3
+        
         # Delegates
-        self.rift_button_delegate = OperatorButtonDelegate(None, "rift")
-        self.battle_button_delegate = OperatorButtonDelegate(None, "battle")
-        self.rfid_delegate = OperatorRfidDelegate(None)
-
-        self.rift_button = None
-        self.battle_button = None
-        self.rfid = None
-
+        self.button_delegate = None
+        
+        # Blink state
+        self.blink_active = False
+        self.blink_state = False
+        
         self.init_hardware()
 
     def attach_workshop(self, workshop):
         self.workshop = workshop
-        self.rift_button_delegate.workshop = workshop
-        self.battle_button_delegate.workshop = workshop
-        self.rfid_delegate.workshop = workshop
 
     def update(self):
-        if self.rfid:
-            self.rfid.check()
+        """Called in main loop for LED blinking"""
+        # Blink logic handled by async task
+        pass
 
     def init_hardware(self):
-        self.logger.info("Initializing Operator Hardware")
+        self.logger.info("Initializing Operator Hardware (Simplified)")
 
-        # 1. Rift Button (Left? TBD) - Button + LED
-        # Assuming Pins: Btn 32, Led 33 (Example, need to confirm pinout or pick safe ones)
-        # User said 4 pins per button. 2 for btn, 2 for led.
-        # Let's pick safe pins for ESP32.
-        # Rift Button: Btn: 32, Led: 33
+        # 1. Button (GPIO 32)
         try:
-            self.rift_button = LedButton(button_pin=32, led_pin=33, delegate=self.rift_button_delegate, name="RiftButton")
-            self.logger.info("Rift Button initialized (Btn:32, Led:33)")
+            self.button_delegate = OperatorButtonDelegate(self)
+            self.button = Button(pin_id=32, delegate=self.button_delegate, debounce_delay=200)
+            self.logger.info("Button initialized (GPIO 32)")
         except Exception as e:
-            self.logger.error(f"Rift Button init failed: {e}")
+            self.logger.error(f"Button init failed: {e}")
 
-        # 2. Battle Button (Right? TBD) - Button + LED
-        # Battle Button: Btn: 25, Led: 26
+        # 2. LED Prompt (GPIO 33) - Blinks
         try:
-            self.battle_button = LedButton(button_pin=25, led_pin=26, delegate=self.battle_button_delegate, name="BattleButton", debounce_delay=200)
-            self.logger.info("Battle Button initialized (Btn:25, Led:26, Debounce:200ms)")
+            self.led_prompt = Pin(33, Pin.OUT)
+            self.led_prompt.off()
+            self.logger.info("LED Prompt initialized (GPIO 33)")
         except Exception as e:
-            self.logger.error(f"Battle Button init failed: {e}")
+            self.logger.error(f"LED Prompt init failed: {e}")
 
-        # 3. RFID Reader
-        # Standard SPI pins + specific CS/RST
-        # SPI2: SCK 18, MOSI 23, MISO 19
-        # RST: 4, SDA(CS): 5
+        # 3. LED Step 1 (GPIO 25)
         try:
-            sck = 18; mosi = 23; miso = 19; cs = 5; rst = 4
-            spi = SPI(2, baudrate=2500000, polarity=0, phase=0, sck=Pin(sck), mosi=Pin(mosi), miso=Pin(miso))
-            self.rfid = RFIDReader(spi, cs, rst, self.rfid_delegate, name="OperatorReader")
-            self.logger.info("RFID initialized (SPI2)")
+            self.led_step_1 = Pin(25, Pin.OUT)
+            self.led_step_1.off()
+            self.logger.info("LED Step 1 initialized (GPIO 25)")
         except Exception as e:
-            self.logger.error(f"RFID init failed: {e}")
+            self.logger.error(f"LED Step 1 init failed: {e}")
+
+        # 4. LED Step 2 (GPIO 26)
+        try:
+            self.led_step_2 = Pin(26, Pin.OUT)
+            self.led_step_2.off()
+            self.logger.info("LED Step 2 initialized (GPIO 26)")
+        except Exception as e:
+            self.logger.error(f"LED Step 2 init failed: {e}")
+
+        # 5. LED Step 3 (GPIO 14)
+        try:
+            self.led_step_3 = Pin(14, Pin.OUT)
+            self.led_step_3.off()
+            self.logger.info("LED Step 3 initialized (GPIO 14)")
+        except Exception as e:
+            self.logger.error(f"LED Step 3 init failed: {e}")
+
+    def start_blink(self):
+        """Start blinking LED Prompt"""
+        if not self.blink_active:
+            self.blink_active = True
+            import uasyncio as asyncio
+            asyncio.create_task(self._blink_task())
+
+    def stop_blink(self):
+        """Stop blinking LED Prompt"""
+        self.blink_active = False
+        if self.led_prompt:
+            self.led_prompt.off()
+
+    async def _blink_task(self):
+        """Async task to blink LED Prompt"""
+        while self.blink_active:
+            if self.led_prompt:
+                self.blink_state = not self.blink_state
+                if self.blink_state:
+                    self.led_prompt.on()
+                else:
+                    self.led_prompt.off()
+            await asyncio.sleep_ms(500)  # Blink every 500ms
+
+    def set_step_led(self, step, state):
+        """Turn step LED on/off
+        Args:
+            step (int): 1, 2, or 3
+            state (bool): True = ON, False = OFF
+        """
+        led = None
+        if step == 1:
+            led = self.led_step_1
+        elif step == 2:
+            led = self.led_step_2
+        elif step == 3:
+            led = self.led_step_3
+        
+        if led:
+            if state:
+                led.on()
+            else:
+                led.off()
+
+
+class OperatorButtonDelegate(ButtonDelegate):
+    def __init__(self, hardware):
+        self.hardware = hardware
+
+    def on_click(self):
+        if self.hardware.workshop:
+            self.hardware.workshop.on_button_press()

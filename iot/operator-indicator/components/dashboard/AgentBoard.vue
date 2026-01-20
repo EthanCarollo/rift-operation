@@ -117,13 +117,13 @@ const agent2Health = computed(() => {
 <template>
   <div class="col-span-6 row-span-6 border border-[#00FFC2]/30 rounded-xl p-0 relative flex overflow-hidden bg-[#0a0f11]">
     <div class="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-[#00FFC2]/5 to-transparent pointer-events-none"></div>
-    <h2 class="absolute top-4 left-5 text-lg font-semibold uppercase tracking-wider text-[#00FFC2] z-20 font-orbitron">Tableau de bord Agent</h2>
+    <h2 class="absolute top-4 left-5 text-3xl font-semibold uppercase tracking-wider text-[#00FFC2] z-20 font-orbitron">Tableau de bord Agent</h2>
 
     <div class="flex w-full h-full pt-14">
       <!-- LEFT: MAP -->
       <div class="w-1/2 h-full border-r border-[#00FFF0]/20 relative bg-black/40">
-        <div class="absolute top-2 left-4 text-[10px] text-gray-500 uppercase tracking-widest font-inter">Zone Rêve</div>
-        <div class="absolute top-2 right-4 text-[10px] text-gray-500 uppercase tracking-widest font-inter">Zone Cauchemar</div>
+        <div class="absolute top-2 left-4 text-sm text-gray-500 uppercase tracking-widest font-inter">Zone Rêve</div>
+        <div class="absolute top-2 right-4 text-sm text-gray-500 uppercase tracking-widest font-inter">Zone Cauchemar</div>
         
         <!-- Rift Line SVG -->
         <div class="absolute inset-0 flex justify-center items-center">
@@ -162,7 +162,7 @@ const agent2Health = computed(() => {
               </svg>
             </div>
           </div>
-          <span class="text-[9px] text-pink-400 uppercase tracking-wider group-hover:scale-110 transition-transform font-inter">Agent 1</span>
+          <span class="text-sm text-pink-400 uppercase tracking-wider group-hover:scale-110 transition-transform font-inter">Agent 1</span>
         </div>
 
         <!-- Agent Dot 2 (Cyan) -->
@@ -188,7 +188,7 @@ const agent2Health = computed(() => {
               </svg>
             </div>
           </div>
-          <span class="text-[9px] text-[#00FFF0] uppercase tracking-wider group-hover:scale-110 transition-transform font-inter">Agent 2</span>
+          <span class="text-sm text-[#00FFF0] uppercase tracking-wider group-hover:scale-110 transition-transform font-inter">Agent 2</span>
         </div>
       </div>
 
@@ -212,13 +212,13 @@ const agent2Health = computed(() => {
                 </svg>
               </div>
               <div>
-                <div class="text-pink-500 font-bold text-lg tracking-wide font-orbitron">Agent 1</div>
-                <div class="text-[9px] text-gray-400 uppercase tracking-widest font-inter">Navigateur Onirique</div>
+                <div class="text-pink-500 font-bold text-2xl tracking-wide font-orbitron">Agent 1</div>
+                <div class="text-sm text-gray-400 uppercase tracking-widest font-inter">Navigateur Onirique</div>
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
-              <span class="text-[9px] text-pink-500 font-inter">En Mission</span>
+              <span class="w-3 h-3 rounded-full bg-pink-500 animate-pulse"></span>
+              <span class="text-sm text-pink-500 font-inter">En Mission</span>
             </div>
           </div>
           <!-- Bars -->
@@ -230,7 +230,7 @@ const agent2Health = computed(() => {
               <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-pink-500 shadow-[0_0_5px_rgba(236,72,153,0.8)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent1Health.health}%` }"></div>
               </div>
-              <span class="text-[9px] text-gray-400 w-6 text-right font-mono">{{ agent1Health.health }}%</span>
+              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent1Health.health }}%</span>
             </div>
             <div class="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500">
@@ -240,7 +240,7 @@ const agent2Health = computed(() => {
               <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-pink-400 shadow-[0_0_5px_rgba(244,114,182,0.8)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent1Health.energy}%` }"></div>
               </div>
-              <span class="text-[9px] text-gray-400 w-6 text-right font-mono">{{ agent1Health.energy }}%</span>
+              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent1Health.energy }}%</span>
             </div>
           </div>
         </div>
@@ -262,13 +262,13 @@ const agent2Health = computed(() => {
                 </svg>
               </div>
               <div>
-                <div class="text-[#00FFF0] font-bold text-lg tracking-wide font-orbitron">Agent 2</div>
-                <div class="text-[9px] text-gray-400 uppercase tracking-widest font-inter">Chasseur de Cauchemars</div>
+                <div class="text-[#00FFF0] font-bold text-2xl tracking-wide font-orbitron">Agent 2</div>
+                <div class="text-sm text-gray-400 uppercase tracking-widest font-inter">Chasseur de Cauchemars</div>
               </div>
             </div>
             <div class="flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-[#00FFF0] animate-pulse"></span>
-              <span class="text-[9px] text-[#00FFF0] font-inter">En Mission</span>
+              <span class="w-3 h-3 rounded-full bg-[#00FFF0] animate-pulse"></span>
+              <span class="text-sm text-[#00FFF0] font-inter">En Mission</span>
             </div>
           </div>
           <!-- Bars -->
@@ -280,7 +280,7 @@ const agent2Health = computed(() => {
               <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-[#00FFF0] shadow-[0_0_5px_rgba(0,255,240,0.8)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent2Health.health}%` }"></div>
               </div>
-              <span class="text-[9px] text-gray-400 w-6 text-right font-mono">{{ agent2Health.health }}%</span>
+              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent2Health.health }}%</span>
             </div>
             <div class="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#00FFF0]">
@@ -290,7 +290,7 @@ const agent2Health = computed(() => {
               <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-[#00FFF0]/70 shadow-[0_0_5px_rgba(0,255,240,0.6)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent2Health.energy}%` }"></div>
               </div>
-              <span class="text-[9px] text-gray-400 w-6 text-right font-mono">{{ agent2Health.energy }}%</span>
+              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent2Health.energy }}%</span>
             </div>
           </div>
         </div>
