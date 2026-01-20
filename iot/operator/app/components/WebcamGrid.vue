@@ -350,9 +350,9 @@ const startStream = async (deviceId: string) => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { 
         deviceId: { exact: deviceId },
-        width: { ideal: 320 }, // Drastically reduced for 5+ cams support
-        height: { ideal: 240 },
-        frameRate: { ideal: 10, max: 15 } // Low FPS to save USB bandwidth
+        width: { ideal: 1280 }, // HD quality (only 1 cam per sector)
+        height: { ideal: 720 },
+        frameRate: { ideal: 30, max: 30 } // Smooth 30fps
       }
     })
     streams.value.set(deviceId, stream)

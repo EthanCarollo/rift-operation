@@ -10,6 +10,14 @@
        />
        <!-- Overlay Lines for "Screen" effect -->
        <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] z-10 bg-[length:100%_4px,6px_100%]"></div>
+       
+       <!-- Sector Indicator -->
+       <div class="absolute top-4 right-4 z-20 px-4 py-2 bg-cyan-500/10 backdrop-blur-sm border border-cyan-500/30 rounded">
+         <div class="flex items-center gap-2">
+           <div class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+           <span class="text-cyan-400 font-mono text-sm font-bold uppercase tracking-wider">{{ currentSector }}</span>
+         </div>
+       </div>
     </div>
 
     <!-- Hover Controls -->
@@ -29,8 +37,14 @@ import { useRiftState } from '~/composables/useRiftState'
 import { useRouter } from '#app'
 import { onMounted } from 'vue'
 
-const { selectedWebcams, webcamRotations, webcamFilters } = useRiftState()
+const { selectedWebcams, webcamRotations, webcamFilters, appMode } = useRiftState()
 const router = useRouter()
+
+// Display sector based on appMode
+const currentSector = computed(() => {
+  if (!appMode.value) return 'NO CONFIG'
+  return appMode.value === 'Dream' ? 'RÊVE' : 'CAUCHEMAR'
+})
 
 onMounted(() => {
   if (Object.keys(selectedWebcams.value).length === 0) {
