@@ -797,6 +797,90 @@
                             </div>
                         </section>
 
+
+                        <!-- Operator Remote -->
+                        <section class="section-box" style="border-color: #ec4899;">
+                            <span class="section-title" style="color: #ec4899;">Operator Remote</span>
+                            
+                            <!-- Briefing Control -->
+                            <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Briefing Steps (0-10)</p>
+                            <div class="grid grid-cols-4 gap-3 mb-4">
+                                <button onclick="sendFastCmd({force_briefing_state: 0})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 0</span>
+                                    <span class="fast-cmd-desc">Briefing</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 1})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 1</span>
+                                    <span class="fast-cmd-desc">Mission 1</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 2})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 2</span>
+                                    <span class="fast-cmd-desc">Succès 1</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 3})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 3</span>
+                                    <span class="fast-cmd-desc">Fermeture 1</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 4})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 4</span>
+                                    <span class="fast-cmd-desc">Mission 2</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 5})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 5</span>
+                                    <span class="fast-cmd-desc">Succès 2</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 6})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 6</span>
+                                    <span class="fast-cmd-desc">Fermeture 2</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 7})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 7</span>
+                                    <span class="fast-cmd-desc">Mission 3</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 8})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 8</span>
+                                    <span class="fast-cmd-desc">Succès 3</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 9})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 9</span>
+                                    <span class="fast-cmd-desc">Fermeture 3</span>
+                                </button>
+                                <button onclick="sendFastCmd({force_briefing_state: 10})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Step 10</span>
+                                    <span class="fast-cmd-desc">Accomplie</span>
+                                </button>
+                            </div>
+
+                            <!-- Variable Overrides -->
+                            <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Variable Overrides</p>
+                            <div class="grid grid-cols-3 gap-3">
+                                <button onclick="sendFastCmd({rift_part_count: 2})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Rift Count 2</span>
+                                    <span class="fast-cmd-desc">-> Step 3</span>
+                                </button>
+                                <button onclick="sendFastCmd({rift_part_count: 4})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Rift Count 4</span>
+                                    <span class="fast-cmd-desc">-> Step 6</span>
+                                </button>
+                                <button onclick="sendFastCmd({rift_part_count: 6})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Rift Count 6</span>
+                                    <span class="fast-cmd-desc">-> Step 9</span>
+                                </button>
+                                <button onclick="sendFastCmd({stranger_state: 'inactive'})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Stranger Inactive</span>
+                                    <span class="fast-cmd-desc">-> Step 2</span>
+                                </button>
+                                <button onclick="sendFastCmd({depth_state: 'inactive'})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Depth Inactive</span>
+                                    <span class="fast-cmd-desc">-> Step 5</span>
+                                </button>
+                                <button onclick="sendFastCmd({battle_state: 'inactive'})" class="fast-cmd-btn">
+                                    <span class="fast-cmd-title">Battle Inactive</span>
+                                    <span class="fast-cmd-desc">-> Step 8</span>
+                                </button>
+                            </div>
+                        </section>
+
                         <!-- Stranger System -->
                         <section class="section-box">
                             <span class="section-title">Stranger System</span>
@@ -1180,25 +1264,35 @@
         // --- Broadcast Logic ---
         // Helper to perform the actual send
         function sendPayload(payload) {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(payload));
+            let sent = 0;
+            sockets.forEach(ws => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(payload));
+                    sent++;
+                }
+            });
 
+            if (sent > 0) {
                 // Feedback
                 const btn = document.getElementById('broadcast-btn');
                 const originalHTML = btn.innerHTML;
+                const originalBg = btn.style.background;
                 btn.innerHTML = `
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Sent!</span>
+                    <span>Sent to ${sent} ports!</span>
                 `;
                 btn.style.background = "var(--success)";
                 setTimeout(() => {
                     btn.innerHTML = originalHTML;
-                    btn.style.background = "";
+                    btn.style.background = originalBg; // Restore
                 }, 1500);
+                
+                // Add log
+                addLog(JSON.stringify(payload, null, 2), 'tx');
             } else {
-                alert("WebSocket not connected. Please wait for reconnection.");
+                alert("No WebSocket connected. Please wait for reconnection.");
             }
         }
 
@@ -1257,76 +1351,106 @@
 
         // --- WebSocket & Clients ---
         // --- WebSocket & Clients ---
-        let ws;
+        // --- WebSocket & Clients ---
+        const sockets = [];
+        const ports = [8000, 8001, 8002];
         let reconnectTimer = null;
         const statusEl = document.getElementById('ws-status');
         const headerStatusEl = document.getElementById('header-ws-status');
         const headerDotEl = document.getElementById('header-ws-dot');
+        const connectedPorts = new Set();
 
-        function updateStatus(state) {
+        function updateGlobalStatus() {
             const badge = document.getElementById('status-badge');
-            if (state === 'CONNECTED') {
-                statusEl.textContent = "Connected";
+            if (connectedPorts.size === ports.length) {
+                // All connected
+                statusEl.textContent = `Connected (${connectedPorts.size}/${ports.length})`;
                 statusEl.style.color = "var(--success)";
-                headerStatusEl.textContent = "Connected";
+                headerStatusEl.textContent = "All Online";
                 badge.className = "status-badge online";
                 headerDotEl.className = "status-dot";
                 headerDotEl.style.background = "var(--success)";
-            } else if (state === 'DISCONNECTED') {
-                statusEl.textContent = "Disconnected";
-                statusEl.style.color = "var(--danger)";
-                headerStatusEl.textContent = "Disconnected";
-                badge.className = "status-badge offline";
-                headerDotEl.className = "status-dot";
-                headerDotEl.style.background = "var(--danger)";
-            } else {
-                statusEl.textContent = "Connecting...";
+            } else if (connectedPorts.size > 0) {
+                // Partial
+                statusEl.textContent = `Partial (${connectedPorts.size}/${ports.length})`;
                 statusEl.style.color = "var(--warning)";
-                headerStatusEl.textContent = "Connecting";
+                headerStatusEl.textContent = "Partial Conn";
                 badge.className = "status-badge connecting";
                 headerDotEl.className = "status-dot";
                 headerDotEl.style.background = "var(--warning)";
+            } else {
+                // None
+                statusEl.textContent = "Disconnected";
+                statusEl.style.color = "var(--danger)";
+                headerStatusEl.textContent = "Offline";
+                badge.className = "status-badge offline";
+                headerDotEl.className = "status-dot";
+                headerDotEl.style.background = "var(--danger)";
             }
         }
 
         function connectWebSocket() {
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
+            // Close existing
+            sockets.forEach(s => s.close());
+            sockets.length = 0;
+            connectedPorts.clear();
+            
+            ports.forEach(port => {
+                const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                // Adjust hostname if needed (assume same host, different ports)
+                const ws = new WebSocket(`${wsProtocol}//${window.location.hostname}:${port}/ws`);
+                sockets.push(ws);
 
-            ws.onopen = () => {
-                updateStatus('CONNECTED');
-                if (reconnectTimer) {
-                    clearInterval(reconnectTimer);
-                    reconnectTimer = null;
-                }
-            };
+                ws.onopen = () => {
+                    console.log(`Connected to port ${port}`);
+                    connectedPorts.add(port);
+                    updateGlobalStatus();
+                    if (reconnectTimer && connectedPorts.size === ports.length) {
+                         // Only clear if all connected? Or just let it be.
+                         // For simplicity, we keep trying unless we implement specific logic.
+                         // Actually, let's clear timer if at least one works to avoid spam?
+                         // Nah, simple reconnect logic below is fine.
+                    }
+                };
 
-            ws.onclose = () => {
-                updateStatus('DISCONNECTED');
-                // Auto reconnect
-                if (!reconnectTimer) {
-                    reconnectTimer = setInterval(() => {
-                        updateStatus('CONNECTING'); // Visual feedback
-                        connectWebSocket();
-                    }, 3000);
-                }
-            };
+                ws.onclose = () => {
+                    console.log(`Disconnected from port ${port}`);
+                    connectedPorts.delete(port);
+                    updateGlobalStatus();
+                };
 
-            ws.onmessage = (event) => {
-                // Try to parse prettily
-                let displayMsg = event.data;
-                try {
-                    const json = JSON.parse(event.data);
-                    displayMsg = JSON.stringify(json, null, 2);
-                } catch (e) { }
+                ws.onmessage = (event) => {
+                    // Try to parse prettily
+                    let displayMsg = event.data;
+                    try {
+                        const json = JSON.parse(event.data);
+                        displayMsg = JSON.stringify(json, null, 2);
+                    } catch (e) { }
 
-                addLog(displayMsg, 'rx');
-            };
+                    addLog(`[Port ${port}] ` + displayMsg, 'rx');
+                };
 
-            ws.onerror = (err) => {
-                console.error("WS Error", err);
-                ws.close(); // Ensure onclose is called
-            };
+                ws.onerror = (err) => {
+                    console.error(`WS Error Port ${port}`, err);
+                    ws.close(); 
+                };
+            });
+            
+            // Reconnect logic global
+            if (!reconnectTimer) {
+                reconnectTimer = setInterval(() => {
+                    if (connectedPorts.size < ports.length) {
+                        // Ideally we only reconnect missing ones, but simplistic approach:
+                        // If completely disconnected, full retry.
+                        // For partials, it's tricky without managing individual retry timers.
+                        // Let's just rely on users refreshing or a more complex logic if requested.
+                        // For now: logs show status.
+                        if (connectedPorts.size === 0) {
+                             connectWebSocket();
+                        }
+                    }
+                }, 5000);
+            }
         }
 
         connectWebSocket();

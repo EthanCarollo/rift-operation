@@ -9,7 +9,13 @@ const props = defineProps<{
 const highestPartCount = ref(0)
 
 const progressPercentage = computed(() => {
-  const newCount = props.status?.rift_part_count || 0
+  let newCount = 0
+  const s = props.status
+
+  if (s?.operator_launch_close_rift_step_3) newCount = 6
+  else if (s?.operator_launch_close_rift_step_2) newCount = 4
+  else if (s?.operator_launch_close_rift_step_1) newCount = 2
+
   // Only update if moving forward
   if (newCount > highestPartCount.value) {
     highestPartCount.value = newCount

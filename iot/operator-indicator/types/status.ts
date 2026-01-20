@@ -16,4 +16,6 @@ export interface OperatorStatus {
     operator_launch_close_rift_step_3: boolean | null
     reset_system: boolean | null
     [key: string]: any // Allow additional properties
+    // Debug / Force
+    force_briefing_state?: number
 }

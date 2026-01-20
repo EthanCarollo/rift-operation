@@ -38,6 +38,16 @@ watch(() => props.status?.reset_system, (reset) => {
   }
 })
 
+// Force State Logic (Debug)
+watch(() => props.status?.force_briefing_state, (forceState) => {
+  if (forceState !== undefined && forceState !== null) {
+    if (stateTimer) clearTimeout(stateTimer)
+    briefingState.value = forceState
+    // We don't necessarily update highestLayoutReached here directly, 
+    // because currentLayout computed prop handles it.
+  }
+})
+
 onUnmounted(() => {
   if (stateTimer) clearTimeout(stateTimer)
 })
