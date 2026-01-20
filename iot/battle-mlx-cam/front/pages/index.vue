@@ -29,6 +29,12 @@
                 <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" :is-hit="isHit" :attack="currentAttack"
                     :is-vertical="false" />
 
+                <!-- Mock Test Button (Temporary) -->
+                <button v-if="debugMode" @click="mockAttackSequence" 
+                    class="absolute top-24 right-4 z-50 px-3 py-1 bg-yellow-500/80 text-black text-xs font-bold rounded hover:bg-yellow-400">
+                    ⚡ TEST ANIM
+                </button>
+
                 <!-- Narrative Text Overlay - Lower position, below top area -->
                 <div v-if="showNarrativeText"
                     class="absolute top-[15%] left-0 right-0 z-20 flex justify-center pointer-events-none">
@@ -213,22 +219,7 @@ const flyingImage = ref(null);
 const flyingImageRef = ref(null);
 const flyingImageStyle = ref({ left: '50%', bottom: '35%' });
 
-// Watch for generated images - only trigger when BOTH sides valid
-watch([dreamDrawingImage, nightmareDrawingImage], ([dreamImg, nightmareImg]) => {
-    const img = dreamImg || nightmareImg;
-    
-    // Only proceed if both sides detected correct counter AND we have a generated image
-    if (img && bothSidesValid.value && waitingForImage.value) {
-        console.log('[Battle] 🎨 Generated image received! Waiting 1s then launching animation...');
-        waitingForImage.value = false;
-        isGenerating.value = false;
-        
-        // Wait 1 second before starting the flying animation
-        setTimeout(() => {
-            triggerFlyingAnimation(img);
-        }, 1000);
-    }
-});
+// Watcher removed - Animation now driven by socket 'attack_ready' event
 
 
 function triggerFlyingAnimation(imageSrc) {
@@ -327,6 +318,44 @@ function connectDebugSocket() {
         console.log('[Battle] Debug mode changed:', data.enabled);
         debugMode.value = data.enabled;
     });
+    
+    // LISTEN FOR SYNCHRONIZED ATTACK SIGNAL
+    socket.on('attack_ready', (data) => {
+        console.log('[Battle] 🌟 Attack Ready received from backend!', data);
+        handleAttackReady(data.frame);
+    });
+}
+
+// Unified handler for real and mock attacks
+function handleAttackReady(imageFrame) {
+    if (waitingForImage.value || bothSidesValid.value) { // Accept if we were waiting OR if both sides were valid
+        console.log('[Battle] 🎬 Starting Attack Animation Sequence...');
+        waitingForImage.value = false;
+        isGenerating.value = false;
+        
+        // Wait 1 second before starting the flying animation (User request for delay)
+        setTimeout(() => {
+             triggerFlyingAnimation(imageFrame);
+        }, 1000);
+    }
+}
+
+// MOCK: Simulate full flow for testing
+function mockAttackSequence() {
+    console.log('[Mock] Starting End-to-End Attack Test');
+    
+    // 1. Simulate Valid Counters
+    dreamCounterValid.value = true;
+    nightmareCounterValid.value = true;
+    
+    // 2. Simulate Backend processing time
+    setTimeout(() => {
+        // 3. Simulate Image Ready signal
+        console.log('[Mock] Simulating backend attack_ready signal');
+        // Use a placeholder image
+        const mockImg = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='; // Red dot
+        handleAttackReady(mockImg);
+    }, 3000);
 }
 
 async function fetchDebugMode() {

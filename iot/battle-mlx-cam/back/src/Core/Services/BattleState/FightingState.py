@@ -15,6 +15,8 @@ class FightingState(BattleState):
 
     def enter(self):
         print(f"[BattleState] Entering FIGHTING")
+        self.attack_ready = False # Lock flag for synchronized attack
+        
         if not self.service.current_attack:
              self.service.current_attack = Config.get_next_attack(self.service.current_hp)
         
@@ -24,6 +26,7 @@ class FightingState(BattleState):
         })
 
     def handle_monitor(self):
+        # ... (unchanged) ...
         # Sync with Rift State (Game Master Authority)
         if self.service.ws.last_state:
             remote_state = self.service.ws.last_state.get("battle_state")
@@ -59,6 +62,10 @@ class FightingState(BattleState):
 
     def on_image_task(self, role: str, state: 'BattleRoleState', image_bytes: bytes):
         """Core logic for processing images during fight."""
+        # STOP if already ready to attack (prevent new inferences)
+        if hasattr(self, 'attack_ready') and self.attack_ready:
+            return
+
         try:
             print(f"[BattleService] ⚙️ Processing task for {role}...")
             
@@ -78,9 +85,9 @@ class FightingState(BattleState):
             if result.should_skip:
                 return
 
-            # 3. Handle Generated Image
+            # 3. Handle Generated Image (and check for Dual-Side Success)
             if result.output_image:
-                # Emit Output to Frontend
+                # Emit Output to Frontend (Preview)
                 if self.service.socketio:
                     b64 = base64.b64encode(result.output_image).decode('utf-8')
                     self.service.socketio.emit('output_frame', {
@@ -88,19 +95,40 @@ class FightingState(BattleState):
                         'frame': b64
                     })
                 
-                # Send to Rift Server
+                # Check Dual Validation (Both sides must be valid)
+                current_valid = result.is_valid_counter
+                
+                # Check other role
+                other_role = 'nightmare' if role == 'dream' else 'dream'
+                other_state = self.service.roles.get(other_role)
+                required = Config.ATTACK_TO_COUNTER_LABEL.get(self.service.current_attack)
+                
+                other_valid = False
+                if other_state and other_state.last_label == required:
+                    other_valid = True
+                
+                # SYNCHRONIZED SUCCESS: Image Generated + Current Valid + Other Valid
+                if current_valid and other_valid:
+                     print(f"[BattleState] 🌟 ULTRA COMBO! Both sides valid & Image Ready. Locking inference.")
+                     self.attack_ready = True
+                     
+                     # Emit SIGNAL to Frontend to start Animation
+                     if self.service.socketio:
+                         b64_final = base64.b64encode(result.output_image).decode('utf-8')
+                         self.service.socketio.emit('attack_ready', {
+                             'role': role,
+                             'frame': b64_final,
+                             'label': result.label
+                         })
+                
+                # Send to Rift Server (Legacy/Proxy)
                 b64_rift = base64.b64encode(result.output_image).decode('utf-8')
                 extra = {f"battle_drawing_{role}_recognised": result.is_valid_counter}
-                
-                # Proxy Send
                 if self.service.ws.send_image(b64_rift, role, extra):
-                    print(f"[BattleService] Sent {role} to Rift Server (valid: {result.is_valid_counter})")
+                    print(f"[BattleService] Sent {role} to Rift Server")
 
-            # 4. If Valid Counter: emit signal to frontend (don't auto-trigger attack)
-            # The frontend will trigger the attack after showing the animation
+            # 4. Standard validation notification (non-locking)
             if result.is_valid_counter:
-                print(f"[BattleState] ✓ Valid Counter by {role}! Waiting for frontend to trigger attack...")
-                # Emit signal to frontend that counter was validated
                 if self.service.socketio:
                     self.service.socketio.emit('counter_validated', {
                         'role': role,
@@ -108,12 +136,19 @@ class FightingState(BattleState):
                         'attack': self.service.current_attack
                     })
 
+
         except Exception as e:
             print(f"[BattleService] Error processing {role}: {e}")
             state.recognition_status = "❌ Error"
 
 
     def trigger_attack(self):
+        if getattr(self, 'is_attacking', False):
+             print(f"[BattleState] Attack already in progress. Ignoring duplicate trigger.")
+             return
+        
+        self.is_attacking = True
+        
         # Decrement HP
         self.service.current_hp -= 1
         print(f"[BattleState] Attack! New HP: {self.service.current_hp}")
