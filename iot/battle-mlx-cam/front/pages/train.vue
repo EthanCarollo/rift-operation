@@ -78,6 +78,15 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Grayscale -->
+                    <div class="flex items-center gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="grayscale"
+                                class="w-4 h-4 rounded bg-neutral-900 border-neutral-600 text-green-500">
+                            <span class="text-xs text-neutral-300">⚫ Black & White</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Camera Preview -->
@@ -199,6 +208,7 @@ const selectedDeviceId = ref(null);
 const cropEnabled = ref(false);
 const crop = ref({ x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
 const rotation = ref(0);
+const grayscale = ref(false);
 
 const quickLabels = ['key', 'door', 'star', 'eye', 'cloud', 'sword', 'empty', 'bullshit'];
 
@@ -314,6 +324,25 @@ async function captureSample() {
         canvas = rotatedCanvas;
     }
 
+    // Apply grayscale if set
+    if (grayscale.value) {
+        const grayCanvas = document.createElement('canvas');
+        grayCanvas.width = canvas.width;
+        grayCanvas.height = canvas.height;
+        const grayCtx = grayCanvas.getContext('2d');
+        grayCtx.drawImage(canvas, 0, 0);
+        const imageData = grayCtx.getImageData(0, 0, grayCanvas.width, grayCanvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = avg;
+            data[i + 1] = avg;
+            data[i + 2] = avg;
+        }
+        grayCtx.putImageData(imageData, 0, 0);
+        canvas = grayCanvas;
+    }
+
     const imageB64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
 
     try {
@@ -378,6 +407,25 @@ async function testPredict() {
         rotatedCtx.rotate((rotation.value * Math.PI) / 180);
         rotatedCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
         canvas = rotatedCanvas;
+    }
+
+    // Apply grayscale if set
+    if (grayscale.value) {
+        const grayCanvas = document.createElement('canvas');
+        grayCanvas.width = canvas.width;
+        grayCanvas.height = canvas.height;
+        const grayCtx = grayCanvas.getContext('2d');
+        grayCtx.drawImage(canvas, 0, 0);
+        const imageData = grayCtx.getImageData(0, 0, grayCanvas.width, grayCanvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            data[i] = avg;
+            data[i + 1] = avg;
+            data[i + 2] = avg;
+        }
+        grayCtx.putImageData(imageData, 0, 0);
+        canvas = grayCanvas;
     }
 
     const imageB64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];

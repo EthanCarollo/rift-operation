@@ -3,30 +3,21 @@
         @click="unlockAudio">
 
         <!-- Hidden Audio Controller (BattleHUD without visible UI) -->
-        <BattleHUD ref="hudRef" 
-            :is-connected="isConnected" 
-            :show-debug="false" 
-            :state="battleState"
-            :hp="currentHp" 
-            :attack="currentAttack" 
-            :video-name="''"
-            :current-music="currentMusic" 
-            :should-loop="musicShouldLoop" 
-            :is-vertical="false"
-            class="hidden" />
+        <BattleHUD ref="hudRef" :is-connected="isConnected" :show-debug="false" :state="battleState" :hp="currentHp"
+            :attack="currentAttack" :video-name="''" :current-music="currentMusic" :should-loop="musicShouldLoop"
+            :is-vertical="false" class="hidden" />
 
         <!-- Main Battle Layout: Dynamic height based on camera visibility -->
         <div class="flex flex-col w-full h-full">
-            
+
             <!-- TOP: Video/Boss Area -->
-            <div class="relative w-full bg-black overflow-hidden" 
-                 :class="showCamera ? 'h-[70%]' : 'h-full'">
+            <div class="relative w-full bg-black overflow-hidden" :class="showCamera ? 'h-[70%]' : 'h-full'">
                 <!-- Video Layer with fade transition -->
                 <video v-show="currentVideo && !videoError" ref="videoRef"
                     class="absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500"
-                    :class="videoReady ? 'opacity-100' : 'opacity-0'"
-                    :src="currentVideo" autoplay loop muted playsinline preload="auto"
-                    @error="handleVideoError" @loadeddata="onVideoReady" @canplay="onVideoReady" />
+                    :class="videoReady ? 'opacity-100' : 'opacity-0'" :src="currentVideo" autoplay loop muted
+                    playsinline preload="auto" @error="handleVideoError" @loadeddata="onVideoReady"
+                    @canplay="onVideoReady" />
 
                 <!-- IDLE BG / Loading State -->
                 <div v-if="battleState === 'IDLE' || !currentVideo || !videoReady"
@@ -36,29 +27,22 @@
                 </div>
 
                 <!-- Boss Overlay -->
-                <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" 
-                    :is-hit="isHit" :attack="currentAttack" :is-vertical="false" />
+                <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" :is-hit="isHit" :attack="currentAttack"
+                    :is-vertical="false" />
             </div>
 
             <!-- BOTTOM: Camera Area (30%) - Always mounted, visibility controlled by showCamera -->
             <div v-show="showCamera" class="relative w-full h-[30%] bg-neutral-900 overflow-hidden">
-                <BattleFrontCamera 
-                    v-if="pureRole"
-                    :role="pureRole"
-                    :backend-url="config.public.backendUrl"
-                    class="w-full h-full"
-                />
+                <BattleFrontCamera v-if="pureRole" :role="pureRole" :backend-url="config.public.backendUrl"
+                    :state="battleState" class="w-full h-full" />
                 <div v-else class="absolute inset-0 flex items-center justify-center text-white/30 text-sm">
                     📷 Rôle non défini (ajouter ?role=dream ou ?role=nightmare)
                 </div>
             </div>
-            
+
             <!-- Hidden camera for sending frames when UI is hidden -->
             <div v-if="!showCamera && pureRole" class="hidden">
-                <BattleFrontCamera 
-                    :role="pureRole"
-                    :backend-url="config.public.backendUrl"
-                />
+                <BattleFrontCamera :role="pureRole" :backend-url="config.public.backendUrl" :state="battleState" />
             </div>
         </div>
     </div>
@@ -127,13 +111,13 @@ const showCamera = computed(() => {
 // --- SOCKET CONNECTION FOR DEBUG MODE ---
 function connectDebugSocket() {
     socket = io(config.public.backendUrl, { transports: ['websocket', 'polling'] });
-    
+
     socket.on('connect', () => {
         console.log('[Battle] Connected to backend for debug sync');
         // Fetch initial debug mode
         fetchDebugMode();
     });
-    
+
     socket.on('debug_mode_changed', (data) => {
         console.log('[Battle] Debug mode changed:', data.enabled);
         debugMode.value = data.enabled;

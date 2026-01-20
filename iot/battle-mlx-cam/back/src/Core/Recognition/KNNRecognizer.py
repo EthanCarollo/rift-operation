@@ -3,6 +3,7 @@ import os
 import json
 import numpy as np
 import time
+import threading
 from PIL import Image
 import ssl
 from pathlib import Path
@@ -45,6 +46,10 @@ class KNNRecognizer(AbstractRecognizer):
         self.transform = None
         
         self.load_samples()
+        
+        # Preload dependencies and model in background
+        print("[KNNRecognizer] Starting background preload...")
+        threading.Thread(target=self._ensure_deps, daemon=True).start()
         
     def _ensure_deps(self):
         """Lazy load dependencies."""
