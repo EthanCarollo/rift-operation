@@ -21,7 +21,7 @@ from .BattleState.CapturedState import CapturedState
 
 # --- Constants ---
 GENERATION_RATE_LIMIT_S = 2.0
-INITIAL_HP = 5
+INITIAL_HP = 3  # 3-phase combat: BOUCLIER → PLUIE → LUNE
 
 class BattleRoleState:
     """Manages state for one role (Dream/Nightmare)."""
@@ -107,7 +107,10 @@ class BattleService:
             print("[BattleService] FAL_KEY missing - AI will fail")
         
         self.running = True
-        print("[BattleService] Started")
+        
+        # Set initial attack based on HP (default first attack)
+        self.current_attack = Config.get_next_attack(self.current_hp)
+        print(f"[BattleService] Started (HP: {self.current_hp}, Attack: {self.current_attack})")
         
         # Enter initial state
         self.state.enter()
