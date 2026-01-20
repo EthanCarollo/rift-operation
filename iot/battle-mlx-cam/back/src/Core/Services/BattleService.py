@@ -59,6 +59,9 @@ class BattleService:
         
         self.running = False
         self.socketio = None
+
+        # State tracking for edge detection
+        self.last_hit_confirmed = False
         
         # Game State
         self.current_hp = INITIAL_HP
