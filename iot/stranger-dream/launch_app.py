@@ -328,11 +328,31 @@ def main():
     url = f"http://localhost:{port}"
     
     # --kiosk for full screen
-    # --app to look like an app
     # --noerrdialogs to avoid error popups
     # --disable-infobars to remove "Chrome is being controlled..."
-    # --start-fullscreen alternate flag
-    browser_cmd = f'{chromium_bin} --kiosk --app={url} --noerrdialogs --disable-infobars'
+    # --incognito to avoid session restore bubbles
+    # --check-for-update-interval to disable updates
+    # --overscroll-history-navigation=0 to disable swipe navigation
+    # --disable-pinch to disable pinch zooming
+    # --no-first-run to skip first run wizards
+    # --fast-start
+    # --disable-features=Translate,TranslateUI, bubble
+    # --password-store=basic to avoid keyring prompts
+    browser_cmd = (
+        f'{chromium_bin} --kiosk "{url}" '
+        '--noerrdialogs '
+        '--disable-infobars '
+        '--incognito '
+        '--check-for-update-interval=31536000 '
+        '--overscroll-history-navigation=0 '
+        '--disable-pinch '
+        '--touch-events=enabled '
+        '--no-first-run '
+        '--fast '
+        '--fast-start '
+        '--disable-features=Translate,TranslateUI,InfiniteSessionRestore,Bubble,SidePanelPinning '
+        '--password-store=basic '
+    )
     
     log(f"Launching Kiosk Mode at {url}...", "INFO")
     # Pass os.environ to ensure DISPLAY/XAUTHORITY/DBUS are passed to Chromium
