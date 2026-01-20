@@ -44,6 +44,16 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Grayscale Toggle -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" :checked="grayscales.nightmare"
+                                @change="setGrayscale('nightmare', $event.target.checked)"
+                                class="w-4 h-4 rounded bg-neutral-900 border-neutral-600 text-red-500">
+                            <span class="text-xs text-neutral-300">⚫ Black & White</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Camera Preview (Raw Feed) -->
@@ -109,7 +119,7 @@
                             :class="knnStatus.nightmare.label === 'Need Training' ? 'text-yellow-400' : 'text-green-400'">{{
                                 knnStatus.nightmare.label }}</span>
                         <span class="text-neutral-500 ml-1">({{ knnStatus.nightmare.distance?.toFixed(1) || '?'
-                        }})</span>
+                            }})</span>
                     </div>
                 </div>
 
@@ -157,6 +167,16 @@
                                 {{ angle }}°
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Grayscale Toggle -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" :checked="grayscales.dream"
+                                @change="setGrayscale('dream', $event.target.checked)"
+                                class="w-4 h-4 rounded bg-neutral-900 border-neutral-600 text-blue-500">
+                            <span class="text-xs text-neutral-300">⚫ Black & White</span>
+                        </label>
                     </div>
                 </div>
 
@@ -305,6 +325,7 @@ const debugMode = ref(false);
 
 const crops = ref({ nightmare: null, dream: null });
 const rotations = ref({ nightmare: 0, dream: 0 });
+const grayscales = ref({ nightmare: false, dream: false });
 const editingCrop = ref(null); // 'nightmare' | 'dream' | null
 const tempCrop = ref({ x: 0, y: 0, w: 0, h: 0 });
 const isDragging = ref(false);

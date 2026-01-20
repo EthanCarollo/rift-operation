@@ -206,6 +206,13 @@ class BattleWebServer(AbstractWebServer):
                 return jsonify({role: p.rotation for role, p in service.roles.items()})
             return jsonify({})
 
+        @self.app.route('/remote/grayscales', methods=['GET'])
+        def get_grayscales():
+            service = self._get_service()
+            if service:
+                return jsonify({role: p.grayscale for role, p in service.roles.items()})
+            return jsonify({})
+
 
     def _register_socket_events(self):
         @self.socketio.on('connect')
@@ -308,6 +315,15 @@ class BattleWebServer(AbstractWebServer):
             if service:
                 service.update_role_rotation(role, rotation)
                 self.socketio.emit('rotation_updated', {'role': role, 'rotation': rotation})
+
+        @self.socketio.on('update_grayscale')
+        def handle_update_grayscale(data):
+            role = data.get('role')
+            enabled = data.get('enabled', False)
+            service = self._get_service()
+            if service:
+                service.update_role_grayscale(role, enabled)
+                self.socketio.emit('grayscale_updated', {'role': role, 'enabled': enabled})
 
         @self.socketio.on('set_debug_mode')
         def handle_set_debug_mode(data):

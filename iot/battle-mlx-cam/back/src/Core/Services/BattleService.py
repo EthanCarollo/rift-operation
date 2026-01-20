@@ -41,6 +41,8 @@ class BattleRoleState:
         self.crop = None
         # Rotation in degrees (0, 90, 180, 270)
         self.rotation = 0
+        # Grayscale (black & white) filter
+        self.grayscale = False
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""
@@ -90,7 +92,8 @@ class BattleService:
                     "knn_distance": p.knn_distance,
                     "processing": p.processing,
                     "crop": p.crop,
-                    "rotation": p.rotation
+                    "rotation": p.rotation,
+                    "grayscale": p.grayscale
                 }
                 for role, p in self.roles.items()
             }
@@ -174,7 +177,20 @@ class BattleService:
             except Exception as e:
                 print(f"[BattleService] Rotation failed for {role}: {e}")
         
-        # DEBUG: Emit the actual image being processed (cropped + rotated)
+        # Apply grayscale (black & white) if enabled
+        if state.grayscale:
+            try:
+                img = Image.open(io.BytesIO(image_bytes))
+                # Convert to grayscale then back to RGB (for consistent format)
+                img = img.convert('L').convert('RGB')
+                buf = io.BytesIO()
+                img.save(buf, format='JPEG')
+                image_bytes = buf.getvalue()
+                print(f"[BattleService] Grayscale applied for {role}")
+            except Exception as e:
+                print(f"[BattleService] Grayscale failed for {role}: {e}")
+        
+        # DEBUG: Emit the actual image being processed (cropped + rotated + grayscale)
         if self.socketio:
             encoded_crop = base64.b64encode(image_bytes).decode('utf-8')
             self.socketio.emit('debug_cropped_frame', {'role': role, 'frame': encoded_crop})
@@ -222,6 +238,13 @@ class BattleService:
                 rotation = 0
             self.roles[role].rotation = rotation
             print(f"[BattleService] Updated rotation for {role}: {rotation}°")
+            self._emit_status()
+
+    def update_role_grayscale(self, role: str, enabled: bool):
+        """Update grayscale (black & white) setting for a role."""
+        if role in self.roles:
+            self.roles[role].grayscale = bool(enabled)
+            print(f"[BattleService] Updated grayscale for {role}: {enabled}")
             self._emit_status()
 
     def force_end_fight(self):
