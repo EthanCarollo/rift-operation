@@ -6,6 +6,10 @@ const props = defineProps<{
   status: OperatorStatus | null
 }>()
 
+const emit = defineEmits<{
+  showOutro: []
+}>()
+
 // Mission briefing state machine
 const briefingState = ref(0)
 const highestStateReached = ref(0)
@@ -237,6 +241,24 @@ onUnmounted(() => {
       <div v-html="message"
         class="text-xl md:text-2xl font-medium text-yellow-400 leading-relaxed tracking-normal glowing-text-yellow font-inter">
       </div>
+      
+      <!-- End Briefing Button (appears at state 18) -->
+      <div 
+        v-if="briefingState === 18"
+        class="mt-8 flex justify-center"
+      >
+        <button 
+          @click="emit('showOutro')"
+          class="relative bg-pink-600 text-white font-bold text-sm uppercase tracking-widest px-6 py-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-pink-700 hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
+        >
+          <span class="relative z-10 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            BRIEFING DE FIN
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -255,5 +277,18 @@ onUnmounted(() => {
     0 0 10px rgba(250, 204, 21, 0.6),
     0 0 20px rgba(250, 204, 21, 0.4),
     0 0 30px rgba(250, 204, 21, 0.2);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.8), 0 0 40px rgba(0, 255, 240, 0.4);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 </style>

@@ -8,6 +8,10 @@ import RiftMonitor from './dashboard/RiftMonitor.vue'
 const props = defineProps<{
   status: OperatorStatus | null
 }>()
+
+const emit = defineEmits<{
+  showOutro: []
+}>()
 </script>
 
 <template>
@@ -15,7 +19,7 @@ const props = defineProps<{
 
     <!-- DASHBOARD GRID -->
     <div class="grid grid-cols-12 grid-rows-12 gap-4 flex-1 relative z-10 overflow-hidden">
-      <MissionBriefing :status="status" />
+      <MissionBriefing :status="status" @showOutro="emit('showOutro')" />
       <AgentBoard :status="status" />
       <MissionProgress :status="status" />
       <RiftMonitor :status="status" />
