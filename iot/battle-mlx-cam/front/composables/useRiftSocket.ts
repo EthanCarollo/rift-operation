@@ -41,11 +41,38 @@ export const useRiftSocket = () => {
         // Let's listen for 'status' as it's what BattleService emits currently.
         globalSocket.on('status', (data: any) => {
             // BattleService emits 'status' with local state + ws_state (Rift State)
-            if (data && data.ws_state) {
-                // Determine if we should use the raw ws_state (Rift payload) 
-                // or if we need to map it. 
-                // The existing code expects the Raw Rift Payload structure.
-                lastPayload.value = data.ws_state;
+            // Priority: Use local backend's battle_state for responsiveness,
+            // fall back to ws_state from Rift server
+            if (data) {
+                const payload: any = {};
+                
+                // Always use local backend state if available (faster, more responsive)
+                if (data.battle_state) {
+                    payload.battle_state = data.battle_state;
+                }
+                if (data.current_hp !== undefined) {
+                    payload.battle_boss_hp = data.current_hp;
+                }
+                if (data.current_attack !== undefined) {
+                    payload.battle_boss_attack = data.current_attack;
+                }
+                
+                // Merge with Rift state if available (for other fields)
+                if (data.ws_state) {
+                    // Rift state provides additional fields, but local state takes priority
+                    lastPayload.value = { ...data.ws_state, ...payload };
+                } else if (Object.keys(payload).length > 0) {
+                    // Only local state available
+                    lastPayload.value = { ...lastPayload.value, ...payload };
+                }
+            }
+        });
+
+        // Listen for explicit battle state updates from backend (force_start_fight, etc.)
+        globalSocket.on('battle_state_update', (data: any) => {
+            if (data) {
+                console.log('[BattleSocket] Received battle_state_update:', data);
+                lastPayload.value = { ...lastPayload.value, ...data };
             }
         });
 

@@ -125,8 +125,10 @@ class BattleService:
         
         # Apply crop if exists
         if state.crop:
+            print(f"[BattleService] Applying crop for {role}: {state.crop}")
             try:
                 img = Image.open(io.BytesIO(image_bytes))
+                original_size = img.size
                 w, h = img.size
                 left = int(state.crop['x'] * w)
                 top = int(state.crop['y'] * h)
@@ -138,8 +140,16 @@ class BattleService:
                     buf = io.BytesIO()
                     img.save(buf, format='JPEG')
                     image_bytes = buf.getvalue()
+                    print(f"[BattleService] Crop applied for {role}: {original_size} -> {img.size}")
+                else:
+                    print(f"[BattleService] Invalid crop dimensions for {role}: width={width}, height={height}")
             except Exception as e:
                 print(f"[BattleService] Crop failed for {role}: {e}")
+        else:
+            # Log only occasionally to avoid spam
+            if not hasattr(state, '_crop_warned'):
+                print(f"[BattleService] No crop configured for {role}")
+                state._crop_warned = True
         
         # DEBUG: Emit the actual image being processed (cropped)
         if self.socketio:
@@ -171,15 +181,11 @@ class BattleService:
             state.processing = False
             self._emit_status()
 
-            self._emit_status()
-
     def update_role_crop(self, role: str, crop: dict):
         """Update crop settings for a role."""
         if role in self.roles:
             self.roles[role].crop = crop
             print(f"[BattleService] Updated crop for {role}: {crop}")
-            self._emit_status()
-
             self._emit_status()
 
     def force_end_fight(self):
