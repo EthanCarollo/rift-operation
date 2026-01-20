@@ -199,6 +199,13 @@ class BattleWebServer(AbstractWebServer):
                 return jsonify({role: p.crop for role, p in service.roles.items()})
             return jsonify({})
 
+        @self.app.route('/remote/rotations', methods=['GET'])
+        def get_rotations():
+            service = self._get_service()
+            if service:
+                return jsonify({role: p.rotation for role, p in service.roles.items()})
+            return jsonify({})
+
 
     def _register_socket_events(self):
         @self.socketio.on('connect')
@@ -292,6 +299,15 @@ class BattleWebServer(AbstractWebServer):
                 # self.socketio.emit('crop_updated', ...) # Service emits status, but we can ack if needed
                 # Actually, let's keep emitting crop_updated for frontend feedback
                 self.socketio.emit('crop_updated', {'role': role, 'crop': crop})
+
+        @self.socketio.on('update_rotation')
+        def handle_update_rotation(data):
+            role = data.get('role')
+            rotation = data.get('rotation', 0)
+            service = self._get_service()
+            if service:
+                service.update_role_rotation(role, rotation)
+                self.socketio.emit('rotation_updated', {'role': role, 'rotation': rotation})
 
         @self.socketio.on('set_debug_mode')
         def handle_set_debug_mode(data):

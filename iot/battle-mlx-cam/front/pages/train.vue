@@ -29,10 +29,70 @@
                     </button>
                 </div>
 
+                <!-- Crop & Rotation Controls -->
+                <div class="bg-neutral-800 p-3 rounded space-y-3">
+                    <!-- Crop Toggle -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="cropEnabled"
+                                class="w-4 h-4 rounded bg-neutral-900 border-neutral-600 text-green-500">
+                            <span class="text-xs text-neutral-300">✂️ Apply Crop</span>
+                        </label>
+                        <span v-if="cropEnabled && crop" class="text-xs text-neutral-500">
+                            {{ Math.round(crop.w * 100) }}% x {{ Math.round(crop.h * 100) }}%
+                        </span>
+                    </div>
+
+                    <!-- Crop Inputs (show if enabled) -->
+                    <div v-if="cropEnabled" class="grid grid-cols-4 gap-2">
+                        <div>
+                            <label class="text-[10px] text-neutral-500">X</label>
+                            <input type="number" v-model.number="crop.x" min="0" max="1" step="0.01"
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-neutral-500">Y</label>
+                            <input type="number" v-model.number="crop.y" min="0" max="1" step="0.01"
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-neutral-500">Width</label>
+                            <input type="number" v-model.number="crop.w" min="0" max="1" step="0.01"
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-neutral-500">Height</label>
+                            <input type="number" v-model.number="crop.h" min="0" max="1" step="0.01"
+                                class="w-full bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-white">
+                        </div>
+                    </div>
+
+                    <!-- Rotation -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-neutral-400">🔄 Rotation:</label>
+                        <div class="flex gap-1">
+                            <button v-for="angle in [0, 90, 180, 270]" :key="angle" @click="rotation = angle"
+                                class="px-2 py-1 text-xs rounded"
+                                :class="rotation === angle ? 'bg-green-600 text-white' : 'bg-neutral-700 hover:bg-neutral-600'">
+                                {{ angle }}°
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Camera Preview -->
                 <div class="relative aspect-video bg-black rounded border border-neutral-700 overflow-hidden">
                     <video ref="videoRef" autoplay playsinline muted
                         class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
+
+                    <!-- Crop Overlay Preview -->
+                    <div v-if="cropEnabled && crop" class="absolute border-2 border-green-500 pointer-events-none"
+                        :style="{
+                            left: (crop.x * 100) + '%',
+                            top: (crop.y * 100) + '%',
+                            width: (crop.w * 100) + '%',
+                            height: (crop.h * 100) + '%'
+                        }"></div>
 
                     <!-- Loading State -->
                     <div v-if="!stream && !cameraError"
@@ -135,6 +195,11 @@ const prediction = ref(null);
 const videoDevices = ref([]);
 const selectedDeviceId = ref(null);
 
+// Crop & Rotation settings for training
+const cropEnabled = ref(false);
+const crop = ref({ x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
+const rotation = ref(0);
+
 const quickLabels = ['key', 'door', 'star', 'eye', 'cloud', 'sword', 'empty', 'bullshit'];
 
 const cameraError = ref(null);
@@ -202,11 +267,52 @@ async function fetchSamples() {
 async function captureSample() {
     if (!videoRef.value || !currentLabel.value) return;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.value.videoWidth;
-    canvas.height = videoRef.value.videoHeight;
-    const ctx = canvas.getContext('2d');
+    const videoWidth = videoRef.value.videoWidth;
+    const videoHeight = videoRef.value.videoHeight;
+
+    // Create a canvas for the full frame first
+    let canvas = document.createElement('canvas');
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+    let ctx = canvas.getContext('2d');
     ctx.drawImage(videoRef.value, 0, 0);
+
+    // Apply crop if enabled
+    if (cropEnabled.value && crop.value) {
+        const left = Math.round(crop.value.x * videoWidth);
+        const top = Math.round(crop.value.y * videoHeight);
+        const width = Math.round(crop.value.w * videoWidth);
+        const height = Math.round(crop.value.h * videoHeight);
+
+        if (width > 0 && height > 0) {
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = width;
+            croppedCanvas.height = height;
+            const croppedCtx = croppedCanvas.getContext('2d');
+            croppedCtx.drawImage(canvas, left, top, width, height, 0, 0, width, height);
+            canvas = croppedCanvas;
+            ctx = croppedCtx;
+        }
+    }
+
+    // Apply rotation if set
+    if (rotation.value !== 0) {
+        const rotatedCanvas = document.createElement('canvas');
+        const rotatedCtx = rotatedCanvas.getContext('2d');
+
+        if (rotation.value === 90 || rotation.value === 270) {
+            rotatedCanvas.width = canvas.height;
+            rotatedCanvas.height = canvas.width;
+        } else {
+            rotatedCanvas.width = canvas.width;
+            rotatedCanvas.height = canvas.height;
+        }
+
+        rotatedCtx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+        rotatedCtx.rotate((rotation.value * Math.PI) / 180);
+        rotatedCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+        canvas = rotatedCanvas;
+    }
 
     const imageB64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
 
@@ -229,11 +335,50 @@ async function captureSample() {
 async function testPredict() {
     if (!videoRef.value) return;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.value.videoWidth;
-    canvas.height = videoRef.value.videoHeight;
-    const ctx = canvas.getContext('2d');
+    const videoWidth = videoRef.value.videoWidth;
+    const videoHeight = videoRef.value.videoHeight;
+
+    let canvas = document.createElement('canvas');
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+    let ctx = canvas.getContext('2d');
     ctx.drawImage(videoRef.value, 0, 0);
+
+    // Apply crop if enabled
+    if (cropEnabled.value && crop.value) {
+        const left = Math.round(crop.value.x * videoWidth);
+        const top = Math.round(crop.value.y * videoHeight);
+        const width = Math.round(crop.value.w * videoWidth);
+        const height = Math.round(crop.value.h * videoHeight);
+
+        if (width > 0 && height > 0) {
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = width;
+            croppedCanvas.height = height;
+            const croppedCtx = croppedCanvas.getContext('2d');
+            croppedCtx.drawImage(canvas, left, top, width, height, 0, 0, width, height);
+            canvas = croppedCanvas;
+        }
+    }
+
+    // Apply rotation if set
+    if (rotation.value !== 0) {
+        const rotatedCanvas = document.createElement('canvas');
+        const rotatedCtx = rotatedCanvas.getContext('2d');
+
+        if (rotation.value === 90 || rotation.value === 270) {
+            rotatedCanvas.width = canvas.height;
+            rotatedCanvas.height = canvas.width;
+        } else {
+            rotatedCanvas.width = canvas.width;
+            rotatedCanvas.height = canvas.height;
+        }
+
+        rotatedCtx.translate(rotatedCanvas.width / 2, rotatedCanvas.height / 2);
+        rotatedCtx.rotate((rotation.value * Math.PI) / 180);
+        rotatedCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+        canvas = rotatedCanvas;
+    }
 
     const imageB64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
 

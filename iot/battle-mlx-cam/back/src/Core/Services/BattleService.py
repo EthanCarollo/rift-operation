@@ -39,6 +39,8 @@ class BattleRoleState:
         
         # Crop settings (x, y, w, h) normalized
         self.crop = None
+        # Rotation in degrees (0, 90, 180, 270)
+        self.rotation = 0
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""
@@ -87,7 +89,8 @@ class BattleService:
                     "knn_label": p.knn_label,
                     "knn_distance": p.knn_distance,
                     "processing": p.processing,
-                    "crop": p.crop
+                    "crop": p.crop,
+                    "rotation": p.rotation
                 }
                 for role, p in self.roles.items()
             }
@@ -151,7 +154,27 @@ class BattleService:
                 print(f"[BattleService] No crop configured for {role}")
                 state._crop_warned = True
         
-        # DEBUG: Emit the actual image being processed (cropped)
+        # Apply rotation if set
+        if state.rotation and state.rotation != 0:
+            try:
+                img = Image.open(io.BytesIO(image_bytes))
+                # PIL rotate is counter-clockwise, so we negate for clockwise rotation
+                # Also, expand=True ensures the image is resized to fit the rotated content
+                if state.rotation == 90:
+                    img = img.transpose(Image.ROTATE_270)  # 90° clockwise
+                elif state.rotation == 180:
+                    img = img.transpose(Image.ROTATE_180)
+                elif state.rotation == 270:
+                    img = img.transpose(Image.ROTATE_90)   # 270° clockwise = 90° counter-clockwise
+                
+                buf = io.BytesIO()
+                img.save(buf, format='JPEG')
+                image_bytes = buf.getvalue()
+                print(f"[BattleService] Rotation {state.rotation}° applied for {role}")
+            except Exception as e:
+                print(f"[BattleService] Rotation failed for {role}: {e}")
+        
+        # DEBUG: Emit the actual image being processed (cropped + rotated)
         if self.socketio:
             encoded_crop = base64.b64encode(image_bytes).decode('utf-8')
             self.socketio.emit('debug_cropped_frame', {'role': role, 'frame': encoded_crop})
@@ -185,7 +208,20 @@ class BattleService:
         """Update crop settings for a role."""
         if role in self.roles:
             self.roles[role].crop = crop
+            # Reset the crop warning flag when crop is updated
+            if hasattr(self.roles[role], '_crop_warned'):
+                delattr(self.roles[role], '_crop_warned')
             print(f"[BattleService] Updated crop for {role}: {crop}")
+            self._emit_status()
+
+    def update_role_rotation(self, role: str, rotation: int):
+        """Update rotation settings for a role (0, 90, 180, 270)."""
+        if role in self.roles:
+            # Validate rotation value
+            if rotation not in [0, 90, 180, 270]:
+                rotation = 0
+            self.roles[role].rotation = rotation
+            print(f"[BattleService] Updated rotation for {role}: {rotation}°")
             self._emit_status()
 
     def force_end_fight(self):

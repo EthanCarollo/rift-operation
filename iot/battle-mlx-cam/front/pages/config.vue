@@ -32,6 +32,18 @@
                             {{ device.label || 'Unknown Device' }}
                         </option>
                     </select>
+
+                    <!-- Rotation Controls -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <label class="text-xs text-neutral-400">Rotation:</label>
+                        <div class="flex gap-1">
+                            <button v-for="angle in [0, 90, 180, 270]" :key="angle"
+                                @click="setRotation('nightmare', angle)" class="px-2 py-1 text-xs rounded"
+                                :class="rotations.nightmare === angle ? 'bg-red-600 text-white' : 'bg-neutral-700 hover:bg-neutral-600'">
+                                {{ angle }}°
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Camera Preview (Raw Feed) -->
@@ -97,7 +109,7 @@
                             :class="knnStatus.nightmare.label === 'Need Training' ? 'text-yellow-400' : 'text-green-400'">{{
                                 knnStatus.nightmare.label }}</span>
                         <span class="text-neutral-500 ml-1">({{ knnStatus.nightmare.distance?.toFixed(1) || '?'
-                            }})</span>
+                        }})</span>
                     </div>
                 </div>
 
@@ -134,6 +146,18 @@
                             {{ device.label || 'Unknown Device' }}
                         </option>
                     </select>
+
+                    <!-- Rotation Controls -->
+                    <div class="flex items-center gap-2 pt-2">
+                        <label class="text-xs text-neutral-400">Rotation:</label>
+                        <div class="flex gap-1">
+                            <button v-for="angle in [0, 90, 180, 270]" :key="angle" @click="setRotation('dream', angle)"
+                                class="px-2 py-1 text-xs rounded"
+                                :class="rotations.dream === angle ? 'bg-blue-600 text-white' : 'bg-neutral-700 hover:bg-neutral-600'">
+                                {{ angle }}°
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Camera Preview (Raw Feed) -->
@@ -280,6 +304,7 @@ const knnStatus = ref({
 const debugMode = ref(false);
 
 const crops = ref({ nightmare: null, dream: null });
+const rotations = ref({ nightmare: 0, dream: 0 });
 const editingCrop = ref(null); // 'nightmare' | 'dream' | null
 const tempCrop = ref({ x: 0, y: 0, w: 0, h: 0 });
 const isDragging = ref(false);
@@ -360,6 +385,12 @@ function saveDebugMode() {
     console.log('[Config] Debug mode:', debugMode.value);
 }
 
+function setRotation(role, angle) {
+    rotations.value[role] = angle;
+    socket.emit('update_rotation', { role, rotation: angle });
+    console.log(`[Config] Rotation for ${role}:`, angle);
+}
+
 function forceStartFight() {
     if (confirm("Force Start Fight? This will reset HP and start appearing phase.")) {
         socket.emit('force_start_fight', {});
@@ -388,6 +419,7 @@ function connect() {
         fetchAssignments();
         fetchDebugMode();
         fetchCrops();
+        fetchRotations();
     });
 
     socket.on('disconnect', () => {
@@ -443,6 +475,13 @@ function connect() {
         if (data.role) {
             console.log('[Config] Crop updated:', data);
             crops.value[data.role] = data.crop;
+        }
+    });
+
+    socket.on('rotation_updated', (data) => {
+        if (data.role !== undefined) {
+            console.log('[Config] Rotation updated:', data);
+            rotations.value[data.role] = data.rotation;
         }
     });
 
@@ -505,6 +544,19 @@ async function fetchCrops() {
         }
     } catch (e) {
         console.error('Failed to fetch crops:', e);
+    }
+}
+
+async function fetchRotations() {
+    try {
+        const res = await fetch(`${backendUrl.value}/remote/rotations`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.nightmare !== undefined) rotations.value.nightmare = data.nightmare;
+            if (data.dream !== undefined) rotations.value.dream = data.dream;
+        }
+    } catch (e) {
+        console.error('Failed to fetch rotations:', e);
     }
 }
 
