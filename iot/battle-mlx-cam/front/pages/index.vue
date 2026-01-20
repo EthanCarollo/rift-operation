@@ -19,22 +19,21 @@
                     playsinline preload="auto" @error="handleVideoError" @loadeddata="onVideoReady"
                     @canplay="onVideoReady" />
 
-                <!-- IDLE BG / Loading State -->
+                <!-- IDLE BG / Loading State - Just black screen -->
                 <div v-if="battleState === 'IDLE' || !currentVideo || !videoReady"
-                    class="absolute inset-0 z-10 bg-black flex items-center justify-center transition-opacity duration-300"
+                    class="absolute inset-0 z-10 bg-black transition-opacity duration-300"
                     :class="videoReady && battleState !== 'IDLE' ? 'opacity-0 pointer-events-none' : 'opacity-100'">
-                    <div class="text-purple-500/30 text-xl animate-pulse">EN ATTENTE...</div>
                 </div>
 
                 <!-- Boss Overlay -->
                 <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" :is-hit="isHit" :attack="currentAttack"
                     :is-vertical="false" />
 
-                <!-- Narrative Text Overlay -->
+                <!-- Narrative Text Overlay - At top, not over enemy -->
                 <div v-if="showNarrativeText"
-                    class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-                    <div class="bg-black/70 px-8 py-6 rounded-lg max-w-2xl text-center">
-                        <p class="text-white text-xl md:text-2xl font-medium leading-relaxed animate-fade-in">
+                    class="absolute top-0 left-0 right-0 z-20 flex justify-center pointer-events-none pt-8">
+                    <div class="bg-black/80 px-8 py-4 rounded-lg max-w-2xl text-center">
+                        <p class="text-white text-lg md:text-xl font-medium leading-relaxed animate-fade-in">
                             {{ narrativeText }}
                         </p>
                     </div>

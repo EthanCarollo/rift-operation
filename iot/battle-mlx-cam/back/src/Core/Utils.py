@@ -29,8 +29,11 @@ class ImageProcessor:
         
     def process_frame(self, image_bytes: bytes, current_attack: Optional[str] = None) -> ProcessingResult:
         
+        print(f"[ImageProcessor] 🔍 Starting processing (attack: {current_attack})")
+        
         # 0. Check Feature Flag
         if not Config.ENABLE_KNN:
+            print(f"[ImageProcessor] ❌ KNN DISABLED - Config.ENABLE_KNN is False")
             return ProcessingResult(
                 label="DISABLED",
                 distance=0.0,
@@ -40,10 +43,13 @@ class ImageProcessor:
 
         try:
             # 1. KNN Recognition
+            print(f"[ImageProcessor] 🧠 Calling KNN.predict()...")
             label, distance = self.knn.predict(image_bytes)
+            print(f"[ImageProcessor] ✅ KNN Result: label='{label}', distance={distance:.2f}")
             
             if label == "Need Training":
-                 return ProcessingResult(
+                print(f"[ImageProcessor] ⚠️ KNN needs training data - skipping")
+                return ProcessingResult(
                     label=label,
                     distance=distance,
                     status_message="⚠️ Need Training",
@@ -52,7 +58,8 @@ class ImageProcessor:
             
             # 2. Check for invalid labels (empty, etc.)
             if label in Config.PROMPT_MAPPING and Config.PROMPT_MAPPING[label] is None:
-                 return ProcessingResult(
+                print(f"[ImageProcessor] ⚠️ Label '{label}' has no prompt (skip generation)")
+                return ProcessingResult(
                     label=label,
                     distance=distance,
                     status_message=f"⚠️ {label.upper()}",
@@ -61,14 +68,19 @@ class ImageProcessor:
             
             # 3. Get Prompt
             prompt = Config.PROMPT_MAPPING.get(label, f"{label} in cartoon style")
+            print(f"[ImageProcessor] 📝 Prompt: '{prompt[:50]}...'")
             
             # 4. Validate Counter
             is_valid_counter = False
             if current_attack:
                 required = Config.ATTACK_TO_COUNTER_LABEL.get(current_attack)
                 is_valid_counter = (label == required)
+                print(f"[ImageProcessor] 🎯 Counter check: attack='{current_attack}' requires='{required}', got='{label}', valid={is_valid_counter}")
+            else:
+                print(f"[ImageProcessor] ⚠️ No current_attack set - cannot validate counter")
             
             if not prompt:
+                print(f"[ImageProcessor] ❌ No prompt for label '{label}' - skipping")
                 return ProcessingResult(
                     label=label,
                     distance=distance,
@@ -77,11 +89,12 @@ class ImageProcessor:
                 )
 
             # 5. Transform Image (AI)
-            # Pass original bytes; editor handles compression
-            generated_bytes, _ = self.editor.edit_image(image_bytes, prompt)
+            print(f"[ImageProcessor] 🎨 Generating image with AI...")
+            generated_bytes, gen_time = self.editor.edit_image(image_bytes, prompt)
             
             if not generated_bytes:
-                 return ProcessingResult(
+                print(f"[ImageProcessor] ❌ AI generation failed")
+                return ProcessingResult(
                     label=label,
                     distance=distance,
                     status_message="❌ Generation Failed",
@@ -89,11 +102,16 @@ class ImageProcessor:
                     is_valid_counter=is_valid_counter,
                     should_skip=True
                 )
+            
+            print(f"[ImageProcessor] ✅ AI generation complete ({gen_time:.2f}s)")
 
             # 6. Remove Background
-            final_bytes, _ = self.bg_remover.remove_background(generated_bytes)
+            print(f"[ImageProcessor] 🖼️ Removing background...")
+            final_bytes, bg_time = self.bg_remover.remove_background(generated_bytes)
+            print(f"[ImageProcessor] ✅ Background removed ({bg_time:.2f}s)")
             
             # Success
+            print(f"[ImageProcessor] 🎉 SUCCESS: label='{label}', valid_counter={is_valid_counter}")
             return ProcessingResult(
                 label=label,
                 distance=distance,
@@ -105,7 +123,9 @@ class ImageProcessor:
             )
 
         except Exception as e:
-            print(f"[ImageProcessor] Error: {e}")
+            print(f"[ImageProcessor] ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
             return ProcessingResult(
                 label="ERROR",
                 distance=0.0,
