@@ -1,4 +1,3 @@
-import threading
 import base64
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
@@ -193,6 +192,27 @@ class BattleWebServer(AbstractWebServer):
         def get_debug_mode():
             return jsonify({'debug_mode': self._debug_mode})
 
+        @self.app.route('/remote/crops', methods=['GET'])
+        def get_crops():
+            service = self._get_service()
+            if service:
+                return jsonify({role: p.crop for role, p in service.roles.items()})
+            return jsonify({})
+
+        @self.app.route('/remote/rotations', methods=['GET'])
+        def get_rotations():
+            service = self._get_service()
+            if service:
+                return jsonify({role: p.rotation for role, p in service.roles.items()})
+            return jsonify({})
+
+        @self.app.route('/remote/grayscales', methods=['GET'])
+        def get_grayscales():
+            service = self._get_service()
+            if service:
+                return jsonify({role: p.grayscale for role, p in service.roles.items()})
+            return jsonify({})
+
 
     def _register_socket_events(self):
         @self.socketio.on('connect')
@@ -207,7 +227,19 @@ class BattleWebServer(AbstractWebServer):
                 print(f"[BattleWebServer] Manual Attack Triggered")
                 service.state.trigger_attack()
 
+        @self.socketio.on('force_start_fight')
+        def handle_force_start_fight(data):
+            """Allow frontend/debug to manually start the fight."""
+            service = self._get_service()
+            if service:
+                service.force_start_fight()
 
+        @self.socketio.on('force_end_fight')
+        def handle_force_end_fight(data):
+            """Allow frontend/debug to manually end the fight."""
+            service = self._get_service()
+            if service:
+                service.force_end_fight()
         @self.socketio.on('disconnect')
         def handle_disconnect():
             print(f"[BattleWebServer] Client disconnected: {request.sid}")
@@ -263,6 +295,35 @@ class BattleWebServer(AbstractWebServer):
                 print(f"[BattleWebServer] Assigning {device_id} to {role}")
                 self._assignments[role] = device_id
                 self.socketio.emit('set_device', {'role': role, 'deviceId': device_id})
+
+        @self.socketio.on('update_crop')
+        def handle_update_crop(data):
+            role = data.get('role')
+            crop = data.get('crop')
+            service = self._get_service()
+            if service:
+                service.update_role_crop(role, crop)
+                # self.socketio.emit('crop_updated', ...) # Service emits status, but we can ack if needed
+                # Actually, let's keep emitting crop_updated for frontend feedback
+                self.socketio.emit('crop_updated', {'role': role, 'crop': crop})
+
+        @self.socketio.on('update_rotation')
+        def handle_update_rotation(data):
+            role = data.get('role')
+            rotation = data.get('rotation', 0)
+            service = self._get_service()
+            if service:
+                service.update_role_rotation(role, rotation)
+                self.socketio.emit('rotation_updated', {'role': role, 'rotation': rotation})
+
+        @self.socketio.on('update_grayscale')
+        def handle_update_grayscale(data):
+            role = data.get('role')
+            enabled = data.get('enabled', False)
+            service = self._get_service()
+            if service:
+                service.update_role_grayscale(role, enabled)
+                self.socketio.emit('grayscale_updated', {'role': role, 'enabled': enabled})
 
         @self.socketio.on('set_debug_mode')
         def handle_set_debug_mode(data):
