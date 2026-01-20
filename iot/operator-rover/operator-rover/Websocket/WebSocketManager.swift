@@ -8,18 +8,6 @@ struct LogMessage: Identifiable, Hashable {
     let text: String
 }
 
-enum ServerMode: String, CaseIterable, Identifiable {
-    case prod = "Production"
-    case dev = "Development"
-    var id: String { self.rawValue }
-    
-    var url: URL {
-        switch self {
-        case .dev: return URL(string: "ws://server.riftoperation.ethan-folio.fr/ws")!
-        case .prod: return URL(string: "ws://192.168.10.7:8000/ws")!
-        }
-    }
-}
 
 extension Notification.Name {
     static let riftStepReceived = Notification.Name("riftStepReceived")
@@ -37,21 +25,17 @@ final class WebSocketManager: ObservableObject, WebSocketDelegate {
     @Published var connectionStatus: ConnectionStatus = .disconnected
     @Published var logs: [LogMessage] = []
     
-    @Published var serverMode: ServerMode = .dev {
-        didSet {
-            // Avoid "Publishing changes from within view updates" error
-            // by dispatching the side-effect asynchronously
-            guard oldValue != serverMode else { return }
-            log("Switching to \(serverMode.rawValue)...")
-            DispatchQueue.main.async {
-                self.respawnSocket()
-            }
-        }
-    }
+    // Track triggers to prevent duplicate firing
+    private var riftTriggered: [String: Bool] = [
+        "step_1": false,
+        "step_2": false,
+        "step_3": false
+    ]
     
     // MARK: - Private
     private var socket: WebSocket?
     private var timer: Timer?
+    private let serverUrl = URL(string: "ws://192.168.10.7:8000/ws")!
     
     init() {
         respawnSocket()
@@ -63,7 +47,7 @@ final class WebSocketManager: ObservableObject, WebSocketDelegate {
     }
     
     private func setupSocket() {
-        var request = URLRequest(url: serverMode.url)
+        var request = URLRequest(url: serverUrl)
         request.timeoutInterval = 5
         socket = WebSocket(request: request)
         socket?.delegate = self
@@ -73,7 +57,7 @@ final class WebSocketManager: ObservableObject, WebSocketDelegate {
     func connect() {
         guard connectionStatus != .connected else { return }
         updateStatus(.connecting)
-        log("Attempting to connect to \(serverMode.url.absoluteString)...")
+        log("Attempting to connect to \(serverUrl.absoluteString)...")
         socket?.connect()
     }
     
@@ -147,19 +131,33 @@ final class WebSocketManager: ObservableObject, WebSocketDelegate {
             if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 let payload = (json["value"] as? [String: Any]) ?? json
                 
-                let s1 = payload["operator_launch_close_rift_step_1"] as? Bool ?? false
-                let s2 = payload["operator_launch_close_rift_step_2"] as? Bool ?? false
-                let s3 = payload["operator_launch_close_rift_step_3"] as? Bool ?? false
-                
-                if s1 || s2 || s3 {
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: .riftStepReceived, object: nil)
-                        self.log("Rift Step Detected -> Triggering Rover")
-                    }
-                }
+                // Check distinct steps
+                checkStep(key: "operator_launch_close_rift_step_1", id: "step_1", payload: payload)
+                checkStep(key: "operator_launch_close_rift_step_2", id: "step_2", payload: payload)
+                checkStep(key: "operator_launch_close_rift_step_3", id: "step_3", payload: payload)
             }
         } catch {
             print("JSON Parse Error: \(error)")
+        }
+    }
+    
+    private func checkStep(key: String, id: String, payload: [String: Any]) {
+        let isActive = payload[key] as? Bool ?? false
+        
+        // Rising edge detection: Was False/Nil, Now True
+        if isActive && !(riftTriggered[id] ?? false) {
+            riftTriggered[id] = true
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .riftStepReceived, object: nil)
+                self.log("Rift Trigger [\(id)] Received -> Advancing Rover")
+            }
+        }
+        
+        // Optional: Reset if signal goes low? Or keeps it true forever?
+        // Assuming "Close Rift Step" is a momentary or latched event. 
+        // If we want to allow re-triggering, we need to reset when it becomes false.
+        if !isActive {
+            riftTriggered[id] = false
         }
     }
 

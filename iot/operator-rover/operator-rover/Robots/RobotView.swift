@@ -16,6 +16,7 @@ struct RobotView: View {
 
     // Sensor & Battery
     @State private var sensorText: String = "Waiting for data..."
+    @State private var lastActionText: String = "READY" // New state for event log
     @State private var batteryText: String = "--"
     @State private var batteryIcon: String = "battery.0"
 
@@ -38,203 +39,40 @@ struct RobotView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 30) {
+            GeometryReader { geometry in
+                let isLandscape = geometry.size.width > 600 // Simple heuristic for Mac/iPad vs Phone Portrait
                 
-                // Header
-                HStack {
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                        .foregroundColor(.blue)
-                        .font(.largeTitle)
-                    Text("COORDINATOR RVR")
-                        .font(.system(size: 28, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white)
-                        .shadow(color: .blue.opacity(0.8), radius: 10, x: 0, y: 0)
-                    Spacer()
+                VStack(spacing: 30) {
                     
-                    // Connection Status
-                    HStack(spacing: 15) {
-                        // WS Status
-                        HStack {
-                            Image(systemName: "server.rack")
-                                .font(.caption)
-                                .foregroundColor(wsManager.connectionStatus == .connected ? .cyan : (wsManager.connectionStatus == .connecting ? .yellow : .gray))
-                            Circle()
-                                .fill(wsManager.connectionStatus == .connected ? Color.cyan : (wsManager.connectionStatus == .connecting ? Color.yellow : Color.red))
-                                .frame(width: 8, height: 8)
-                                .shadow(color: wsManager.connectionStatus == .connected ? .cyan : (wsManager.connectionStatus == .connecting ? .yellow : .red), radius: 5)
-                            Text("WS")
-                                .font(.caption.bold())
-                                .foregroundColor(.white.opacity(0.8))
+                    // Header (Shared)
+                    headerView
+                    
+                    if let rob = robot, rob.isConnected {
+                        if isLandscape {
+                            // Landscape / Mac Layout: Side by Side
+                            HStack(alignment: .top, spacing: 20) {
+                                controlsPanel
+                                telemetryPanel
+                                    .frame(width: 300)
+                            }
+                            .padding(.horizontal)
+                        } else {
+                            // Portrait / iPhone Layout: Vertical Stack
+                            ScrollView {
+                                VStack(spacing: 20) {
+                                    controlsPanel
+                                    telemetryPanel
+                                }
+                                .padding(.horizontal)
+                                .padding(.bottom, 20)
+                            }
                         }
-                        .padding(6)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(15)
-
-                        // Robot Status
-                        HStack {
-                            Circle()
-                                .fill(robot?.isConnected == true ? Color.green : Color.red)
-                                .frame(width: 8, height: 8)
-                                .shadow(color: robot?.isConnected == true ? .green : .red, radius: 5)
-                            Text(robot?.isConnected == true ? "RVR" : "NO LINK")
-                                .font(.caption.bold())
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                        .padding(8)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(20)
+                    } else {
+                        connectingView
                     }
+                    
+                    if isLandscape { Spacer() }
                 }
-                .padding(.horizontal)
-                .padding(.top, 20)
-
-                if let rob = robot, rob.isConnected {
-                    HStack(alignment: .top, spacing: 20) {
-                        
-                        // LEFT PANEL: CONTROLS
-                        VStack(spacing: 20) {
-                            Text("MANUAL OVERRIDE")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                            Spacer()
-
-                            // Directional Pad
-                            VStack(spacing: 15) {
-                                ControlButton(icon: "arrow.up", label: "FORWARD", color: .cyan) {
-                                    startInteraction(cmd: "Forward")
-                                    rob.forward(speed: 100)
-                                } onPressRelease: {
-                                    stopInteraction()
-                                }
-
-                                HStack(spacing: 20) {
-                                    ControlButton(icon: "arrow.turn.up.left", label: "LEFT", color: .purple) {
-                                        startInteraction(cmd: "Left")
-                                        rob.turn(degrees: -15)
-                                    } onPressRelease: { stopInteraction() }
-
-                                    ControlButton(icon: "stop.fill", label: "HALT", color: .red) {
-                                        startInteraction(cmd: "Stop")
-                                        rob.stop()
-                                    } onPressRelease: { stopInteraction() }
-
-                                    ControlButton(icon: "arrow.turn.up.right", label: "RIGHT", color: .purple) {
-                                        startInteraction(cmd: "Right")
-                                        rob.turn(degrees: 15)
-                                    } onPressRelease: { stopInteraction() }
-                                }
-
-                                ControlButton(icon: "arrow.down", label: "REVERSE", color: .cyan) {
-                                    startInteraction(cmd: "Reverse")
-                                    rob.backward(speed: 80)
-                                } onPressRelease: { stopInteraction() }
-                            }
-                            
-                            Spacer()
-                            
-                            // LED Control
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("LIGHTING SYSTEM")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                
-                                HStack {
-                                    ColorButton(color: .off, selected: $selectedColor, rob: rob)
-                                    ColorButton(color: .red, selected: $selectedColor, rob: rob)
-                                    ColorButton(color: .green, selected: $selectedColor, rob: rob)
-                                    ColorButton(color: .blue, selected: $selectedColor, rob: rob)
-                                    ColorButton(color: .white, selected: $selectedColor, rob: rob)
-                                }
-                            }
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(15)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(20)
-                        
-                        // RIGHT PANEL: TELEMETRY & DEBUG
-                        VStack(spacing: 20) {
-                            
-                            // Debug Timer
-                            VStack {
-                                Text("DEBUG TIMER (MS)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                Text(String(format: "%.0f ms", pressDuration * 1000))
-                                    .font(.system(size: 40, weight: .bold, design: .monospaced))
-                                    .foregroundColor(isInteracting ? .yellow : .white)
-                                    .shadow(color: isInteracting ? .yellow.opacity(0.5) : .clear, radius: 10)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.vertical)
-                            }
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(15)
-
-                            // Telemetry
-                            VStack(alignment: .leading, spacing: 15) {
-                                Text("TELEMETRY STREAM")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                                
-                                HStack {
-                                    Label(batteryText, systemImage: batteryIcon)
-                                        .font(.headline)
-                                        .foregroundColor(batteryText == "Critical" ? .red : .green)
-                                    Spacer()
-                                    Text("Heading: \(rob.heading)°")
-                                        .font(.monospacedDigit(.body)())
-                                        .foregroundColor(.white)
-                                }
-                                
-                                Divider().background(.white.opacity(0.2))
-                                
-                                ScrollView {
-                                    Text(sensorText)
-                                        .font(.system(size: 12, design: .monospaced))
-                                        .foregroundColor(.white.opacity(0.8))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .frame(height: 150)
-                            }
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(15)
-                            
-                            Spacer()
-                        }
-                        .frame(width: 300)
-                    }
-                    .padding(.horizontal)
-                } else {
-                    // Connecting State
-                    VStack {
-                        Spacer()
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(2)
-                        Text("ESTABLISHING UPLINK...")
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(.top)
-                        Spacer()
-                        
-                        Button("FORCE RECONNECT") {
-                            createAndConnectRobot()
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(.white)
-                    }
-                }
-                
-                Spacer()
             }
         }
         .onAppear {
@@ -243,12 +81,221 @@ struct RobotView: View {
         .onReceive(NotificationCenter.default.publisher(for: .riftStepReceived)) { _ in
             guard let rob = self.robot, rob.isConnected else { return }
             print("Auto-Advancing Rover!")
+            self.lastActionText = "RIFT STEP: ADVANCING (50ms)"
             rob.forward(speed: 100)
             
-            // Stop after short delay (Advance "once")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // Stop after short delay (Advance "Micro-Step")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 rob.stop()
+                self.lastActionText = "RIFT STEP: COMPLETED"
             }
+        }
+    }
+
+    // MARK: - Subviews
+    
+    private var headerView: some View {
+        HStack {
+            Image(systemName: "dot.radiowaves.left.and.right")
+                .foregroundColor(.blue)
+                .font(.largeTitle)
+            Text("COORDINATOR RVR")
+                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
+                .shadow(color: .blue.opacity(0.8), radius: 10, x: 0, y: 0)
+            Spacer()
+            
+            // Connection Status
+            HStack(spacing: 15) {
+                // WS Status
+                HStack {
+                    Image(systemName: "server.rack")
+                        .font(.caption)
+                        .foregroundColor(wsManager.connectionStatus == .connected ? .cyan : (wsManager.connectionStatus == .connecting ? .yellow : .gray))
+                    Circle()
+                        .fill(wsManager.connectionStatus == .connected ? Color.cyan : (wsManager.connectionStatus == .connecting ? Color.yellow : Color.red))
+                        .frame(width: 8, height: 8)
+                        .shadow(color: wsManager.connectionStatus == .connected ? .cyan : (wsManager.connectionStatus == .connecting ? .yellow : .red), radius: 5)
+                    Text("WS")
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(6)
+                .background(.ultraThinMaterial)
+                .cornerRadius(15)
+
+                // Robot Status
+                HStack {
+                    Circle()
+                        .fill(robot?.isConnected == true ? Color.green : Color.red)
+                        .frame(width: 8, height: 8)
+                        .shadow(color: robot?.isConnected == true ? .green : .red, radius: 5)
+                    Text(robot?.isConnected == true ? "RVR" : "NO LINK")
+                        .font(.caption.bold())
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(8)
+                .background(.ultraThinMaterial)
+                .cornerRadius(20)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 20)
+    }
+    
+    private var controlsPanel: some View {
+        // LEFT PANEL: CONTROLS
+        VStack(spacing: 20) {
+            Text("MANUAL OVERRIDE")
+                .font(.caption)
+                .foregroundColor(.gray)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer()
+
+            if let rob = robot {
+                // Directional Pad
+                VStack(spacing: 15) {
+                    ControlButton(icon: "arrow.up", label: "FORWARD", color: .cyan) {
+                        startInteraction(cmd: "Forward")
+                        rob.forward(speed: 100)
+                    } onPressRelease: {
+                        stopInteraction()
+                    }
+
+                    HStack(spacing: 20) {
+                        ControlButton(icon: "arrow.turn.up.left", label: "LEFT", color: .purple) {
+                            startInteraction(cmd: "Left")
+                            rob.turn(degrees: -15)
+                        } onPressRelease: { stopInteraction() }
+
+                        ControlButton(icon: "stop.fill", label: "HALT", color: .red) {
+                            startInteraction(cmd: "Stop")
+                            rob.stop()
+                        } onPressRelease: { stopInteraction() }
+
+                        ControlButton(icon: "arrow.turn.up.right", label: "RIGHT", color: .purple) {
+                            startInteraction(cmd: "Right")
+                            rob.turn(degrees: 15)
+                        } onPressRelease: { stopInteraction() }
+                    }
+
+                    ControlButton(icon: "arrow.down", label: "REVERSE", color: .cyan) {
+                        startInteraction(cmd: "Reverse")
+                        rob.backward(speed: 80)
+                    } onPressRelease: { stopInteraction() }
+                }
+            }
+            
+            Spacer()
+            
+            // LED Control
+            if let rob = robot {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("LIGHTING SYSTEM")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    HStack {
+                        ColorButton(color: .off, selected: $selectedColor, rob: rob)
+                        ColorButton(color: .red, selected: $selectedColor, rob: rob)
+                        ColorButton(color: .green, selected: $selectedColor, rob: rob)
+                        ColorButton(color: .blue, selected: $selectedColor, rob: rob)
+                        ColorButton(color: .white, selected: $selectedColor, rob: rob)
+                    }
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(15)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(.ultraThinMaterial)
+        .cornerRadius(20)
+    }
+    
+    private var telemetryPanel: some View {
+        // RIGHT PANEL: TELEMETRY & DEBUG
+        VStack(spacing: 20) {
+            
+            // Debug Timer
+            VStack {
+                Text("DEBUG TIMER (MS)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Text(String(format: "%.0f ms", pressDuration * 1000))
+                    .font(.system(size: 40, weight: .bold, design: .monospaced))
+                    .foregroundColor(isInteracting ? .yellow : .white)
+                    .shadow(color: isInteracting ? .yellow.opacity(0.5) : .clear, radius: 10)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical)
+            }
+            .padding()
+            .background(.ultraThinMaterial)
+            .cornerRadius(15)
+
+            // Telemetry
+            if let rob = robot {
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("TELEMETRY STREAM")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    HStack {
+                        Label(batteryText, systemImage: batteryIcon)
+                            .font(.headline)
+                            .foregroundColor(batteryText == "Critical" ? .red : .green)
+                        Spacer()
+                        Text("Heading: \(rob.heading)°")
+                            .font(.monospacedDigit(.body)())
+                            .foregroundColor(.white)
+                    }
+                    
+                    Divider().background(.white.opacity(0.2))
+                    
+                    ScrollView {
+                        Text("LAST EVENT: \(lastActionText)")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(.yellow)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.bottom, 4)
+                        
+                        Text(sensorText)
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 150)
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(15)
+            }
+            
+            Spacer()
+        }
+    }
+    
+    private var connectingView: some View {
+        VStack {
+            Spacer()
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                .scaleEffect(2)
+            Text("ESTABLISHING UPLINK...")
+                .font(.headline)
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.top)
+            Spacer()
+            
+            Button("FORCE RECONNECT") {
+                createAndConnectRobot()
+            }
+            .buttonStyle(.bordered)
+            .tint(.white)
         }
     }
 
@@ -272,6 +319,9 @@ struct RobotView: View {
         interactionTimer?.invalidate()
         interactionTimer = nil
     }
+    
+    // MARK: - Connection
+    // (createAndConnectRobot is below, unchanged)
 
     // MARK: - Connection
 

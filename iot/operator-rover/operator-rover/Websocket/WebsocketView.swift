@@ -48,15 +48,11 @@ struct WebsocketView: View {
                 .padding()
                 .background(Color.gray.opacity(0.15))
                 
-                // Server Selection
-                Picker("Server", selection: $wsManager.serverMode) {
-                   ForEach(ServerMode.allCases) { mode in
-                       Text(mode.rawValue).tag(mode)
-                   }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                // Server Selection - REMOVED (Hardcoded to Production)
+                Text("MODE: PRODUCTION (192.168.10.7)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .padding(.vertical, 8)
 
                 Divider().background(Color.gray)
                 
