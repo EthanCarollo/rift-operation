@@ -46,7 +46,7 @@ export const questions: Record<string, Question> = {
   step_4: {
     type: 'text',
     step: 4,
-    text: "<b>Pour trouver la dernière lettre</b>, ramène <b>Dark Cosmo</b> au près de son frère <b>Cosmo</b>.",
+    text: "<b>Pour trouver la dernière lettre</b>, prenez <b>Dark Cosmo</b> et posez-le sur son socle à côté de <b>Cosmo</b>.",
     images: ['/images/stranger/dark-cosmo.png', '/images/stranger/cosmo.png']
   },
   recognized: {
