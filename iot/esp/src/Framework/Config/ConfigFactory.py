@@ -94,7 +94,7 @@ class ConfigFactory:
             wifi=WifiConfigFactory.create_cudy(),
             websocket=WebsocketConfigFactory.create_prod(),
             device_id="OPERATOR-ESP",
-            debug_mode=True,
+            debug_mode=False,
             heartbeat_interval=15
         )
 
