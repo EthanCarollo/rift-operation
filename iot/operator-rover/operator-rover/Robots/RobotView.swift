@@ -28,6 +28,10 @@ struct RobotView: View {
 
     // Design
     @State private var selectedColor: RobotColor = .off
+    
+    // Rift Step Log History
+    @State private var riftStepLog: [String] = ["[SYSTEM] Waiting for rift_step_1..."]
+    @State private var currentStep: Int = 1 // Track which step we're on (1, 2, or 3)
 
     var body: some View {
         ZStack {
@@ -80,14 +84,26 @@ struct RobotView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .riftStepReceived)) { _ in
             guard let rob = self.robot, rob.isConnected else { return }
-            print("Auto-Advancing Rover!")
-            self.lastActionText = "RIFT STEP: ADVANCING (50ms)"
+            
+            // Log received
+            riftStepLog.append("[RECEIVED] launch_close_rift_step_\(currentStep) = true")
+            print("Rift Step \(currentStep) Received!")
+            
+            // Execute movement
             rob.forward(speed: 100)
             
-            // Stop after short delay (Advance "Micro-Step")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            // Stop after 15ms (perfect 1/3 closure)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.015) {
                 rob.stop()
-                self.lastActionText = "RIFT STEP: COMPLETED"
+                
+                // Log completed
+                if currentStep == 3 {
+                    riftStepLog.append("[COMPLETED] launch_close_rift (ALL STEPS DONE)")
+                } else {
+                    riftStepLog.append("[COMPLETED] launch_close_rift_step_\(currentStep)")
+                    currentStep += 1
+                    riftStepLog.append("[WAITING] Waiting for rift_step_\(currentStep)...")
+                }
             }
         }
     }
@@ -99,7 +115,7 @@ struct RobotView: View {
             Image(systemName: "dot.radiowaves.left.and.right")
                 .foregroundColor(.blue)
                 .font(.largeTitle)
-            Text("COORDINATOR RVR")
+            Text("OPERATOR RVR")
                 .font(.system(size: 28, weight: .bold, design: .monospaced))
                 .foregroundColor(.white)
                 .shadow(color: .blue.opacity(0.8), radius: 10, x: 0, y: 0)
@@ -257,16 +273,16 @@ struct RobotView: View {
                     Divider().background(.white.opacity(0.2))
                     
                     ScrollView {
-                        Text("LAST EVENT: \(lastActionText)")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.yellow)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.bottom, 4)
-                        
-                        Text(sensorText)
-                            .font(.system(size: 12, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.8))
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(riftStepLog.indices, id: \.self) { index in
+                                Text(riftStepLog[index])
+                                    .font(.system(size: 10, design: .monospaced))
+                                    .foregroundColor(riftStepLog[index].contains("Completed") ? .green : 
+                                                   riftStepLog[index].contains("Received") ? .cyan :
+                                                   riftStepLog[index].contains("Waiting") ? .yellow : .white)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
                     }
                     .frame(height: 150)
                 }
@@ -320,9 +336,7 @@ struct RobotView: View {
         interactionTimer = nil
     }
     
-    // MARK: - Connection
-    // (createAndConnectRobot is below, unchanged)
-
+    
     // MARK: - Connection
 
     private func createAndConnectRobot() {
