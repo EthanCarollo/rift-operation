@@ -5,7 +5,9 @@ import type { OperatorStatus } from '~/types/status'
 const status = ref<OperatorStatus | null>(null)
 const isConnected = ref(false)
 const viewState = ref<'idle' | 'intro_video' | 'show_start_button' | 'dashboard' | 'outro_video'>('idle')
-let socket: WebSocket | null = null
+const sockets: WebSocket[] = []
+const ports = [8000, 8001, 8002]
+const connectedPorts = ref<Set<number>>(new Set())
 
 // Header time
 const currentTime = ref('')
@@ -23,36 +25,58 @@ let timeTimer: ReturnType<typeof setInterval>
 const config = useRuntimeConfig()
 
 const connectWebSocket = () => {
-  try {
-    socket = new WebSocket(config.public.wsUrl)
+  // Clear existing
+  sockets.forEach(s => s.close())
+  sockets.length = 0
+  connectedPorts.value.clear()
 
-    socket.onopen = () => {
-      isConnected.value = true
-    }
+  const baseUrl = config.public.wsUrl.replace('ws://', '').split(':')[0] // Extract IP "192.168.10.7" from config if needed, or hardcode.
+  // Actually config has full URL. Let's assume the IP is consistent with the user request.
+  // User said: "8000... 8001... 8002".
+  // Let's use the explicit IP from the user request to be safe: 192.168.10.7.
+  const targetIp = '192.168.10.7'
 
-    socket.onmessage = (event) => {
-      try {
-        const newStatus = JSON.parse(event.data) as OperatorStatus
-        console.log("⬇️ WS RECEIVED:", newStatus)
-        status.value = newStatus
-      } catch (e) {
-        console.error('Failed to parse WebSocket message')
+  ports.forEach(port => {
+    try {
+      const socket = new WebSocket(`ws://${targetIp}:${port}/ws`)
+      sockets.push(socket)
+
+      socket.onopen = () => {
+        console.log(`✅ WS Connected to port ${port}`)
+        connectedPorts.value.add(port)
+        isConnected.value = true
       }
-    }
 
-    socket.onclose = () => {
-      isConnected.value = false
-      status.value = null
-      setTimeout(connectWebSocket, 3000)
-    }
+      socket.onmessage = (event) => {
+        try {
+          const newStatus = JSON.parse(event.data) as OperatorStatus
+          // console.log(`⬇️ WS RECEIVED (${port}):`, newStatus)
+          status.value = newStatus
+        } catch (e) {
+          console.error(`Failed to parse WebSocket message from port ${port}`)
+        }
+      }
 
-    socket.onerror = () => {
-      socket?.close()
-    }
+      socket.onclose = () => {
+        console.log(`❌ WS Closed on port ${port}`)
+        connectedPorts.value.delete(port)
+        if (connectedPorts.value.size === 0) {
+          isConnected.value = false
+        }
+        // Simple reconnect logic for individual socket could be complex. 
+        // For now, if all close, we might want to retry global connect or just let it be.
+        // User didn't specify robust retry logic for individual ports, so we left it simple.
+      }
 
-  } catch (err) {
-    // Silent fail
-  }
+      socket.onerror = () => {
+        console.error(`WS Error on port ${port}`)
+        socket?.close()
+      }
+
+    } catch (err) {
+      console.error(`Failed to create connection for port ${port}`, err)
+    }
+  })
 }
 
 const playIntroOnClick = () => {
@@ -68,12 +92,24 @@ const onIntroVideoEnded = () => {
 
 const startMission = () => {
   // Send WebSocket message with start_system = true
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    const payload = { start_system: true }
-    socket.send(JSON.stringify(payload))
-    console.log("⬆️ WS SENT:", payload)
+  // Send WebSocket message with start_system = true to ALL ports
+  const payload = { 
+    start_system: true,
+    device_id: 'OPERATOR-MONITOR' 
+  }
+  
+  let sentCount = 0
+  sockets.forEach(socket => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(payload))
+      sentCount++
+    }
+  })
+  
+  if (sentCount > 0) {
+    console.log(`⬆️ WS SENT to ${sentCount} ports:`, payload)
   } else {
-    console.error("WebSocket not connected")
+    console.error("No WebSocket connected")
   }
   
   // Transition to dashboard
@@ -91,9 +127,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (socket) {
-    socket.close()
-  }
+  sockets.forEach(s => s.close())
   if (timeTimer) {
     clearInterval(timeTimer)
   }

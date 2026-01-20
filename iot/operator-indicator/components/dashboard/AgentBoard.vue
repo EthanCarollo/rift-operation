@@ -196,11 +196,11 @@ const agent2Health = computed(() => {
       <div class="w-1/2 h-full p-4 flex flex-col gap-4">
         
         <!-- Agent 1 Card -->
-        <div class="border border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-transparent rounded-lg p-3">
-          <div class="flex items-start justify-between mb-2">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full border border-pink-500 flex items-center justify-center text-pink-500 bg-pink-900/10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gradient-pink-card)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="border border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-transparent rounded-lg p-5 flex flex-col justify-center flex-1">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full border border-pink-500 flex items-center justify-center text-pink-500 bg-pink-900/10">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#gradient-pink-card)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <defs>
                     <linearGradient id="gradient-pink-card" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
@@ -212,45 +212,45 @@ const agent2Health = computed(() => {
                 </svg>
               </div>
               <div>
-                <div class="text-pink-500 font-bold text-2xl tracking-wide font-orbitron">Agent 1</div>
-                <div class="text-sm text-gray-400 uppercase tracking-widest font-inter">Navigateur Onirique</div>
+                <div class="text-pink-500 font-bold text-4xl tracking-wide font-orbitron mb-1">Agent 1</div>
+                <div class="text-xl text-gray-400 uppercase tracking-widest font-inter">Navigateur Onirique</div>
               </div>
             </div>
-            <div class="flex items-center gap-1">
-              <span class="w-3 h-3 rounded-full bg-pink-500 animate-pulse"></span>
-              <span class="text-sm text-pink-500 font-inter">En Mission</span>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-pink-500 animate-pulse"></span>
+              <span class="text-xl text-pink-500 font-inter">En Mission</span>
             </div>
           </div>
           <!-- Bars -->
-          <div class="space-y-2 mt-2">
-            <div class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500">
+          <div class="space-y-4 mt-2">
+            <div class="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500">
                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
               </svg>
-              <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-3 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-pink-500 shadow-[0_0_5px_rgba(236,72,153,0.8)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent1Health.health}%` }"></div>
               </div>
-              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent1Health.health }}%</span>
+              <span class="text-xl text-gray-400 w-12 text-right font-mono">{{ agent1Health.health }}%</span>
             </div>
-            <div class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500">
+            <div class="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-500">
                 <path d="m13 2-2 2.5L9 7l3 3-2 2.5L8 15l3 3-2 2.5L7 23"/>
                 <path d="M11 2 9 4.5 7 7l3 3-2 2.5L6 15l3 3-2 2.5L5 23"/>
               </svg>
-              <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-3 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-pink-400 shadow-[0_0_5px_rgba(244,114,182,0.8)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent1Health.energy}%` }"></div>
               </div>
-              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent1Health.energy }}%</span>
+              <span class="text-xl text-gray-400 w-12 text-right font-mono">{{ agent1Health.energy }}%</span>
             </div>
           </div>
         </div>
 
         <!-- Agent 2 Card -->
-        <div class="border border-[#00FFF0]/30 bg-gradient-to-br from-[#00FFF0]/5 to-transparent rounded-lg p-3">
-          <div class="flex items-start justify-between mb-2">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full border border-[#00FFF0] flex items-center justify-center text-[#00FFF0] bg-[#00FFF0]/5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gradient-cyan-card)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="border border-[#00FFF0]/30 bg-gradient-to-br from-[#00FFF0]/5 to-transparent rounded-lg p-5 flex flex-col justify-center flex-1">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-4">
+              <div class="w-16 h-16 rounded-full border border-[#00FFF0] flex items-center justify-center text-[#00FFF0] bg-[#00FFF0]/5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#gradient-cyan-card)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <defs>
                     <linearGradient id="gradient-cyan-card" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" style="stop-color:#00FFF0;stop-opacity:1" />
@@ -262,35 +262,35 @@ const agent2Health = computed(() => {
                 </svg>
               </div>
               <div>
-                <div class="text-[#00FFF0] font-bold text-2xl tracking-wide font-orbitron">Agent 2</div>
-                <div class="text-sm text-gray-400 uppercase tracking-widest font-inter">Chasseur de Cauchemars</div>
+                <div class="text-[#00FFF0] font-bold text-4xl tracking-wide font-orbitron mb-1">Agent 2</div>
+                <div class="text-xl text-gray-400 uppercase tracking-widest font-inter">Chasseur de Cauchemars</div>
               </div>
             </div>
-            <div class="flex items-center gap-1">
-              <span class="w-3 h-3 rounded-full bg-[#00FFF0] animate-pulse"></span>
-              <span class="text-sm text-[#00FFF0] font-inter">En Mission</span>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-[#00FFF0] animate-pulse"></span>
+              <span class="text-xl text-[#00FFF0] font-inter">En Mission</span>
             </div>
           </div>
           <!-- Bars -->
-          <div class="space-y-2 mt-2">
-            <div class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#00FFF0]">
+          <div class="space-y-4 mt-2">
+            <div class="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#00FFF0]">
                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
               </svg>
-              <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-3 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-[#00FFF0] shadow-[0_0_5px_rgba(0,255,240,0.8)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent2Health.health}%` }"></div>
               </div>
-              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent2Health.health }}%</span>
+              <span class="text-xl text-gray-400 w-12 text-right font-mono">{{ agent2Health.health }}%</span>
             </div>
-            <div class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#00FFF0]">
+            <div class="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#00FFF0]">
                 <path d="m13 2-2 2.5L9 7l3 3-2 2.5L8 15l3 3-2 2.5L7 23"/>
                 <path d="M11 2 9 4.5 7 7l3 3-2 2.5L6 15l3 3-2 2.5L5 23"/>
               </svg>
-              <div class="h-1.5 flex-1 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-3 flex-1 bg-gray-800 rounded-full overflow-hidden">
                 <div class="h-full bg-[#00FFF0]/70 shadow-[0_0_5px_rgba(0,255,240,0.6)] transition-all duration-1000 ease-in-out" :style="{ width: `${agent2Health.energy}%` }"></div>
               </div>
-              <span class="text-sm text-gray-400 w-8 text-right font-mono">{{ agent2Health.energy }}%</span>
+              <span class="text-xl text-gray-400 w-12 text-right font-mono">{{ agent2Health.energy }}%</span>
             </div>
           </div>
         </div>
