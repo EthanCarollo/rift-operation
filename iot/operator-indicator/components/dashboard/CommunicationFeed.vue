@@ -22,7 +22,7 @@ const displayMessages = computed(() => props.messages || defaultMessages)
 <template>
   <div class="col-span-5 row-span-6 border border-[#00FFC2]/30 rounded-xl p-5 flex flex-col relative overflow-hidden bg-[#050809]">
     <div class="flex justify-between items-center mb-5 pb-2 border-b border-[#00FFC2]/20">
-      <h2 class="text-sm font-semibold uppercase tracking-wider flex items-center gap-2 text-[#00FFC2] font-inter">
+      <h2 class="text-lg font-semibold uppercase tracking-wider flex items-center gap-2 text-[#00FFC2] font-inter">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-pulse">
           <path d="M5 22h14"/>
           <path d="M5 2h14"/>
@@ -46,7 +46,7 @@ const displayMessages = computed(() => props.messages || defaultMessages)
           msg.color === 'cyan' ? 'bg-gray-900/50 border-[#00FFF0]' : 'bg-pink-900/10 border-pink-500'
         ]"
       >
-        <div class="flex justify-between text-xs mb-1">
+        <div class="flex justify-between text-sm mb-1">
           <span 
             :class="[
               'font-bold tracking-wider font-orbitron',
@@ -57,7 +57,7 @@ const displayMessages = computed(() => props.messages || defaultMessages)
           </span>
           <span class="text-gray-500 font-mono">{{ msg.time }}</span>
         </div>
-        <div class="text-gray-300 text-sm font-light font-inter">{{ msg.text }}</div>
+        <div class="text-gray-300 text-lg font-light font-inter">{{ msg.text }}</div>
       </div>
     </div>
   </div>

@@ -232,14 +232,14 @@ onUnmounted(() => {
     <div class="absolute bottom-0 left-0 p-2 border-b border-l border-[#00FFC2]/40 w-6 h-6 rounded-bl-xl"></div>
 
     <h2
-      class="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider mb-5 text-[#00FFC2] font-orbitron">
-      <span class="text-base">⚠</span>
+      class="flex items-center gap-2 text-lg font-semibold uppercase tracking-wider mb-5 text-[#00FFC2] font-orbitron">
+      <span class="text-xl">⚠</span>
       {{ title }}
     </h2>
 
     <div class="flex flex-col justify-center h-[calc(100%-3rem)]">
       <div v-html="message"
-        class="text-xl md:text-2xl font-medium text-yellow-400 leading-relaxed tracking-normal glowing-text-yellow font-inter">
+        class="text-3xl md:text-4xl font-medium text-yellow-400 leading-relaxed tracking-normal glowing-text-yellow font-inter">
       </div>
       
       <!-- End Briefing Button (appears at state 18) -->
@@ -249,7 +249,7 @@ onUnmounted(() => {
       >
         <button 
           @click="emit('showOutro')"
-          class="relative bg-pink-600 text-white font-bold text-sm uppercase tracking-widest px-6 py-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-pink-700 hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
+          class="relative bg-pink-600 text-white font-bold text-lg uppercase tracking-widest px-6 py-3 rounded-lg overflow-hidden transition-all duration-300 hover:bg-pink-700 hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.8)] font-orbitron skew-x-[-12deg] animate-pulse-glow"
         >
           <span class="relative z-10 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

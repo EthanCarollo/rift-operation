@@ -84,10 +84,10 @@ const gradientOffsetFormatted = computed(() => {
   <div class="col-span-9 row-span-6 border border-[#00FFC2]/30 rounded-xl p-5 flex flex-col bg-[#0a0f11]">
     <div class="flex justify-between items-end mb-2">
       <div>
-        <h2 class="text-sm font-semibold uppercase tracking-wider text-[#00FFC2] font-orbitron">Moniteur de faille</h2>
-        <div class="text-white/60 text-xs mt-1 font-light font-inter">{{ stageText }}</div>
+        <h2 class="text-lg font-semibold uppercase tracking-wider text-[#00FFC2] font-orbitron">Moniteur de faille</h2>
+        <div class="text-white/60 text-sm mt-1 font-light font-inter">{{ stageText }}</div>
       </div>
-      <span class="text-[#00FFC2] font-mono text-xl">{{ progressPercentage }}%</span>
+      <span class="text-[#00FFC2] font-mono text-3xl">{{ progressPercentage }}%</span>
     </div>
     
     <!-- Progress Bar -->

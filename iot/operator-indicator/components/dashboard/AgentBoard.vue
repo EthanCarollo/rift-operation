@@ -117,7 +117,7 @@ const agent2Health = computed(() => {
 <template>
   <div class="col-span-6 row-span-6 border border-[#00FFC2]/30 rounded-xl p-0 relative flex overflow-hidden bg-[#0a0f11]">
     <div class="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-[#00FFC2]/5 to-transparent pointer-events-none"></div>
-    <h2 class="absolute top-4 left-5 text-sm font-semibold uppercase tracking-wider text-[#00FFC2] z-20 font-orbitron">Tableau de bord Agent</h2>
+    <h2 class="absolute top-4 left-5 text-lg font-semibold uppercase tracking-wider text-[#00FFC2] z-20 font-orbitron">Tableau de bord Agent</h2>
 
     <div class="flex w-full h-full pt-14">
       <!-- LEFT: MAP -->
@@ -212,7 +212,7 @@ const agent2Health = computed(() => {
                 </svg>
               </div>
               <div>
-                <div class="text-pink-500 font-bold text-sm tracking-wide font-orbitron">Agent 1</div>
+                <div class="text-pink-500 font-bold text-lg tracking-wide font-orbitron">Agent 1</div>
                 <div class="text-[9px] text-gray-400 uppercase tracking-widest font-inter">Navigateur Onirique</div>
               </div>
             </div>
@@ -262,7 +262,7 @@ const agent2Health = computed(() => {
                 </svg>
               </div>
               <div>
-                <div class="text-[#00FFF0] font-bold text-sm tracking-wide font-orbitron">Agent 2</div>
+                <div class="text-[#00FFF0] font-bold text-lg tracking-wide font-orbitron">Agent 2</div>
                 <div class="text-[9px] text-gray-400 uppercase tracking-widest font-inter">Chasseur de Cauchemars</div>
               </div>
             </div>
