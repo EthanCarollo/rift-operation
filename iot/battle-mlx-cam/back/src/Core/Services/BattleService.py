@@ -141,6 +141,11 @@ class BattleService:
             except Exception as e:
                 print(f"[BattleService] Crop failed for {role}: {e}")
         
+        # DEBUG: Emit the actual image being processed (cropped)
+        if self.socketio:
+            encoded_crop = base64.b64encode(image_bytes).decode('utf-8')
+            self.socketio.emit('debug_cropped_frame', {'role': role, 'frame': encoded_crop})
+
         if time.time() - state.last_gen_time < GENERATION_RATE_LIMIT_S:
             return
         

@@ -109,6 +109,15 @@
                         🎨 Waiting for AI Output...
                     </div>
                     <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">AI Output</div>
+
+                    <!-- Backend Crop Preview (Hover/Debug) -->
+                    <div class="absolute bottom-2 right-2 w-1/3 aspect-video bg-neutral-900 border border-neutral-700 shadow-lg overflow-hidden"
+                        v-if="debugCrops.nightmare">
+                        <img :src="'data:image/jpeg;base64,' + debugCrops.nightmare"
+                            class="w-full h-full object-cover" />
+                        <div class="absolute bottom-0 text-[10px] bg-black/60 w-full text-center text-neutral-400">
+                            Backend Input</div>
+                    </div>
                 </div>
             </div>
 
@@ -200,6 +209,14 @@
                         🎨 Waiting for AI Output...
                     </div>
                     <div class="absolute top-2 left-2 bg-black/50 px-2 py-1 rounded text-xs">AI Output</div>
+
+                    <!-- Backend Crop Preview (Hover/Debug) -->
+                    <div class="absolute bottom-2 right-2 w-1/3 aspect-video bg-neutral-900 border border-neutral-700 shadow-lg overflow-hidden"
+                        v-if="debugCrops.dream">
+                        <img :src="'data:image/jpeg;base64,' + debugCrops.dream" class="w-full h-full object-cover" />
+                        <div class="absolute bottom-0 text-[10px] bg-black/60 w-full text-center text-neutral-400">
+                            Backend Input</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,6 +251,7 @@ const connected = ref(false);
 const remoteDevices = ref([]);
 const assignments = ref({ nightmare: null, dream: null });
 const outputs = ref({ nightmare: null, dream: null });
+const debugCrops = ref({ nightmare: null, dream: null });
 const cameraPreviews = ref({ nightmare: null, dream: null });
 const knnStatus = ref({
     nightmare: { label: 'Waiting...', distance: 0 },
@@ -384,6 +402,12 @@ function connect() {
         if (data.role) {
             console.log('[Config] Crop updated:', data);
             crops.value[data.role] = data.crop;
+        }
+    });
+
+    socket.on('debug_cropped_frame', (data) => {
+        if (data.role && data.frame) {
+            debugCrops.value[data.role] = data.frame;
         }
     });
 }
