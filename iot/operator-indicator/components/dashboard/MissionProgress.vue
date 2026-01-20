@@ -47,7 +47,7 @@ const riftWidth = computed(() => {
 
 // Listen for reset_system
 watch(() => props.status?.reset_system, (reset) => {
-  if (reset === true || reset === 'true' || reset === 'TRUE') {
+  if (reset === true) {
     highestPartCount.value = 0
     startTime = Date.now()
   }
@@ -65,31 +65,31 @@ onUnmounted(() => {
 
 <template>
   <div class="col-span-3 row-span-6 border border-[#00FFC2]/30 rounded-xl p-4 flex flex-col bg-[#050809] relative">
-    <h2 class="text-sm font-semibold uppercase tracking-wider mb-5 text-[#00FFC2] font-orbitron">Avancée de la mission</h2>
+    <h2 class="text-3xl font-semibold uppercase tracking-wider mb-5 text-[#00FFC2] font-orbitron">Avancée de la mission</h2>
     
     <div class="grid grid-cols-2 grid-rows-2 gap-4 flex-1">
       <!-- Box 1: Timer -->
       <div class="border border-[#00FFC2] rounded-xl bg-gradient-to-b from-[#00FFC2]/5 to-transparent flex flex-col items-center justify-center text-center p-2 shadow-[0_0_10px_rgba(0,255,240,0.1)]">
-        <span class="text-3xl font-bold text-[#00FFC2] font-mono tracking-tighter drop-shadow-[0_0_5px_#00FFC2]">{{ elapsedTime }}</span>
-        <span class="text-[10px] text-[#00FFC2]/70 mt-1 font-semibold leading-tight uppercase font-inter">Temps passé<br>dans la faille</span>
+        <span class="text-7xl font-bold text-[#00FFC2] font-mono tracking-tighter drop-shadow-[0_0_5px_#00FFC2]">{{ elapsedTime }}</span>
+        <span class="text-base text-[#00FFC2]/70 mt-1 font-semibold leading-tight uppercase font-inter">Temps passé<br>dans la faille</span>
       </div>
       
       <!-- Box 2: Parts Collected -->
       <div class="border border-yellow-400 rounded-xl bg-gradient-to-b from-yellow-400/5 to-transparent flex flex-col items-center justify-center text-center p-2 shadow-[0_0_10px_rgba(250,204,21,0.1)]">
-        <span class="text-4xl font-bold text-yellow-400 font-mono drop-shadow-[0_0_5px_#FACC15]">{{ partsCollected }}</span>
-        <span class="text-[10px] text-yellow-400/70 mt-1 font-semibold leading-tight uppercase font-inter">Morceaux de<br>faille récupérés</span>
+        <span class="text-8xl font-bold text-yellow-400 font-mono drop-shadow-[0_0_5px_#FACC15]">{{ partsCollected }}</span>
+        <span class="text-base text-yellow-400/70 mt-1 font-semibold leading-tight uppercase font-inter">Morceaux de<br>faille récupérés</span>
       </div>
       
       <!-- Box 3: Parts Remaining -->
       <div class="border border-yellow-400 rounded-xl bg-gradient-to-b from-yellow-400/5 to-transparent flex flex-col items-center justify-center text-center p-2 shadow-[0_0_10px_rgba(250,204,21,0.1)]">
-        <span class="text-4xl font-bold text-yellow-400 font-mono drop-shadow-[0_0_5px_#FACC15]">{{ partsRemaining }}</span>
-        <span class="text-[10px] text-yellow-400/70 mt-1 font-semibold leading-tight uppercase font-inter">Morceaux de<br>faille restants</span>
+        <span class="text-6xl font-bold text-yellow-400 font-mono drop-shadow-[0_0_5px_#FACC15]">{{ partsRemaining }}</span>
+        <span class="text-base text-yellow-400/70 mt-1 font-semibold leading-tight uppercase font-inter">Morceaux de<br>faille restants</span>
       </div>
       
       <!-- Box 4: Rift Width -->
       <div class="border border-[#00FFC2] rounded-xl bg-gradient-to-b from-[#00FFC2]/5 to-transparent flex flex-col items-center justify-center text-center p-2 shadow-[0_0_10px_rgba(0,255,240,0.1)]">
-        <span class="text-3xl font-bold text-[#00FFC2] font-mono tracking-tighter drop-shadow-[0_0_5px_#00FFC2]">{{ riftWidth }}</span>
-        <span class="text-[10px] text-[#00FFC2]/70 mt-1 font-semibold leading-tight uppercase font-inter">Largeur de<br>la faille</span>
+        <span class="text-7xl font-bold text-[#00FFC2] font-mono tracking-tighter drop-shadow-[0_0_5px_#00FFC2]">{{ riftWidth }}</span>
+        <span class="text-base text-[#00FFC2]/70 mt-1 font-semibold leading-tight uppercase font-inter">Largeur de<br>la faille</span>
       </div>
     </div>
   </div>

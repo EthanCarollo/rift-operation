@@ -1,5 +1,4 @@
 from src.Framework.EspController import EspController
-from src.Framework.Logger.Logger import Logger
 from src.Core.Operator.OperatorWorkshop import OperatorWorkshop
 from src.Core.Operator.OperatorHardware import OperatorHardware
 
