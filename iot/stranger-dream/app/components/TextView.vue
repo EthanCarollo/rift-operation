@@ -1,6 +1,6 @@
 <template>
     <div class="flex flex-col items-center w-full gap-[2vw] text-center">
-        <h2 class="font-bold text-[3vw] text-stranger-rose uppercase tracking-wide m-0">
+        <h2 class="font-bold text-[1.8vw] text-stranger-rose uppercase tracking-wide m-0">
             {{ question.title || `Question ${question.step}` }}
         </h2>
 

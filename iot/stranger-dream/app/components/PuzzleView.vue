@@ -1,10 +1,13 @@
 <template>
     <div class="flex flex-col items-center w-full gap-[1.5vw]">
-        <h2 class="font-bold text-[2.5vw] text-stranger-rose uppercase tracking-wide m-0 text-center">
-            {{ question.title || `Question ${question.step}` }}
-        </h2>
-        <p class="text-[2vw] text-stranger-blue leading-snug m-0 text-center max-w-[80vw]" v-html="question.subtitle">
-        </p>
+        <div class="flex flex-col items-center w-full gap-[0.5vw]">
+            <h2 class="font-bold text-[1.8vw] text-stranger-rose uppercase tracking-wide m-0 text-center">
+                {{ question.title || `Question ${question.step}` }}
+            </h2>
+            <p class="text-[2vw] text-stranger-blue leading-snug m-0 text-center max-w-[80vw]"
+                v-html="question.subtitle">
+            </p>
+        </div>
 
         <div class="flex flex-col items-center gap-[1vw]">
             <div v-for="(item, idx) in question.puzzleItems" :key="idx"

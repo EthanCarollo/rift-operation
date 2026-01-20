@@ -64,10 +64,10 @@ const currentQuestion = computed<Question | null>(() => {
 </script>
 
 <style>
-/* Font face declarations - keeping global styles only */
+/* Font face declarations - using public folder to avoid Nuxt asset loop issues */
 @font-face {
   font-family: 'Lineal';
-  src: url('/assets/fonts/Lineal-Regular.ttf') format('truetype');
+  src: url('/fonts/Lineal-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -75,7 +75,7 @@ const currentQuestion = computed<Question | null>(() => {
 
 @font-face {
   font-family: 'Lineal';
-  src: url('/assets/fonts/Lineal-Medium.ttf') format('truetype');
+  src: url('/fonts/Lineal-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -83,7 +83,7 @@ const currentQuestion = computed<Question | null>(() => {
 
 @font-face {
   font-family: 'Lineal';
-  src: url('/assets/fonts/Lineal-Bold.ttf') format('truetype');
+  src: url('/fonts/Lineal-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -105,6 +105,7 @@ body {
   cursor: none;
 }
 
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;
 }
