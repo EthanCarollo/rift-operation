@@ -1,25 +1,14 @@
 <template>
-    <div class="flex justify-center gap-3 p-2">
+    <div class="flex justify-center gap-[1vw] p-[0.5vw]">
         <div v-for="step in totalSteps" :key="step"
-            class="relative w-[70px] h-[35px] flex items-center justify-center transition-transform duration-300 hover:scale-110">
-            <!-- Candy shape with double spikes -->
-            <svg viewBox="0 0 100 50" class="absolute inset-0 w-full h-full drop-shadow-md">
-                <!-- Left spikes -->
-                <polygon points="20,15 0,5 10,15" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
-                <polygon points="20,35 0,45 10,35" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
-                <polygon points="20,15 10,15 10,35 20,35" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
+            class="relative w-[5vw] h-[5vw] flex items-center justify-center transition-transform duration-300 hover:scale-110">
+            <!-- Candy image - fill for current/past steps, not-fill for future -->
+            <img :src="step <= currentStep ? '/images/fill-candy.png' : '/images/not-fill-candy.png'" alt=""
+                class="absolute inset-0 w-full h-full object-contain" />
 
-                <!-- Center oval -->
-                <ellipse cx="50" cy="25" rx="32" ry="22" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
-
-                <!-- Right spikes -->
-                <polygon points="80,15 100,5 90,15" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
-                <polygon points="80,35 100,45 90,35" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
-                <polygon points="80,15 90,15 90,35 80,35" :fill="step <= currentStep ? '#FF00CF' : '#00FFC4'" />
-            </svg>
-
-            <!-- Step number -->
-            <span class="relative z-10 font-bold text-xl text-stranger-blue">{{ step }}</span>
+            <!-- Step number - yellow for active, dark blue for inactive -->
+            <span class="relative z-10 font-bold text-[1.5vw]"
+                :style="{ color: step <= currentStep ? '#FFFF00' : '#150059' }">{{ step }}</span>
         </div>
     </div>
 </template>

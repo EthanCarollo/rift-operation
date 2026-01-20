@@ -61,6 +61,68 @@ class PinguinQaService:
         text = text.lower().strip()
         text = re.sub(r'[.!?,\d]', '', text)
         return text.strip()
+    
+    def find_exact_match(self, question: str) -> Tuple[str, str] | None:
+        """
+        Recherche une correspondance avec les stratégies suivantes (par ordre de priorité):
+        1. Correspondance exacte après normalisation
+        2. Correspondance à 90%+ (fuzzy matching)
+        3. Fin de phrase correspondant exactement à une phrase indexée
+        
+        Utile quand le STT ne met pas de ponctuation ou délire un peu.
+        
+        Returns:
+            Tuple (segment_original, audio_file) si trouvé, None sinon.
+        """
+        from difflib import SequenceMatcher
+        
+        normalized_question = self.normalize_text(question)
+        
+        best_match = None
+        best_ratio = 0.0
+        
+        for original_segment in self.segments:
+            normalized_segment = self.normalize_text(original_segment)
+            
+            # 1. Correspondance exacte
+            if normalized_segment == normalized_question:
+                print(f"✅ [EXACT] '{question}' == '{original_segment}'")
+                return self._get_audio_for_segment(original_segment)
+            
+            # 2. Correspondance à 90%+ (fuzzy)
+            ratio = SequenceMatcher(None, normalized_question, normalized_segment).ratio()
+            if ratio >= 0.90 and ratio > best_ratio:
+                best_ratio = ratio
+                best_match = original_segment
+            
+            # 3. Fin de phrase correspondant exactement
+            # Ex: "blabla blabla C'est quoi la lettre" -> match "C'est quoi la lettre ?"
+            if normalized_question.endswith(normalized_segment):
+                print(f"✅ [SUFFIX] '{question}' ends with '{original_segment}'")
+                return self._get_audio_for_segment(original_segment)
+        
+        # Retourne le meilleur match fuzzy si trouvé
+        if best_match and best_ratio >= 0.90:
+            print(f"✅ [FUZZY {best_ratio:.0%}] '{question}' ≈ '{best_match}'")
+            return self._get_audio_for_segment(best_match)
+        
+        return None
+    
+    def _get_audio_for_segment(self, original_segment: str) -> Tuple[str, str]:
+        """
+        Récupère le fichier audio associé à un segment.
+        """
+        norm_key = self.normalize_text(original_segment)
+        audio_entry = self.audio_map.get(norm_key)
+        
+        audio_file = None
+        if audio_entry:
+            if isinstance(audio_entry, list) and audio_entry:
+                audio_file = random.choice(audio_entry)
+            elif isinstance(audio_entry, str):
+                audio_file = audio_entry
+        
+        return (original_segment, audio_file)
         
     def prepare_transcription(self, transcription: str, window_size: int = 1) -> List[str]:
         """
@@ -149,6 +211,30 @@ class PinguinQaService:
         Répond à la question de manière naturelle en cherchant dans l'index.
         """
         start_time = time.time()
+        
+        # --- [FAST PATH] Vérification de correspondance exacte (sans ponctuation) ---
+        # Utile quand le STT ne met pas de ponctuation mais dit exactement la bonne phrase.
+        exact_match = self.find_exact_match(question)
+        if exact_match:
+            original_segment, audio_file = exact_match
+            elapsed_ms = (time.time() - start_time) * 1000
+            print(f"✅ [EXACT MATCH] '{question}' → '{original_segment}'")
+            
+            # Vérification de l'existence du fichier sur le disque
+            if audio_file:
+                audio_path = os.path.join("audio", audio_file)
+                if not os.path.exists(audio_path):
+                    print(f"⚠️ Fichier audio introuvable sur le disque : {audio_path}")
+                    audio_file = None
+            
+            return {
+                'answer': self._format_answer(original_segment, 1.0),
+                'confidence': 1.0,
+                'time_ms': elapsed_ms,
+                'raw_segment': original_segment,
+                'audio_file': audio_file
+            }
+        # -------------------------------------------------------------------------------
         
         results = self.search(question, top_k=1)
         

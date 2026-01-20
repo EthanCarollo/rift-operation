@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       isDev: process.env.NODE_ENV !== 'production',
-      defaultWsUrl: 'ws://192.168.10.7:8000/ws'
+      defaultWsUrl: 'ws://192.168.10.7:8002/ws'
     }
   },
   app: {

@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat"
-    :style="{ backgroundImage: 'url(/images/stranger/bg-candy-land.png)' }">
+  <div class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat cursor-none"
+    :style="strangerState === 'inactive' ? { backgroundColor: 'black' } : { backgroundImage: 'url(/images/stranger/bg-candy-land.png)' }">
     <!-- Main content area -->
     <main class="relative z-10 flex flex-col items-center justify-center min-h-screen p-8">
       <template v-if="strangerState !== 'inactive'">
@@ -64,19 +64,27 @@ const currentQuestion = computed<Question | null>(() => {
 </script>
 
 <style>
-/* Font face declarations - keeping global styles only */
+/* Font face declarations - using public folder to avoid Nuxt asset loop issues */
 @font-face {
   font-family: 'Lineal';
-  src: url('/Lineal.otf') format('opentype');
-  font-weight: normal;
+  src: url('/fonts/Lineal-Regular.ttf') format('truetype');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'Lineal';
-  src: url('/Lineal.otf') format('opentype');
-  font-weight: bold;
+  src: url('/fonts/Lineal-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lineal';
+  src: url('/fonts/Lineal-Bold.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -97,6 +105,7 @@ body {
   cursor: none;
 }
 
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;
 }
