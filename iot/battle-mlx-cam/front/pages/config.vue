@@ -97,7 +97,7 @@
                             :class="knnStatus.nightmare.label === 'Need Training' ? 'text-yellow-400' : 'text-green-400'">{{
                                 knnStatus.nightmare.label }}</span>
                         <span class="text-neutral-500 ml-1">({{ knnStatus.nightmare.distance?.toFixed(1) || '?'
-                        }})</span>
+                            }})</span>
                     </div>
                 </div>
 
@@ -222,15 +222,35 @@
         </div>
 
         <!-- Debug Mode Toggle -->
-        <div class="mt-8 p-4 bg-neutral-800 rounded border border-neutral-700">
+        <div class="mt-8 p-4 bg-neutral-800 rounded border border-neutral-700 flex flex-wrap gap-4 items-center">
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" v-model="debugMode" @change="saveDebugMode"
                     class="w-5 h-5 rounded bg-neutral-900 border-neutral-600 text-purple-500 focus:ring-purple-500" />
                 <div>
                     <span class="font-bold text-white">Debug Mode</span>
-                    <p class="text-xs text-neutral-500">Show cameras on battle screens even when in IDLE state</p>
+                    <p class="text-xs text-neutral-500">Show cameras in IDLE</p>
                 </div>
             </label>
+
+            <div class="h-8 w-px bg-neutral-700 mx-2"></div>
+
+            <!-- Operator Actions -->
+            <div class="flex gap-2">
+                <button @click="forceStartFight"
+                    class="px-4 py-2 bg-green-700 hover:bg-green-600 rounded font-bold text-xs uppercase tracking-wide flex items-center gap-2">
+                    ⚔️ Force Start
+                </button>
+
+                <button @click="triggerAttack"
+                    class="px-4 py-2 bg-red-700 hover:bg-red-600 rounded font-bold text-xs uppercase tracking-wide flex items-center gap-2">
+                    🔥 Launch Attack
+                </button>
+
+                <button @click="forceEndFight"
+                    class="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 rounded font-bold text-xs uppercase tracking-wide flex items-center gap-2 border border-neutral-500">
+                    🛑 Force End
+                </button>
+            </div>
         </div>
 
         <div class="mt-4 p-4 bg-neutral-800/50 rounded text-center text-neutral-500 text-xs">
@@ -333,6 +353,22 @@ function endCropDrag() {
 function saveDebugMode() {
     socket.emit('set_debug_mode', { enabled: debugMode.value });
     console.log('[Config] Debug mode:', debugMode.value);
+}
+
+function forceStartFight() {
+    if (confirm("Force Start Fight? This will reset HP and start appearing phase.")) {
+        socket.emit('force_start_fight', {});
+    }
+}
+
+function forceEndFight() {
+    if (confirm("Force End Fight? This will stop logic and go to IDLE.")) {
+        socket.emit('force_end_fight', {});
+    }
+}
+
+function triggerAttack() {
+    socket.emit('trigger_attack', {});
 }
 
 function connect() {

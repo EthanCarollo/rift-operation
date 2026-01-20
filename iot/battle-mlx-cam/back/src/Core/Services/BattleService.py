@@ -171,6 +171,35 @@ class BattleService:
             state.processing = False
             self._emit_status()
 
+            self._emit_status()
+
+    def update_role_crop(self, role: str, crop: dict):
+        """Update crop settings for a role."""
+        if role in self.roles:
+            self.roles[role].crop = crop
+            print(f"[BattleService] Updated crop for {role}: {crop}")
+            self._emit_status()
+
+            self._emit_status()
+
+    def force_end_fight(self):
+        """Manually force end the fight and reset to Idle."""
+        print("[BattleService] 🛑 Force End Fight triggered by operator")
+        self.current_hp = INITIAL_HP
+        self.current_attack = None
+        
+        # Reset roles? Maybe
+        # self.roles['nightmare'].processing = False
+        # self.roles['dream'].processing = False
+        
+        self.change_state(IdleState(self))
+        self.broadcast_state("IDLE")
+
+    def force_start_fight(self):
+        """Manually force start the fight."""
+        print("[BattleService] ⚔️ Force Start Fight triggered by operator")
+        self.change_state(AppearingState(self))
+
     def broadcast_state(self, state_name: str, payload: dict = None):
         """Helper to broadcast state changes to Frontend and Rift."""
         data = {
@@ -209,8 +238,3 @@ def init_service(nightmare_cam: int = 0, dream_cam: int = 1) -> BattleService:
     global _service
     _service = BattleService()
     return _service
-
-def update_crop(role: str, crop: dict):
-    if _service and role in _service.roles:
-        _service.roles[role].crop = crop
-        print(f"[BattleService] Updated crop for {role}: {crop}")

@@ -213,7 +213,19 @@ class BattleWebServer(AbstractWebServer):
                 print(f"[BattleWebServer] Manual Attack Triggered")
                 service.state.trigger_attack()
 
+        @self.socketio.on('force_start_fight')
+        def handle_force_start_fight(data):
+            """Allow frontend/debug to manually start the fight."""
+            service = self._get_service()
+            if service:
+                service.force_start_fight()
 
+        @self.socketio.on('force_end_fight')
+        def handle_force_end_fight(data):
+            """Allow frontend/debug to manually end the fight."""
+            service = self._get_service()
+            if service:
+                service.force_end_fight()
         @self.socketio.on('disconnect')
         def handle_disconnect():
             print(f"[BattleWebServer] Client disconnected: {request.sid}")
@@ -274,9 +286,12 @@ class BattleWebServer(AbstractWebServer):
         def handle_update_crop(data):
             role = data.get('role')
             crop = data.get('crop')
-            from src.Core.Services.BattleService import update_crop
-            update_crop(role, crop)
-            self.socketio.emit('crop_updated', {'role': role, 'crop': crop})
+            service = self._get_service()
+            if service:
+                service.update_role_crop(role, crop)
+                # self.socketio.emit('crop_updated', ...) # Service emits status, but we can ack if needed
+                # Actually, let's keep emitting crop_updated for frontend feedback
+                self.socketio.emit('crop_updated', {'role': role, 'crop': crop})
 
         @self.socketio.on('set_debug_mode')
         def handle_set_debug_mode(data):
