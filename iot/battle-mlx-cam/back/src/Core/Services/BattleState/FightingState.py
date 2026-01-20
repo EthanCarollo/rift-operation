@@ -96,10 +96,17 @@ class FightingState(BattleState):
                 if self.service.ws.send_image(b64_rift, role, extra):
                     print(f"[BattleService] Sent {role} to Rift Server (valid: {result.is_valid_counter})")
 
-            # 4. Trigger Attack if Valid Counter
+            # 4. If Valid Counter: emit signal to frontend (don't auto-trigger attack)
+            # The frontend will trigger the attack after showing the animation
             if result.is_valid_counter:
-                print(f"[BattleState] Valid Counter by {role}! Triggering HIT.")
-                self.trigger_attack()
+                print(f"[BattleState] ✓ Valid Counter by {role}! Waiting for frontend to trigger attack...")
+                # Emit signal to frontend that counter was validated
+                if self.service.socketio:
+                    self.service.socketio.emit('counter_validated', {
+                        'role': role,
+                        'label': result.label,
+                        'attack': self.service.current_attack
+                    })
 
         except Exception as e:
             print(f"[BattleService] Error processing {role}: {e}")

@@ -252,6 +252,12 @@ function triggerFlyingAnimation(imageSrc) {
             flyingImage.value = null;
             bothSidesValid.value = false;
             console.log('[Battle] ⚔️ Animation complete! Triggering attack to proceed...');
+            
+            // Emit to backend to signal attack (Sync)
+            if (socket && socket.connected) {
+                socket.emit('trigger_attack', {});
+            }
+            
             triggerAttack();
         }, 1200);
     });
@@ -284,6 +290,18 @@ function typewriterEffect(text) {
         }
     }, 50);
 }
+
+// Watch for victory to stop music
+watch(showVictoryMessage, (val) => {
+    if (val) {
+        // Wait for typewriter to roughly finish (text length * 50ms) + buffer
+        const duration = victoryFullText.length * 50 + 1000;
+        setTimeout(() => {
+            console.log('[Battle] Victory narrative complete - Stopping music');
+            if (hudRef.value) hudRef.value.pauseMusic();
+        }, duration);
+    }
+});
 
 // --- COMPUTED ---
 const isEndState = computed(() => {
