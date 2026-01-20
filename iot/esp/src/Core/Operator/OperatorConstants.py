@@ -14,4 +14,4 @@ class OperatorSteps:
         return "UNKNOWN"
 
 class OperatorConfig:
-    CAGE_UUID = "04050607" # Replace with actual UUID
+    CAGE_UUID = "AF-4B-1C-1C-E4"  # Cage RFID tag

@@ -9,11 +9,11 @@ except ImportError:
     raise
 
 class LedButton:
-    def __init__(self, button_pin, led_pin, delegate, name="LedButton"):
+    def __init__(self, button_pin, led_pin, delegate, name="LedButton", debounce_delay=50):
         self.name = name
         self.led = Pin(led_pin, Pin.OUT)
         self.led.off()
-        self.button = Button(pin_id=button_pin, delegate=delegate)
+        self.button = Button(pin_id=button_pin, delegate=delegate, debounce_delay=debounce_delay)
         self.is_led_on = False
 
     def turn_on(self):
@@ -68,8 +68,8 @@ class OperatorHardware:
         # 2. Battle Button (Right? TBD) - Button + LED
         # Battle Button: Btn: 25, Led: 26
         try:
-            self.battle_button = LedButton(button_pin=25, led_pin=26, delegate=self.battle_button_delegate, name="BattleButton")
-            self.logger.info("Battle Button initialized (Btn:25, Led:26)")
+            self.battle_button = LedButton(button_pin=25, led_pin=26, delegate=self.battle_button_delegate, name="BattleButton", debounce_delay=200)
+            self.logger.info("Battle Button initialized (Btn:25, Led:26, Debounce:200ms)")
         except Exception as e:
             self.logger.error(f"Battle Button init failed: {e}")
 

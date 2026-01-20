@@ -83,8 +83,8 @@ class ConfigFactory:
     @staticmethod
     def create_operator_config():
         return Config(
-            wifi=WifiConfigFactory.create_appartment_aix(),
-            websocket=WebsocketConfigFactory.create_dev(),
+            wifi=WifiConfigFactory.create_cudy(),
+            websocket=WebsocketConfigFactory.create_prod(),
             device_id="OPERATOR-ESP",
             debug_mode=True,
             heartbeat_interval=15
