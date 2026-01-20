@@ -1,4 +1,7 @@
 import { RiftOperationServer } from "./Core/Server/RiftOperationServer";
 
-const port = 8000;
-new RiftOperationServer(port);
+const ports = [8000, 8001, 8002];
+
+ports.forEach(port => {
+  new RiftOperationServer(port);
+});
