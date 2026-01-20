@@ -19,33 +19,48 @@
                     playsinline preload="auto" @error="handleVideoError" @loadeddata="onVideoReady"
                     @canplay="onVideoReady" />
 
-                <!-- IDLE BG / Loading State -->
+                <!-- IDLE BG / Loading State - Just black screen -->
                 <div v-if="battleState === 'IDLE' || !currentVideo || !videoReady"
-                    class="absolute inset-0 z-10 bg-black flex items-center justify-center transition-opacity duration-300"
+                    class="absolute inset-0 z-10 bg-black transition-opacity duration-300"
                     :class="videoReady && battleState !== 'IDLE' ? 'opacity-0 pointer-events-none' : 'opacity-100'">
-                    <div class="text-purple-500/30 text-xl animate-pulse">EN ATTENTE...</div>
                 </div>
 
                 <!-- Boss Overlay -->
                 <BattleBoss v-if="battleState !== 'IDLE' && !isEndState" :is-hit="isHit" :attack="currentAttack"
                     :is-vertical="false" />
 
-                <!-- Narrative Text Overlay -->
+                <!-- Mock Test Button (Temporary) -->
+                <button v-if="debugMode" @click="mockAttackSequence" 
+                    class="absolute top-24 right-4 z-50 px-3 py-1 bg-yellow-500/80 text-black text-xs font-bold rounded hover:bg-yellow-400">
+                    ⚡ TEST ANIM
+                </button>
+
+                <!-- Narrative Text Overlay - Lower position, below top area -->
                 <div v-if="showNarrativeText"
-                    class="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-                    <div class="bg-black/70 px-8 py-6 rounded-lg max-w-2xl text-center">
-                        <p class="text-white text-xl md:text-2xl font-medium leading-relaxed animate-fade-in">
+                    class="absolute top-[15%] left-0 right-0 z-20 flex justify-center pointer-events-none">
+                    <div class="bg-black/80 px-8 py-4 rounded-lg max-w-2xl text-center">
+                        <p class="text-white text-lg md:text-xl font-medium leading-relaxed animate-fade-in">
                             {{ narrativeText }}
                         </p>
                     </div>
                 </div>
 
-                <!-- Drawing Validation Feedback -->
-                <div v-if="showDrawingFeedback"
-                    class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300">
-                    <div class="px-6 py-3 rounded-full text-lg font-bold"
+                <!-- Drawing Validation Feedback + Loading Bar -->
+                <div v-if="showDrawingFeedback || isGenerating"
+                    class="absolute bottom-[35%] left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300">
+                    
+                    <!-- Validation Badge -->
+                    <div v-if="showDrawingFeedback && !isGenerating" class="px-6 py-3 rounded-full text-lg font-bold animate-bounce"
                         :class="isDrawingValid ? 'bg-green-500 text-white' : 'bg-red-500/80 text-white'">
-                        {{ isDrawingValid ? '✓ Bon dessin !' : '✗ Essayez autre chose...' }}
+                        {{ isDrawingValid ? '✓ Dessin validé !' : '✗ Essayez autre chose...' }}
+                    </div>
+                    
+                    <!-- Loading Bar for AI Generation -->
+                    <div v-if="isGenerating" class="flex flex-col items-center gap-3">
+                        <div class="text-white text-lg font-medium animate-pulse">🎨 Génération en cours...</div>
+                        <div class="w-64 h-2 bg-neutral-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-full animate-loading-bar"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -53,7 +68,7 @@
                 <div v-if="flyingImage" ref="flyingImageRef"
                     class="absolute z-40 fly-to-enemy pointer-events-none"
                     :style="flyingImageStyle">
-                    <img :src="flyingImage" class="w-32 h-32 object-contain drop-shadow-2xl" />
+                    <img :src="flyingImage" class="w-40 h-40 object-contain drop-shadow-2xl" />
                 </div>
 
                 <!-- Victory Typewriter Message -->
@@ -167,10 +182,14 @@ function showNarrative(text, duration) {
 // --- DRAWING FEEDBACK ---
 const showDrawingFeedback = ref(false);
 const isDrawingValid = ref(false);
+const bothSidesValid = ref(false);
+const waitingForImage = ref(false);
+const isGenerating = ref(false);
 let feedbackTimeout = null;
 
-// Watch for counter validity changes
+// Watch for counter validity changes - require BOTH sides
 watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid]) => {
+    // Show individual feedback
     if (dreamValid || nightmareValid) {
         isDrawingValid.value = true;
         showDrawingFeedback.value = true;
@@ -179,43 +198,85 @@ watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid])
             showDrawingFeedback.value = false;
         }, 2000);
     }
+    
+    // Check if BOTH sides are now valid
+    if (dreamValid && nightmareValid) {
+        console.log('[Battle] 🎯 BOTH sides detected correct counter! Showing loading bar...');
+        bothSidesValid.value = true;
+        waitingForImage.value = true;
+        
+        // Show validation feedback briefly, then switch to loading bar
+        showDrawingFeedback.value = true;
+        setTimeout(() => {
+            showDrawingFeedback.value = false;
+            isGenerating.value = true;
+        }, 1000);
+    }
 });
 
 // --- FLYING IMAGE ANIMATION ---
 const flyingImage = ref(null);
 const flyingImageRef = ref(null);
-const flyingImageStyle = ref({ left: '50%', bottom: '35%' });
+const flyingImageStyle = ref({ left: '50%', bottom: '10%' });
+const animationInProgress = ref(false); // Prevent double trigger
 
-// Watch for generated images to trigger flying animation
-watch([dreamDrawingImage, nightmareDrawingImage], ([dreamImg, nightmareImg]) => {
-    const img = dreamImg || nightmareImg;
-    if (img && (dreamCounterValid.value || nightmareCounterValid.value)) {
-        triggerFlyingAnimation(img);
-    }
-});
+// Watcher removed - Animation now driven by socket 'attack_ready' event
+
 
 function triggerFlyingAnimation(imageSrc) {
+    // Prevent double animation
+    if (animationInProgress.value) {
+        console.log('[Battle] ⚠️ Animation already in progress, ignoring');
+        return;
+    }
+    animationInProgress.value = true;
+    
+    console.log('[Battle] 🚀 Starting flying animation...');
     flyingImage.value = imageSrc.startsWith('data:') ? imageSrc : `data:image/png;base64,${imageSrc}`;
-    flyingImageStyle.value = { left: '50%', bottom: '35%', transform: 'translateX(-50%) scale(1)', opacity: '1' };
+    
+    // Start from bottom center of screen
+    flyingImageStyle.value = { 
+        left: '50%', 
+        bottom: '10%', 
+        transform: 'translateX(-50%) scale(1)', 
+        opacity: '1',
+        transition: 'none'
+    };
     
     nextTick(() => {
+        // Small delay to ensure initial position is set, then animate upward
         setTimeout(() => {
-            // Animate to center of screen (towards enemy)
+            console.log('[Battle] 🎯 Animating toward enemy...');
+            // Animate to top (toward the enemy at ~30% from top)
             flyingImageStyle.value = { 
                 left: '50%', 
-                top: '30%', 
-                transform: 'translateX(-50%) scale(0.3)', 
+                bottom: '60%',  // Move up from 10% to 60% bottom (toward top)
+                transform: 'translateX(-50%) scale(0.4)', 
                 opacity: '0',
-                transition: 'all 1s ease-in-out'
+                transition: 'all 1.2s ease-out'
             };
-        }, 100);
+        }, 50);
         
-        // Clear after animation
+        // After animation completes: clear image and trigger attack
         setTimeout(() => {
             flyingImage.value = null;
-        }, 1200);
+            console.log('[Battle] ⚔️ Animation complete! Triggering attack...');
+            
+            // Emit to backend to signal attack (Backend will handle HP/state)
+            if (socket && socket.connected) {
+                console.log('[Battle] 📡 Emitting trigger_attack to backend');
+                socket.emit('trigger_attack', {});
+            }
+            
+            // Also call local triggerAttack for UI sync
+            triggerAttack();
+            
+            // Reset flag for next attack phase
+            animationInProgress.value = false;
+        }, 1400); // 50ms initial + 1200ms animation + buffer
     });
 }
+
 
 // --- VICTORY MESSAGE ---
 const showVictoryMessage = ref(false);
@@ -245,6 +306,18 @@ function typewriterEffect(text) {
     }, 50);
 }
 
+// Watch for victory to stop music
+watch(showVictoryMessage, (val) => {
+    if (val) {
+        // Wait for typewriter to roughly finish (text length * 50ms) + buffer
+        const duration = victoryFullText.length * 50 + 1000;
+        setTimeout(() => {
+            console.log('[Battle] Victory narrative complete - Stopping music');
+            if (hudRef.value) hudRef.value.pauseMusic();
+        }, duration);
+    }
+});
+
 // --- COMPUTED ---
 const isEndState = computed(() => {
     return battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
@@ -269,6 +342,70 @@ function connectDebugSocket() {
         console.log('[Battle] Debug mode changed:', data.enabled);
         debugMode.value = data.enabled;
     });
+    
+    // LISTEN FOR SYNCHRONIZED ATTACK SIGNAL
+    socket.on('attack_ready', (data) => {
+        console.log('[Battle] 🌟 Attack Ready received from backend!', data);
+        handleAttackReady(data.frame);
+    });
+    
+    // LISTEN FOR STATE UPDATES (Force End, etc.)
+    socket.on('battle_state_update', (data) => {
+        console.log('[Battle] 📡 State update from backend:', data);
+        
+        if (data.battle_state === 'IDLE') {
+            console.log('[Battle] 🛑 IDLE state received - Stopping music and resetting');
+            // Update local state
+            battleState.value = 'IDLE';
+            
+            // Stop music
+            if (hudRef.value) {
+                hudRef.value.pauseMusic();
+            }
+            
+            // Reset animation state
+            animationInProgress.value = false;
+            flyingImage.value = null;
+            showVictoryMessage.value = false;
+            isGenerating.value = false;
+            showDrawingFeedback.value = false;
+        }
+    });
+}
+
+// Unified handler for real and mock attacks
+// Backend is authoritative - if it says attack_ready, we trigger animation
+function handleAttackReady(imageFrame) {
+    console.log('[Battle] 🎬 Starting Attack Animation Sequence...');
+    
+    // Reset all waiting states
+    waitingForImage.value = false;
+    isGenerating.value = false;
+    showDrawingFeedback.value = false;
+    bothSidesValid.value = false;
+    
+    // Wait 1 second before starting the flying animation (User request for delay)
+    setTimeout(() => {
+         triggerFlyingAnimation(imageFrame);
+    }, 1000);
+}
+
+// MOCK: Simulate full flow for testing
+function mockAttackSequence() {
+    console.log('[Mock] Starting End-to-End Attack Test');
+    
+    // 1. Simulate Valid Counters
+    dreamCounterValid.value = true;
+    nightmareCounterValid.value = true;
+    
+    // 2. Simulate Backend processing time
+    setTimeout(() => {
+        // 3. Simulate Image Ready signal
+        console.log('[Mock] Simulating backend attack_ready signal');
+        // Use a placeholder image
+        const mockImg = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='; // Red dot
+        handleAttackReady(mockImg);
+    }, 3000);
 }
 
 async function fetchDebugMode() {
@@ -307,7 +444,15 @@ onUnmounted(() => {
 }
 
 .fly-to-enemy {
-    transition: all 1s ease-in-out;
+    transition: all 1.5s ease-in-out;
+}
+
+@keyframes loadingBar {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+.animate-loading-bar {
+    animation: loadingBar 3s ease-in-out infinite;
 }
 </style>
-

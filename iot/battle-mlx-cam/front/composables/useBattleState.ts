@@ -108,10 +108,17 @@ export function useBattleState(debug = false) {
             currentAttack.value = null;
         }
 
-        // Play music
-        if (config.music && hudRef.value && audioUnlocked.value) {
-            log('Playing music:', config.music);
-            hudRef.value.playMusic();
+        // Music Management
+        if (hudRef.value && audioUnlocked.value) {
+            if (config.music) {
+                log('Playing music:', config.music);
+                hudRef.value.playMusic();
+            } else if (state === 'IDLE') {
+                // Explicitly stop music for IDLE state
+                log('IDLE state: Stopping music');
+                hudRef.value.pauseMusic();
+            }
+            // If music is null but not IDLE (e.g. HIT), keep previous music playing
         }
 
         // State-specific logic
@@ -204,10 +211,12 @@ export function useBattleState(debug = false) {
 
     // --- ACTIONS ---
     function triggerAttack() {
-        if (!canTriggerAttack.value) return;
+        // Backend is authoritative - this function just syncs UI state
+        if (isAttacking.value) return; // Prevent rapid double-calls only
 
         log('Attack triggered');
         const nextHp = currentHp.value - 1;
+        console.log(`[Battle] ⚔️ ATTACK TRIGGER: HP ${currentHp.value} → ${nextHp}`);
 
         // Optimistically update HP locally
         currentHp.value = nextHp;
@@ -233,6 +242,7 @@ export function useBattleState(debug = false) {
             } else {
                 // Deterministic attack based on next HP
                 const newAttack = getNextAttack(nextHp);
+                console.log(`[Battle] 🔄 NEXT PHASE: HP=${nextHp}, Attack=${newAttack}`);
                 sendBattlePayload('FIGHTING', { battle_boss_hp: nextHp, battle_boss_attack: newAttack });
                 // Optimistic FIGHTING update
                 battleState.value = 'FIGHTING';
