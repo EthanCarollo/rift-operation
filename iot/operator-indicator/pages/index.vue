@@ -4,7 +4,7 @@ import type { OperatorStatus } from '~/types/status'
 // State
 const status = ref<OperatorStatus | null>(null)
 const isConnected = ref(false)
-const viewState = ref<'idle' | 'intro_video' | 'show_start_button' | 'dashboard'>('idle')
+const viewState = ref<'idle' | 'intro_video' | 'show_start_button' | 'dashboard' | 'outro_video'>('idle')
 let socket: WebSocket | null = null
 
 // Header time
@@ -78,6 +78,10 @@ const startMission = () => {
   
   // Transition to dashboard
   viewState.value = 'dashboard'
+}
+
+const showOutro = () => {
+  viewState.value = 'outro_video'
 }
 
 onMounted(() => {
@@ -156,7 +160,18 @@ onUnmounted(() => {
       </div>
       <!-- DASHBOARD (Bento Grid) -->
       <div v-if="viewState === 'dashboard'" class="absolute inset-0">
-        <OperatorDashboard :status="status" />
+        <OperatorDashboard :status="status" @showOutro="showOutro" />
+      </div>
+      
+      <!-- OUTRO VIDEO -->
+      <div v-if="viewState === 'outro_video'" class="absolute inset-0 flex items-center justify-center p-4 z-10">
+        <VideoPlayer 
+          videoSrc="/video/outro-directeur.mp4" 
+        />
+        <!-- Background Effects -->
+        <div class="fixed inset-0 pointer-events-none -z-10 opacity-10"
+          style="background-image: linear-gradient(#00FFF0 1px, transparent 1px), linear-gradient(90deg, #00FFF0 1px, transparent 1px); background-size: 50px 50px;">
+        </div>
       </div>
 
     </div>
