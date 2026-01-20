@@ -216,6 +216,7 @@ export function useBattleState(debug = false) {
 
         log('Attack triggered');
         const nextHp = currentHp.value - 1;
+        console.log(`[Battle] ⚔️ ATTACK TRIGGER: HP ${currentHp.value} → ${nextHp}`);
 
         // Optimistically update HP locally
         currentHp.value = nextHp;
@@ -241,6 +242,7 @@ export function useBattleState(debug = false) {
             } else {
                 // Deterministic attack based on next HP
                 const newAttack = getNextAttack(nextHp);
+                console.log(`[Battle] 🔄 NEXT PHASE: HP=${nextHp}, Attack=${newAttack}`);
                 sendBattlePayload('FIGHTING', { battle_boss_hp: nextHp, battle_boss_attack: newAttack });
                 // Optimistic FIGHTING update
                 battleState.value = 'FIGHTING';

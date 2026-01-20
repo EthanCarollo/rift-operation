@@ -217,12 +217,20 @@ watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid])
 // --- FLYING IMAGE ANIMATION ---
 const flyingImage = ref(null);
 const flyingImageRef = ref(null);
-const flyingImageStyle = ref({ left: '50%', bottom: '35%' });
+const flyingImageStyle = ref({ left: '50%', bottom: '10%' });
+const animationInProgress = ref(false); // Prevent double trigger
 
 // Watcher removed - Animation now driven by socket 'attack_ready' event
 
 
 function triggerFlyingAnimation(imageSrc) {
+    // Prevent double animation
+    if (animationInProgress.value) {
+        console.log('[Battle] ⚠️ Animation already in progress, ignoring');
+        return;
+    }
+    animationInProgress.value = true;
+    
     console.log('[Battle] 🚀 Starting flying animation...');
     flyingImage.value = imageSrc.startsWith('data:') ? imageSrc : `data:image/png;base64,${imageSrc}`;
     
@@ -262,6 +270,9 @@ function triggerFlyingAnimation(imageSrc) {
             
             // Also call local triggerAttack for UI sync
             triggerAttack();
+            
+            // Reset flag for next attack phase
+            animationInProgress.value = false;
         }, 1400); // 50ms initial + 1200ms animation + buffer
     });
 }
@@ -336,6 +347,29 @@ function connectDebugSocket() {
     socket.on('attack_ready', (data) => {
         console.log('[Battle] 🌟 Attack Ready received from backend!', data);
         handleAttackReady(data.frame);
+    });
+    
+    // LISTEN FOR STATE UPDATES (Force End, etc.)
+    socket.on('battle_state_update', (data) => {
+        console.log('[Battle] 📡 State update from backend:', data);
+        
+        if (data.battle_state === 'IDLE') {
+            console.log('[Battle] 🛑 IDLE state received - Stopping music and resetting');
+            // Update local state
+            battleState.value = 'IDLE';
+            
+            // Stop music
+            if (hudRef.value) {
+                hudRef.value.pauseMusic();
+            }
+            
+            // Reset animation state
+            animationInProgress.value = false;
+            flyingImage.value = null;
+            showVictoryMessage.value = false;
+            isGenerating.value = false;
+            showDrawingFeedback.value = false;
+        }
     });
 }
 

@@ -114,11 +114,16 @@ class FightingState(BattleState):
             required = Config.ATTACK_TO_COUNTER_LABEL.get(self.service.current_attack)
             
             other_valid = False
+            other_label = other_state.last_label if other_state else None
             if other_state and other_state.last_label == required:
                 other_valid = True
             
+            # Debug: Log sync check status
+            print(f"[BattleState] 🔍 SYNC ({role}): cur={current_valid}, oth={other_valid} (label={other_label}, need={required}), locked={getattr(self, 'attack_ready', False)}")
+            
             # SYNCHRONIZED SUCCESS: Current Valid + Other Valid + Image Available
-            if current_valid and other_valid:
+            # CRITICAL: Check attack_ready flag to prevent race condition (both roles might reach here)
+            if current_valid and other_valid and not getattr(self, 'attack_ready', False):
                  # We need an image for the animation. usage priority: Current New -> Current Cached -> Other Cached
                  final_image = result.output_image or state.last_output_image or (other_state.last_output_image if other_state else None)
                  
@@ -155,16 +160,22 @@ class FightingState(BattleState):
 
     def trigger_attack(self):
         if getattr(self, 'is_attacking', False):
-             print(f"[BattleState] Attack already in progress. Ignoring duplicate trigger.")
+             print(f"[BattleState] ⚠️ Attack already in progress. Ignoring duplicate trigger.")
              return
         
         self.is_attacking = True
         
         # Decrement HP
+        old_hp = self.service.current_hp
         self.service.current_hp -= 1
-        print(f"[BattleState] Attack! New HP: {self.service.current_hp}")
+        new_hp = self.service.current_hp
+        print(f"[BattleState] ⚔️ Attack! HP: {old_hp} → {new_hp}")
         
         if self.service.current_hp <= 0:
+            print(f"[BattleState] 🏆 HP reached 0! Transitioning to WEAKENED")
             self.service.change_state(WeakenedState(self.service))
         else:
+            next_attack = Config.get_next_attack(new_hp)
+            print(f"[BattleState] 🔄 Transitioning to HIT, next attack will be: {next_attack}")
             self.service.change_state(HitState(self.service))
+
