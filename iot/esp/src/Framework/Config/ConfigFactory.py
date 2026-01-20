@@ -57,13 +57,21 @@ class WebsocketConfigFactory:
     @staticmethod
     def create_prod():
         return WebsocketConfig(
-            # Mac Mini (2) URL 
             server="ws://192.168.10.7:8000",
             path="/ws",
             reconnect_delay=10,
             ping_interval=60
         )
     
+    @staticmethod
+    def create_dev():
+        return WebsocketConfig(
+            server="ws://server.riftoperation.ethan-folio.fr",
+            path="/ws",
+            reconnect_delay=10,
+            ping_interval=60
+        )
+
     @staticmethod
     def create_custom(server, path):
         return WebsocketConfig(
@@ -72,6 +80,16 @@ class WebsocketConfigFactory:
         )
 
 class ConfigFactory:
+    @staticmethod
+    def create_operator_config():
+        return Config(
+            wifi=WifiConfigFactory.create_appartment_aix(),
+            websocket=WebsocketConfigFactory.create_dev(),
+            device_id="OPERATOR-ESP",
+            debug_mode=True,
+            heartbeat_interval=15
+        )
+
     @staticmethod
     def create_table_config():
         return Config(
