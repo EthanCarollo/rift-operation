@@ -5,11 +5,9 @@ export default {
   modules: ['@nuxtjs/tailwindcss'],
   runtimeConfig: {
     public: {
-      // 1. Local WPA
       wsUrl: 'ws://192.168.10.7:8000/ws',
-
       // 2. PRODUCTION (Online Server)
-      // wsUrl: 'wss://server.riftoperation.ethan-folio.fr/ws',
+      // wsUrl: 'ws://server.riftoperation.ethan-folio.fr/ws',
     }
   },
   app: {
