@@ -1,24 +1,26 @@
 <template>
     <div class="relative w-full h-full overflow-hidden">
         <!-- Local Video Feed (Mirrored) -->
-        <video ref="videoRef" autoplay playsinline muted 
-            class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1] z-0"></video>
-        
+        <video ref="videoRef" autoplay playsinline muted
+            class="absolute inset-0 w-full h-full object-cover z-0"></video>
+
         <!-- Status / Error Overlay -->
-        <div v-if="error" class="absolute inset-0 flex items-center justify-center bg-black/80 z-20 text-red-500 text-center p-2 text-xs font-mono">
+        <div v-if="error"
+            class="absolute inset-0 flex items-center justify-center bg-black/80 z-20 text-red-500 text-center p-2 text-xs font-mono">
             {{ error }}
         </div>
-        <div v-else-if="!stream" class="absolute inset-0 flex items-center justify-center bg-black/80 z-20 text-neutral-500 text-xs animate-pulse">
+        <div v-else-if="!stream"
+            class="absolute inset-0 flex items-center justify-center bg-black/80 z-20 text-neutral-500 text-xs animate-pulse">
             Connecting Camera...
         </div>
 
         <!-- AI Output Overlay -->
-        <img v-if="outputFrame" :src="'data:image/png;base64,' + outputFrame"
-            class="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none" 
-            alt="AI Output" />
+        <img v-if="outputFrame && state !== 'IDLE'" :src="'data:image/png;base64,' + outputFrame"
+            class="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none" alt="AI Output" />
 
         <!-- Label -->
-        <div class="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] px-1 py-0.5 text-center uppercase tracking-wider z-20">
+        <div
+            class="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] px-1 py-0.5 text-center uppercase tracking-wider z-20">
             {{ role }}
         </div>
     </div>
@@ -30,7 +32,8 @@ import { io } from 'socket.io-client';
 
 const props = defineProps({
     role: { type: String, required: true }, // 'dream' or 'nightmare'
-    backendUrl: { type: String, required: true }
+    backendUrl: { type: String, required: true },
+    state: { type: String, default: 'IDLE' }
 });
 
 const videoRef = ref(null);
@@ -47,7 +50,7 @@ const JPEG_QUALITY = 0.85;
 async function startCamera(overrideDeviceId = null, retryWithAny = false) {
     try {
         error.value = null;
-        
+
         let deviceId = overrideDeviceId;
 
         // Fallback to local config if no override (skip if retrying with any)
@@ -80,7 +83,7 @@ async function startCamera(overrideDeviceId = null, retryWithAny = false) {
         }
 
         console.log(`[FrontCam:${props.role}] Requesting camera with constraints:`, constraints.video.deviceId ? 'specific device' : 'any device');
-        
+
         // Start Stream
         stream.value = await navigator.mediaDevices.getUserMedia(constraints);
         if (videoRef.value) {
@@ -92,18 +95,18 @@ async function startCamera(overrideDeviceId = null, retryWithAny = false) {
 
     } catch (e) {
         console.error(`[FrontCam:${props.role}] Error starting camera:`, e);
-        
+
         // If device not found, retry with any available camera
         if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError' || e.message.includes('not found')) {
             console.warn(`[FrontCam:${props.role}] Device not found, retrying with any camera...`);
             // Clear saved config for this role
             localStorage.removeItem('battle_camera_config');
-            
+
             if (!retryWithAny) {
                 return startCamera(null, true); // Retry without specific deviceId
             }
         }
-        
+
         error.value = `Camera Error: ${e.message}`;
     }
 }
@@ -116,10 +119,10 @@ async function registerDevices() {
         const videoInputs = devices
             .filter(d => d.kind === 'videoinput')
             .map(d => ({ deviceId: d.deviceId, label: d.label }));
-            
+
         console.log('[FrontCam] Registering devices:', videoInputs);
         socket.emit('register_client', { devices: videoInputs });
-        
+
     } catch (e) {
         console.error('[FrontCam] Failed to register devices:', e);
     }
@@ -127,7 +130,7 @@ async function registerDevices() {
 
 function startCaptureLoop() {
     if (captureInterval) clearInterval(captureInterval);
-    
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -160,7 +163,7 @@ function startCaptureLoop() {
 
 function connectSocket() {
     socket = io(props.backendUrl, { transports: ['websocket', 'polling'] });
-    
+
     socket.on('connect', () => {
         console.log(`[FrontCam:${props.role}] Socket Connected`);
         // Register devices only once (e.g. from first role to connect? or both? doesn't matter)
@@ -183,7 +186,7 @@ function connectSocket() {
             const config = JSON.parse(saved);
             config[props.role] = data.deviceId;
             localStorage.setItem('battle_camera_config', JSON.stringify(config));
-            
+
             // Apply
             startCamera(data.deviceId);
         }

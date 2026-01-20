@@ -357,7 +357,7 @@ function resetCrop(role) {
 function saveCrop(role) {
     // Validate crop dimensions - must have some size
     if (tempCrop.value.w < 0.01 || tempCrop.value.h < 0.01) {
-        alert('Please draw a valid crop area by clicking and dragging.');
+        console.warn('[Config] Invalid crop area');
         return;
     }
     crops.value[role] = { ...tempCrop.value };
@@ -419,15 +419,11 @@ function setGrayscale(role, enabled) {
 }
 
 function forceStartFight() {
-    if (confirm("Force Start Fight? This will reset HP and start appearing phase.")) {
-        socket.emit('force_start_fight', {});
-    }
+    socket.emit('force_start_fight', {});
 }
 
 function forceEndFight() {
-    if (confirm("Force End Fight? This will stop logic and go to IDLE.")) {
-        socket.emit('force_end_fight', {});
-    }
+    socket.emit('force_end_fight', {});
 }
 
 function triggerAttack() {
