@@ -1,8 +1,8 @@
 <template>
     <div class="relative w-full h-full overflow-hidden">
-        <!-- Local Video Feed (Mirrored) -->
+        <!-- Local Video Feed (Vertically Flipped) -->
         <video ref="videoRef" autoplay playsinline muted
-            class="absolute inset-0 w-full h-full object-cover z-0"></video>
+            class="absolute inset-0 w-full h-full object-cover z-0 scale-y-[-1]"></video>
 
         <!-- Status / Error Overlay -->
         <div v-if="error"

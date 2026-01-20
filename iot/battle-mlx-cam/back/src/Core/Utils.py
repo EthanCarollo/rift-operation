@@ -68,16 +68,33 @@ class ImageProcessor:
             
             # 3. Get Prompt
             prompt = Config.PROMPT_MAPPING.get(label, f"{label} in cartoon style")
-            print(f"[ImageProcessor] 📝 Prompt: '{prompt[:50]}...'")
+            print(f"[ImageProcessor] 📝 Prompt: '{prompt[:50] if prompt else 'None'}...'")
             
-            # 4. Validate Counter
+            # 4. Validate Counter - ONLY INFER IF CORRECT COUNTER
             is_valid_counter = False
             if current_attack:
                 required = Config.ATTACK_TO_COUNTER_LABEL.get(current_attack)
                 is_valid_counter = (label == required)
                 print(f"[ImageProcessor] 🎯 Counter check: attack='{current_attack}' requires='{required}', got='{label}', valid={is_valid_counter}")
+                
+                # SKIP INFERENCE if not the correct counter
+                if not is_valid_counter:
+                    print(f"[ImageProcessor] 🚫 WRONG COUNTER - Skipping AI inference (need '{required}', got '{label}')")
+                    return ProcessingResult(
+                        label=label,
+                        distance=distance,
+                        status_message=f"🎯 Besoin: {required}",
+                        is_valid_counter=False,
+                        should_skip=True
+                    )
             else:
-                print(f"[ImageProcessor] ⚠️ No current_attack set - cannot validate counter")
+                print(f"[ImageProcessor] ⚠️ No current_attack set - cannot validate counter, skipping inference")
+                return ProcessingResult(
+                    label=label,
+                    distance=distance,
+                    status_message="⚠️ Pas d'attaque en cours",
+                    should_skip=True
+                )
             
             if not prompt:
                 print(f"[ImageProcessor] ❌ No prompt for label '{label}' - skipping")

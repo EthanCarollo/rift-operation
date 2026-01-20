@@ -166,10 +166,13 @@ function showNarrative(text, duration) {
 // --- DRAWING FEEDBACK ---
 const showDrawingFeedback = ref(false);
 const isDrawingValid = ref(false);
+const bothSidesValid = ref(false);
+const waitingForImage = ref(false);
 let feedbackTimeout = null;
 
-// Watch for counter validity changes
+// Watch for counter validity changes - require BOTH sides
 watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid]) => {
+    // Show individual feedback
     if (dreamValid || nightmareValid) {
         isDrawingValid.value = true;
         showDrawingFeedback.value = true;
@@ -178,6 +181,13 @@ watch([dreamCounterValid, nightmareCounterValid], ([dreamValid, nightmareValid])
             showDrawingFeedback.value = false;
         }, 2000);
     }
+    
+    // Check if BOTH sides are now valid
+    if (dreamValid && nightmareValid) {
+        console.log('[Battle] 🎯 BOTH sides detected correct counter! Waiting for generated image...');
+        bothSidesValid.value = true;
+        waitingForImage.value = true;
+    }
 });
 
 // --- FLYING IMAGE ANIMATION ---
@@ -185,13 +195,18 @@ const flyingImage = ref(null);
 const flyingImageRef = ref(null);
 const flyingImageStyle = ref({ left: '50%', bottom: '35%' });
 
-// Watch for generated images to trigger flying animation
+// Watch for generated images - only trigger when BOTH sides valid
 watch([dreamDrawingImage, nightmareDrawingImage], ([dreamImg, nightmareImg]) => {
     const img = dreamImg || nightmareImg;
-    if (img && (dreamCounterValid.value || nightmareCounterValid.value)) {
+    
+    // Only proceed if both sides detected correct counter AND we have a generated image
+    if (img && bothSidesValid.value && waitingForImage.value) {
+        console.log('[Battle] 🎨 Generated image received! Launching flying animation...');
+        waitingForImage.value = false;
         triggerFlyingAnimation(img);
     }
 });
+
 
 function triggerFlyingAnimation(imageSrc) {
     flyingImage.value = imageSrc.startsWith('data:') ? imageSrc : `data:image/png;base64,${imageSrc}`;
@@ -209,9 +224,12 @@ function triggerFlyingAnimation(imageSrc) {
             };
         }, 100);
         
-        // Clear after animation
+        // After animation completes: clear image, reset state, and trigger attack to proceed
         setTimeout(() => {
             flyingImage.value = null;
+            bothSidesValid.value = false;
+            console.log('[Battle] ⚔️ Animation complete! Triggering attack to proceed...');
+            triggerAttack();
         }, 1200);
     });
 }
