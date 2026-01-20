@@ -17,6 +17,12 @@ class HitState(BattleState):
         self.service.broadcast_state("HIT", {"battle_boss_hp": self.service.current_hp})
 
     def handle_monitor(self):
+        # Monitor for signal reset (Falling Edge) to re-arm for next hit
+        if self.service.ws.last_state:
+            current_confirm = self.service.ws.last_state.get("battle_hit_confirmed") is True
+            if not current_confirm:
+                 self.service.last_hit_confirmed = False
+
         if time.time() - self.start_time > HIT_DURATION:
             # Back to Fighting with new attack
             self.service.current_attack = Config.get_next_attack(self.service.current_hp)
