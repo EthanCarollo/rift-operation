@@ -211,7 +211,8 @@ export function useBattleState(debug = false) {
 
     // --- ACTIONS ---
     function triggerAttack() {
-        if (!canTriggerAttack.value) return;
+        // Backend is authoritative - this function just syncs UI state
+        if (isAttacking.value) return; // Prevent rapid double-calls only
 
         log('Attack triggered');
         const nextHp = currentHp.value - 1;

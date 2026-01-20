@@ -223,36 +223,49 @@ const flyingImageStyle = ref({ left: '50%', bottom: '35%' });
 
 
 function triggerFlyingAnimation(imageSrc) {
+    console.log('[Battle] 🚀 Starting flying animation...');
     flyingImage.value = imageSrc.startsWith('data:') ? imageSrc : `data:image/png;base64,${imageSrc}`;
-    flyingImageStyle.value = { left: '50%', bottom: '35%', transform: 'translateX(-50%) scale(1)', opacity: '1' };
+    
+    // Start from bottom center of screen
+    flyingImageStyle.value = { 
+        left: '50%', 
+        bottom: '10%', 
+        transform: 'translateX(-50%) scale(1)', 
+        opacity: '1',
+        transition: 'none'
+    };
     
     nextTick(() => {
+        // Small delay to ensure initial position is set, then animate upward
         setTimeout(() => {
-            // Animate to center of screen (towards enemy)
+            console.log('[Battle] 🎯 Animating toward enemy...');
+            // Animate to top (toward the enemy at ~30% from top)
             flyingImageStyle.value = { 
                 left: '50%', 
-                top: '30%', 
-                transform: 'translateX(-50%) scale(0.3)', 
+                bottom: '60%',  // Move up from 10% to 60% bottom (toward top)
+                transform: 'translateX(-50%) scale(0.4)', 
                 opacity: '0',
-                transition: 'all 1s ease-in-out'
+                transition: 'all 1.2s ease-out'
             };
-        }, 100);
+        }, 50);
         
-        // After animation completes: clear image, reset state, and trigger attack to proceed
+        // After animation completes: clear image and trigger attack
         setTimeout(() => {
             flyingImage.value = null;
-            bothSidesValid.value = false;
-            console.log('[Battle] ⚔️ Animation complete! Triggering attack to proceed...');
+            console.log('[Battle] ⚔️ Animation complete! Triggering attack...');
             
-            // Emit to backend to signal attack (Sync)
+            // Emit to backend to signal attack (Backend will handle HP/state)
             if (socket && socket.connected) {
+                console.log('[Battle] 📡 Emitting trigger_attack to backend');
                 socket.emit('trigger_attack', {});
             }
             
+            // Also call local triggerAttack for UI sync
             triggerAttack();
-        }, 1200);
+        }, 1400); // 50ms initial + 1200ms animation + buffer
     });
 }
+
 
 // --- VICTORY MESSAGE ---
 const showVictoryMessage = ref(false);
@@ -327,17 +340,20 @@ function connectDebugSocket() {
 }
 
 // Unified handler for real and mock attacks
+// Backend is authoritative - if it says attack_ready, we trigger animation
 function handleAttackReady(imageFrame) {
-    if (waitingForImage.value || bothSidesValid.value) { // Accept if we were waiting OR if both sides were valid
-        console.log('[Battle] 🎬 Starting Attack Animation Sequence...');
-        waitingForImage.value = false;
-        isGenerating.value = false;
-        
-        // Wait 1 second before starting the flying animation (User request for delay)
-        setTimeout(() => {
-             triggerFlyingAnimation(imageFrame);
-        }, 1000);
-    }
+    console.log('[Battle] 🎬 Starting Attack Animation Sequence...');
+    
+    // Reset all waiting states
+    waitingForImage.value = false;
+    isGenerating.value = false;
+    showDrawingFeedback.value = false;
+    bothSidesValid.value = false;
+    
+    // Wait 1 second before starting the flying animation (User request for delay)
+    setTimeout(() => {
+         triggerFlyingAnimation(imageFrame);
+    }, 1000);
 }
 
 // MOCK: Simulate full flow for testing
