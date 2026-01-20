@@ -9,7 +9,7 @@
         </div>
 
         <!-- Images side-by-side (if images array exists) -->
-        <div v-if="question.images && question.images.length" class="flex justify-center items-center">
+        <div v-if="question.images && question.images.length" class="flex justify-center items-center space-x-[-6vw]">
             <img v-for="(img, idx) in question.images" :key="idx" :src="img"
                 :alt="`Question ${question.step} image ${idx + 1}`" class="w-[18vw] h-[18vw] object-contain" />
         </div>
