@@ -40,6 +40,19 @@ class FightingState(BattleState):
                 self.service.change_state(WeakenedState(self.service))
                 return
             
+            # Check for attack confirmation from Rift Server (Rising Edge Detection)
+            current_confirm = self.service.ws.last_state.get("battle_hit_confirmed") is True
+            
+            if current_confirm and not self.service.last_hit_confirmed:
+                print(f"[BattleState] Attack Confirm received (Rising Edge)! Triggering HIT.")
+                self.service.last_hit_confirmed = True
+                self.trigger_attack()
+                return
+            
+            # Reset latch when signal goes low
+            if not current_confirm:
+                self.service.last_hit_confirmed = False
+            
             # Sync HP if changed passively
             if remote_hp is not None and remote_hp != self.service.current_hp:
                 self.service.current_hp = remote_hp
