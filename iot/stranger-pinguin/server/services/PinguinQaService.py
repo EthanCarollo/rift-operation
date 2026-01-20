@@ -206,7 +206,7 @@ class PinguinQaService:
         
         return results
     
-    def answer(self, question: str, min_confidence: float = 0.3) -> Dict[str, Any]:
+    def answer(self, question: str, min_confidence: float = 0.65) -> Dict[str, Any]:
         """
         Répond à la question de manière naturelle en cherchant dans l'index.
         """

@@ -218,9 +218,6 @@ async def send_qa_response(websocket: WebSocket, qa_result: Dict[str, Any]):
     """Helper to consistently send QA answers with Base64 audio."""
     audio_base64 = None
     audio_file = qa_result.get('audio_file')
-    
-    audio_base64 = None
-    audio_file = qa_result.get('audio_file')
     confidence = qa_result.get('confidence', 0.0)
     
     # User Rule: Only play audio if confidence >= 65%
@@ -390,7 +387,8 @@ async def audio_websocket(websocket: WebSocket):
                         print(f"💡 Réponse auto : {qa_result['answer']}")
                         
                         # LOGGING: Explicitly mark the start of "talking"
-                        print(f"🔊 [SERVER] SENDING ANSWER with audio to client ({len(qa_result.get('audio_file', ''))} chars filename)")
+                        audio_file_name = qa_result.get('audio_file')
+                        print(f"🔊 [SERVER] SENDING ANSWER with audio to client ({len(audio_file_name) if audio_file_name else 0} chars filename)")
                         
                         await send_qa_response(websocket, qa_result)
                         

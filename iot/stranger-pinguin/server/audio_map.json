@@ -2,5 +2,22 @@
   "C'est quoi la lettre ?": ["mickey_u_letter.mp3"],
   "Quelle est la lettre ?": ["mickey_u_letter.mp3"],
   "Cosmo, C'est quoi la lettre ?": ["mickey_u_letter.mp3"],
-  "Cosmo, Quelle est la lettre ?": ["mickey_u_letter.mp3"]
+  "Cosmo, Quelle est la lettre ?": ["mickey_u_letter.mp3"],
+  "Cosmo, il me faut une lettre, tu peux me la donner ?": ["mickey_u_letter.mp3"],
+  
+  "Cosmo, ça va ?": [],
+  "Cosmo, comment ça va ?": [],
+  "Cosmo, tu fais quoi ?": [],
+  "Cosmo, je lui dis quoi ?": [],
+  "Cosmo, pourquoi ?": [],
+  "Cosmo, qu'est ce que tu fais ?": [],
+  "Cosmo, qu'est ce que t'en dis ?": [],
+  "Cosmo, pourquoi tu es là ?": [],
+  "Cosmo, comment est-ce que tu vas ?": [],
+  "Cosmo, tu vas bien ?": [],
+  "ça va ?": [],
+  "comment ça va ?": [],
+  "t'es là ?": [],
+  "ou au": [],
+  "sur le mauvais réseau": []
 }
