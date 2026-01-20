@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 
 export function useBattleAttacks() {
-    const ATTACKS = ['PORTE', 'ÉTOILE', 'OEIL', 'NUAGE', 'CLÉ'];
+    const ATTACKS = ['BOUCLIER', 'PLUIE', 'LUNE'];
 
     const attackHistory = ref<string[]>([]);
     const currentAttack = ref<string | null>(null);
@@ -17,13 +17,14 @@ export function useBattleAttacks() {
     });
 
     function getNextAttack(hp?: number) {
-        // Deterministic mode (Sync)
-        if (hp !== undefined && hp > 0 && hp <= 5) {
-            // Map HP 5->1 to Indices 0->4
-            // HP 5 -> Index 0
-            // HP 4 -> Index 1
-            const index = 5 - hp;
-            const nextAttack = ATTACKS[index % ATTACKS.length];
+        // Deterministic mode (Sync) - 3 HP phases
+        if (hp !== undefined && hp > 0 && hp <= 3) {
+            // Map HP 3->1 to Indices 0->2
+            // HP 3 -> Index 0 (BOUCLIER)
+            // HP 2 -> Index 1 (PLUIE)
+            // HP 1 -> Index 2 (LUNE)
+            const index = 3 - hp;
+            const nextAttack = ATTACKS[index % ATTACKS.length]!;
 
             // Update state
             attackHistory.value.push(nextAttack);

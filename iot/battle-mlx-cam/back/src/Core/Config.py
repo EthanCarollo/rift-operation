@@ -55,47 +55,37 @@ class Config:
     # Key: Label defined in Training View
     # Value: Prompt sent to Flux Kontext (None = skip generation)
     PROMPT_MAPPING = {
-        "key": "Transform this drawing into a realistic image of a golden antique key, detailed metalwork, soft shadows",
-        "door": "Transform this drawing into a realistic image of a wooden medieval door, detailed wood grain, iron hinges",
-        "star": "Transform this drawing into a realistic image of a glowing golden star, soft magical glow, cosmic feel",
-        "eye": "Transform this drawing into a realistic image of a mystical all-seeing eye, detailed iris, ethereal glow",
-        "cloud": "Transform this drawing into a realistic image of a fluffy cumulus cloud, soft lighting, atmospheric",
-        "sword": "Transform this drawing into a realistic image of a steel katana sword, sharp edge, detailed hilt",
+        "sword": "Transform this drawing into a realistic image of a medieval steel sword, sharp blade, ornate hilt, soft shadows",
+        "umbrella": "Transform this drawing into a realistic image of an elegant vintage umbrella, wooden handle, fabric canopy, rain drops",
+        "sun": "Transform this drawing into a realistic image of a radiant golden sun, warm rays, glowing corona, ethereal light",
         "empty": None,      # Skip generation
         "bullshit": None,   # Skip generation - unrecognized drawing
     }
 
-    # Attack names
+    # Attack names (Boss uses these)
     class Attack:
-        DOOR  = "PORTE"    # HP 5
-        STAR  = "ÉTOILE"   # HP 4
-        EYE   = "OEIL"     # HP 3
-        CLOUD = "NUAGE"    # HP 2
-        KEY   = "CLÉ"      # HP 1 (final)
+        SHIELD = "BOUCLIER"  # HP 3 (first attack)
+        RAIN   = "PLUIE"     # HP 2
+        MOON   = "LUNE"      # HP 1 (final)
 
-    # Counter labels
+    # Counter labels (Player draws these)
     class Counter:
-        KEY   = "key"
-        DOOR  = "door"
-        STAR  = "star"
-        EYE   = "eye"
-        CLOUD = "cloud"
+        SWORD    = "sword"
+        UMBRELLA = "umbrella"
+        SUN      = "sun"
 
     # Mapping: Boss Attack → Required Counter (KNN Label)
+    # Épée > Bouclier, Parapluie > Pluie, Soleil > Lune
     ATTACK_TO_COUNTER_LABEL = {
-        Attack.DOOR:  Counter.KEY,
-        Attack.STAR:  Counter.DOOR,
-        Attack.EYE:   Counter.STAR,
-        Attack.CLOUD: Counter.EYE,
-        Attack.KEY:   Counter.CLOUD,
+        Attack.SHIELD: Counter.SWORD,
+        Attack.RAIN:   Counter.UMBRELLA,
+        Attack.MOON:   Counter.SUN,
     }
 
     @staticmethod
     def get_next_attack(hp: int) -> str | None:
-        """Determines the next attack based on current HP."""
-        if hp == 5: return Config.Attack.DOOR
-        if hp == 4: return Config.Attack.STAR
-        if hp == 3: return Config.Attack.EYE
-        if hp == 2: return Config.Attack.CLOUD
-        if hp == 1: return Config.Attack.KEY
+        """Determines the next attack based on current HP (3 phases)."""
+        if hp == 3: return Config.Attack.SHIELD
+        if hp == 2: return Config.Attack.RAIN
+        if hp == 1: return Config.Attack.MOON
         return None

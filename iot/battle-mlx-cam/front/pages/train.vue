@@ -210,7 +210,7 @@ const crop = ref({ x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
 const rotation = ref(0);
 const grayscale = ref(false);
 
-const quickLabels = ['key', 'door', 'star', 'eye', 'cloud', 'sword', 'empty', 'bullshit'];
+const quickLabels = ['sword', 'umbrella', 'sun', 'empty', 'bullshit'];
 
 const cameraError = ref(null);
 
