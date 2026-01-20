@@ -156,7 +156,7 @@ const narrativeTimeout = ref(null);
 // Show narrative intro on APPEARING
 watch(battleState, (newState, oldState) => {
     if (newState === 'APPEARING' && oldState === 'IDLE') {
-        showNarrative(BATTLE_NARRATIVE.intro, 5000);
+        showNarrative(BATTLE_NARRATIVE.intro, 6000); // 6 seconds for intro
     }
 });
 
@@ -260,6 +260,11 @@ function triggerFlyingAnimation(imageSrc) {
         // After animation completes: clear image and trigger attack
         setTimeout(() => {
             flyingImage.value = null;
+            
+            // Clear generated preview images (they flew away!)
+            dreamDrawingImage.value = null;
+            nightmareDrawingImage.value = null;
+            
             console.log('[Battle] ⚔️ Animation complete! Triggering attack...');
             
             // Emit to backend to signal attack (Backend will handle HP/state)
@@ -323,9 +328,10 @@ const isEndState = computed(() => {
     return battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
 });
 
-// Show camera when NOT in IDLE, OR when debugMode is enabled
+// Show camera when NOT in IDLE/WEAKENED/CAPTURED, OR when debugMode is enabled
 const showCamera = computed(() => {
-    return battleState.value !== 'IDLE' || debugMode.value;
+    const isEndState = battleState.value === 'IDLE' || battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
+    return !isEndState || debugMode.value;
 });
 
 // --- SOCKET CONNECTION FOR DEBUG MODE ---

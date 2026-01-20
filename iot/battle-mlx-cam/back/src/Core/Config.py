@@ -55,9 +55,9 @@ class Config:
     # Key: Label defined in Training View
     # Value: Prompt sent to Flux Kontext (None = skip generation)
     PROMPT_MAPPING = {
-        "sword": "Transform this drawing into a realistic image of a medieval steel sword, sharp blade, ornate hilt, soft shadows",
-        "umbrella": "Transform this drawing into a realistic image of an elegant vintage umbrella, wooden handle, fabric canopy, rain drops",
-        "sun": "Transform this drawing into a realistic image of a radiant golden sun, warm rays, glowing corona, ethereal light",
+        "sword": "Transform this drawing into a cartoonistic image of a medieval steel sword",
+        "umbrella": "Transform this drawing into a cartoonistic image of an umbrella",
+        "sun": "Transform this drawing into a cartoonistic image of a golden sun",
         "empty": None,      # Skip generation
         "bullshit": None,   # Skip generation - unrecognized drawing
     }

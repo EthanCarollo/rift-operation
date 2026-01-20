@@ -50,6 +50,10 @@ class BattleRoleState:
         # Persistent flag: True once correct counter is detected for current attack
         # Reset when attack phase changes
         self.counter_validated = False
+        
+        # Flag: True once a valid counter image has been generated for this role
+        # Prevents re-generation until attack changes
+        self.valid_image_generated = False
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""

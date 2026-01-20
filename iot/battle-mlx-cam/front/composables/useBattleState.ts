@@ -126,6 +126,13 @@ export function useBattleState(debug = false) {
             scheduleAutoFight();
         } else if (state === 'HIT') {
             handleHitEffects();
+        } else if (state === 'FIGHTING') {
+            // Reset validation flags for new attack phase (images cleared at animation end)
+            log('FIGHTING: Resetting validation flags for new phase');
+            dreamCounterValid.value = false;
+            nightmareCounterValid.value = false;
+        } else if (state === 'WEAKENED') {
+            // Victory - images already cleared at animation end
         }
     }
 

@@ -21,6 +21,7 @@ class FightingState(BattleState):
         for role_state in self.service.roles.values():
             role_state.counter_validated = False
             role_state.last_output_image = None  # Clear cached images too
+            role_state.valid_image_generated = False  # Allow new generation
         
         if not self.service.current_attack:
              self.service.current_attack = Config.get_next_attack(self.service.current_hp)
@@ -72,6 +73,10 @@ class FightingState(BattleState):
         # STOP if already ready to attack (prevent new inferences)
         if hasattr(self, 'attack_ready') and self.attack_ready:
             return
+        
+        # STOP if this role already generated a valid image for current attack
+        if state.valid_image_generated:
+            return
 
         try:
             print(f"[BattleService] ⚙️ Processing task for {role}...")
@@ -96,6 +101,11 @@ class FightingState(BattleState):
             if result.output_image:
                 # Save to state cache
                 state.last_output_image = result.output_image
+                
+                # Mark as generated if valid counter (prevent regeneration)
+                if result.is_valid_counter:
+                    state.valid_image_generated = True
+                    print(f"[BattleState] ✅ {role} locked - valid image generated, won't regenerate")
                 
                 # Emit Output to Frontend (Preview)
                 if self.service.socketio:
