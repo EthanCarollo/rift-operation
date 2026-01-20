@@ -56,13 +56,13 @@ class ImageProcessor:
                     should_skip=True
                 )
             
-            # 2. Check for invalid labels (empty, etc.)
+            # 2. Check for invalid labels (empty, bullshit) - SKIP INFERENCE
             if label in Config.PROMPT_MAPPING and Config.PROMPT_MAPPING[label] is None:
-                print(f"[ImageProcessor] ⚠️ Label '{label}' has no prompt (skip generation)")
+                print(f"[ImageProcessor] 🚫 Label '{label}' = NO INFERENCE (skipping AI generation)")
                 return ProcessingResult(
                     label=label,
                     distance=distance,
-                    status_message=f"⚠️ {label.upper()}",
+                    status_message=f"🚫 {label.upper()} - Pas d'inférence",
                     should_skip=True
                 )
             
