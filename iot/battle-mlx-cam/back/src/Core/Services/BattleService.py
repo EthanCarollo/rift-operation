@@ -43,6 +43,9 @@ class BattleRoleState:
         self.rotation = 0
         # Grayscale (black & white) filter
         self.grayscale = False
+        
+        # Store last generated image [New]
+        self.last_output_image = None
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""

@@ -38,6 +38,11 @@ export interface StateConfig {
 }
 
 export const BATTLE_STATE_CONFIG: Record<string, StateConfig> = {
+    IDLE: {
+        video: null,
+        music: null,
+        loop: false
+    },
     APPEARING: {
         video: BATTLE_VIDEOS.APPEARING ?? null,
         music: BATTLE_MUSIC.APPEARING ?? null,

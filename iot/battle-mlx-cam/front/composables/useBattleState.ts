@@ -108,10 +108,17 @@ export function useBattleState(debug = false) {
             currentAttack.value = null;
         }
 
-        // Play music
-        if (config.music && hudRef.value && audioUnlocked.value) {
-            log('Playing music:', config.music);
-            hudRef.value.playMusic();
+        // Music Management
+        if (hudRef.value && audioUnlocked.value) {
+            if (config.music) {
+                log('Playing music:', config.music);
+                hudRef.value.playMusic();
+            } else if (state === 'IDLE') {
+                // Explicitly stop music for IDLE state
+                log('IDLE state: Stopping music');
+                hudRef.value.pauseMusic();
+            }
+            // If music is null but not IDLE (e.g. HIT), keep previous music playing
         }
 
         // State-specific logic

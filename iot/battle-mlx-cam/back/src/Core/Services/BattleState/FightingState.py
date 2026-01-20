@@ -87,6 +87,9 @@ class FightingState(BattleState):
 
             # 3. Handle Generated Image (and check for Dual-Side Success)
             if result.output_image:
+                # Save to state cache
+                state.last_output_image = result.output_image
+                
                 # Emit Output to Frontend (Preview)
                 if self.service.socketio:
                     b64 = base64.b64encode(result.output_image).decode('utf-8')
@@ -95,40 +98,48 @@ class FightingState(BattleState):
                         'frame': b64
                     })
                 
-                # Check Dual Validation (Both sides must be valid)
-                current_valid = result.is_valid_counter
-                
-                # Check other role
-                other_role = 'nightmare' if role == 'dream' else 'dream'
-                other_state = self.service.roles.get(other_role)
-                required = Config.ATTACK_TO_COUNTER_LABEL.get(self.service.current_attack)
-                
-                other_valid = False
-                if other_state and other_state.last_label == required:
-                    other_valid = True
-                
-                # SYNCHRONIZED SUCCESS: Image Generated + Current Valid + Other Valid
-                if current_valid and other_valid:
-                     print(f"[BattleState] 🌟 ULTRA COMBO! Both sides valid & Image Ready. Locking inference.")
-                     self.attack_ready = True
-                     
-                     # Emit SIGNAL to Frontend to start Animation
-                     if self.service.socketio:
-                         b64_final = base64.b64encode(result.output_image).decode('utf-8')
-                         self.service.socketio.emit('attack_ready', {
-                             'role': role,
-                             'frame': b64_final,
-                             'label': result.label
-                         })
-                
                 # Send to Rift Server (Legacy/Proxy)
                 b64_rift = base64.b64encode(result.output_image).decode('utf-8')
                 extra = {f"battle_drawing_{role}_recognised": result.is_valid_counter}
                 if self.service.ws.send_image(b64_rift, role, extra):
                     print(f"[BattleService] Sent {role} to Rift Server")
 
+            # --- SYNCHRONIZED ATTACK CHECK ---
+            # Check Dual Validation (Both sides must be valid)
+            current_valid = result.is_valid_counter
+            
+            # Check other role
+            other_role = 'nightmare' if role == 'dream' else 'dream'
+            other_state = self.service.roles.get(other_role)
+            required = Config.ATTACK_TO_COUNTER_LABEL.get(self.service.current_attack)
+            
+            other_valid = False
+            if other_state and other_state.last_label == required:
+                other_valid = True
+            
+            # SYNCHRONIZED SUCCESS: Current Valid + Other Valid + Image Available
+            if current_valid and other_valid:
+                 # We need an image for the animation. usage priority: Current New -> Current Cached -> Other Cached
+                 final_image = result.output_image or state.last_output_image or (other_state.last_output_image if other_state else None)
+                 
+                 if final_image:
+                     print(f"[BattleState] 🌟 ULTRA COMBO! Both sides valid & Image Ready. Locking inference.")
+                     self.attack_ready = True
+                     
+                     # Emit SIGNAL to Frontend to start Animation
+                     if self.service.socketio:
+                         b64_final = base64.b64encode(final_image).decode('utf-8')
+                         self.service.socketio.emit('attack_ready', {
+                             'role': role,
+                             'frame': b64_final,
+                             'label': result.label
+                         })
+                 else:
+                     print(f"[BattleState] Both valid but NO IMAGE ready yet. Waiting...")
+
             # 4. Standard validation notification (non-locking)
             if result.is_valid_counter:
+
                 if self.service.socketio:
                     self.service.socketio.emit('counter_validated', {
                         'role': role,
