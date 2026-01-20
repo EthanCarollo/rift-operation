@@ -13,7 +13,7 @@
       </div>
       <div class="flex gap-4">
         <button 
-          @click="refreshDevices"
+          @click="() => refreshDevices(true)"
           class="px-4 py-2 border border-[var(--border)] bg-[var(--bg-sec)] hover:bg-[var(--bg-main)] hover:border-[var(--border-focus)] text-xs font-bold uppercase transition-all flex items-center gap-2"
         >
           <span>Refresh</span>
@@ -29,9 +29,27 @@
     </div>
 
     <!-- Permission Error -->
-    <div v-if="error" class="flex-none border border-red-500 bg-red-500/5 p-4 mb-6 text-red-500 text-center text-xs font-bold uppercase">
-      {{ error }}
-      <button @click="requestPermissions" class="block mx-auto mt-2 underline">Retry Access</button>
+    <div v-if="error" class="flex-none border border-red-500 bg-red-500/5 p-4 mb-6 text-red-500 text-center text-xs font-bold uppercase transition-all">
+      <div class="text-lg mb-1">{{ error }}</div>
+      <div v-if="errorDetails" class="text-[10px] opacity-70 normal-case font-mono bg-black/20 p-2 rounded mb-2 select-text ">{{ errorDetails }}</div>
+      
+      <div class="flex gap-4 justify-center">
+        <button @click="requestPermissions" class="underline hover:text-white">Retry Access</button>
+        <button @click="showDebug = !showDebug" class="underline hover:text-white opacity-70">
+            {{ showDebug ? 'Hide Debug' : 'Show System Dump' }}
+        </button>
+      </div>
+
+      <!-- Raw Device Dump -->
+      <div v-if="showDebug" class="mt-4 text-left bg-black/50 p-4 rounded font-mono text-[10px] overflow-x-auto whitespace-pre text-gray-300 select-text card border border-white/10">
+        <div class="font-bold text-white mb-2 border-b border-white/20 pb-1">BROWSER DEVICE DUMP:</div>
+        <div v-if="debugDevices.length === 0">No devices enumerated yet.</div>
+        <div v-for="(d, i) in debugDevices" :key="i" class="mb-1 border-b border-white/5 pb-1">
+            <span class="text-blue-400">[{{ d.kind }}]</span> 
+            <span :class="d.label ? 'text-green-400' : 'text-red-500'">{{ d.label ? d.label : '[EMPTY_LABEL (NO PERM)]' }}</span>
+            <span class="text-gray-500 ml-2">ID: {{ d.deviceId.slice(0, 8) }}...</span>
+        </div>
+      </div>
     </div>
 
     <!-- Grid Container -->
@@ -174,6 +192,9 @@ interface WebcamInfo {
 const webcams = ref<WebcamInfo[]>([])
 const streams = ref<Map<string, MediaStream>>(new Map())
 const error = ref<string | null>(null)
+const errorDetails = ref<string | null>(null)
+const showDebug = ref(false)
+const debugDevices = ref<MediaDeviceInfo[]>([])
 const videoRefs = ref<Map<string, HTMLVideoElement>>(new Map())
 
 // State for selection mode: Map<ID, CustomName>
@@ -284,16 +305,21 @@ const requestPermissions = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true })
     stream.getTracks().forEach(t => t.stop())
     await refreshDevices()
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
     error.value = "ACCESS DENIED"
+    errorDetails.value = `${err.name}: ${err.message}`
+    // Try to enumerate anyway to see if hardware exists (labels will be empty)
+    await refreshDevices(false)
   }
 }
 
-const refreshDevices = async () => {
+const refreshDevices = async (startStreams = true) => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices()
     const videoInputs = devices.filter(d => d.kind === 'videoinput')
+    
+    debugDevices.value = videoInputs // Store for debug view
     
     // Stop all streams first to ensure clean state
     stopAllStreams()
@@ -302,6 +328,8 @@ const refreshDevices = async () => {
       deviceId: d.deviceId,
       label: d.label || `CAM_${d.deviceId.slice(0, 4)}`
     }))
+
+    if (!startStreams) return
 
     const toStart = props.mode === 'view' ? displayList.value : webcams.value
     

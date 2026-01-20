@@ -1,8 +1,5 @@
-try:
-    from src.Framework.Button.ButtonDelegate import ButtonDelegate
-    from src.Framework.Rfid.RfidDelegate import RfidDelegate
-except ImportError:
-    pass
+from src.Framework.Button.ButtonDelegate import ButtonDelegate
+from src.Framework.Rfid.RfidDelegate import RFIDDelegate
 
 class OperatorButtonDelegate(ButtonDelegate):
     def __init__(self, workshop, button_type):
@@ -13,10 +10,10 @@ class OperatorButtonDelegate(ButtonDelegate):
         if self.workshop:
             self.workshop.on_button_press(self.button_type)
 
-class OperatorRfidDelegate(RfidDelegate):
+class OperatorRfidDelegate(RFIDDelegate):
     def __init__(self, workshop):
         self.workshop = workshop
 
-    def on_read(self, uid):
+    def on_read(self, uid, reader_name=""):
         if self.workshop:
             self.workshop.on_rfid_read(uid)

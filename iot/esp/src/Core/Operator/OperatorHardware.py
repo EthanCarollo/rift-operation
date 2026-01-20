@@ -5,7 +5,8 @@ try:
     from src.Framework.Rfid.RfidReader import RFIDReader
     from src.Core.Operator.OperatorDelegate import OperatorButtonDelegate, OperatorRfidDelegate
 except ImportError:
-    pass
+    # If imports fail, let it crash to see error
+    raise
 
 class LedButton:
     def __init__(self, button_pin, led_pin, delegate, name="LedButton"):

@@ -1,7 +1,7 @@
 
 import utime
 import gc
-from src.Framework.Logger.Logger import Logger
+from src.Framework.Logger import Logger
 from src.Core.Operator.OperatorHardware import OperatorHardware
 
 # Mock Controller to provide logger
