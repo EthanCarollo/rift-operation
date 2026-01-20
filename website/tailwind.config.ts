@@ -12,6 +12,7 @@ export default {
     extend: {
       fontFamily: {
         mono: ['"Space Mono"', 'monospace'],
+        lineal: ['Lineal', 'sans-serif'],
       },
       colors: {
         bg: {

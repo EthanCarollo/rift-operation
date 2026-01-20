@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed inset-0 overflow-hidden select-none bg-[#150059]" 
+    class="fixed inset-0 overflow-hidden select-none bg-[#150059] font-lineal"
     ref="containerRef"
   >
     <!-- Background from Figma -->
@@ -81,7 +81,7 @@
       </button>
 
       <!-- COMPLETED -->
-      <div v-if="isCompleted" class="flex flex-col items-center gap-[86px] text-center">
+      <div v-if="isCompleted" class="flex flex-col items-center gap-[86px] text-center mb-[200px]">
         <div class="flex flex-col items-center gap-2">
           <p class="text-[#FF00CF] text-3xl uppercase font-bold">
             Félicitations !
@@ -91,12 +91,12 @@
           </p>
         </div>
         <p class="text-[#FFFF00] text-3xl font-bold leading-[1.2] max-w-[500px]">
-          Récupérez vite vos morceaux de faille !
+          Récupérez vite vos<br> morceaux de faille !
         </p>
       </div>
 
       <!-- START INSTRUCTION: Only at the very beginning (position 0 and not started) -->
-      <div v-else-if="riftReady && isDreamTurn && !gameStarted" class="flex flex-col items-center gap-12">
+      <div v-else-if="riftReady && isDreamTurn && !gameStarted" class="flex flex-col items-center gap-12 mb-[200px]">
         <!-- Consigne Box with wavy border -->
         <div class="relative px-12 py-8 flex flex-col items-center gap-1 w-full max-w-[580px]">
           <!-- Wavy border SVG -->
@@ -130,7 +130,7 @@
       </div>
 
       <!-- DREAM Content: Show note to play -->
-      <div v-else-if="riftReady && isDreamTurn && gameStarted" class="flex flex-col items-center gap-[53px]">
+      <div v-else-if="riftReady && isDreamTurn && gameStarted" class="flex flex-col items-center gap-[53px] mb-[200px]">
         <!-- Instruction text -->
         <p class="text-[#FFFF00] text-2xl font-bold text-center leading-tight max-w-[500px]">
           Sois réactif et secoue les bons poissons au bon moment !
@@ -148,37 +148,23 @@
       </div>
 
       <!-- NIGHTMARE Content: Show waiting message -->
-      <div v-else-if="riftReady && isNightmareTurn" class="flex flex-col items-center gap-8">
-        <div class="text-white/30 text-xl font-light tracking-widest uppercase">
-          En attente...
+      <div v-else-if="riftReady && isNightmareTurn" class="flex flex-col items-center gap-[86px] text-center mb-[200px]">
+        <div class="flex flex-col items-center gap-2">
+          <p class="text-[#FF00CF] text-3xl uppercase font-bold">
+            Patientez...
+          </p>
+          <p class="text-[#FFFF00] text-2xl leading-[1.2] max-w-[600px]">
+            ...c’est au tour du monde des<br> cauchemars de jouer.
+          </p>
         </div>
-        
-        <!-- Waiting animation -->
-        <div class="relative w-48 h-48 flex items-center justify-center">
-          <div class="absolute inset-0 border-4 border-white/10 rounded-full"></div>
-          <div class="absolute inset-4 border-4 border-white/20 rounded-full animate-spin-slow"></div>
-          <div class="absolute inset-8 border-4 border-white/10 rounded-full animate-spin-reverse"></div>
-          
-          <!-- Center icon -->
-          <div class="text-6xl opacity-50">🌙</div>
-        </div>
-
-        <div class="text-white/40 text-lg">
-          C'est au tour du Nightmare
-        </div>
-        
-        <div class="text-white/20 text-sm">
-          Prépare-toi pour ta prochaine note...
-        </div>
+        <p class="text-[#FFFF00] text-3xl font-bold leading-[1.2] max-w-[500px]">
+          Restez attentifs car ça<br> va recommencer...
+        </p>
       </div>
 
       <!-- IDLE: Waiting to start -->
-      <div v-else class="flex flex-col items-center gap-8">
-        <div class="text-white/50 text-xl font-light tracking-widest uppercase">
-          En attente de la partie...
-        </div>
-        
-        <div class="w-16 h-16 border-4 border-white/20 border-t-[#ff1493] rounded-full animate-spin"></div>
+      <div v-else class="bg-black absolute inset-0">
+
       </div>
 
     </div>
@@ -285,8 +271,8 @@ function getSpheroName(note) {
 
 // WebSocket connection
 function connectWebSocket() {
-  // const wsUrl = 'ws://192.168.10.7:8000/ws';
-  const wsUrl = 'ws://localhost:8000/ws';
+  const wsUrl = 'ws://192.168.10.7:8001/ws';
+  // const wsUrl = 'ws://localhost:8000/ws';
   
   try {
     ws.value = new WebSocket(wsUrl);
