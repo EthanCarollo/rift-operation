@@ -46,6 +46,10 @@ class BattleRoleState:
         
         # Store last generated image [New]
         self.last_output_image = None
+        
+        # Persistent flag: True once correct counter is detected for current attack
+        # Reset when attack phase changes
+        self.counter_validated = False
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""
@@ -204,6 +208,30 @@ class BattleService:
             encoded_crop = base64.b64encode(image_bytes).decode('utf-8')
             self.socketio.emit('debug_cropped_frame', {'role': role, 'frame': encoded_crop})
 
+        # ALWAYS run KNN to keep last_label updated (for SYNC check)
+        # This runs every frame, not rate-limited
+        if self.knn and self.current_attack:
+            try:
+                label, distance = self.knn.predict(image_bytes)
+                state.knn_label = label
+                state.knn_distance = distance
+                state.last_label = label
+                
+                # Check if valid counter
+                required = Config.ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
+                is_valid = (label == required)
+                
+                # Set persistent flag when valid (stays True until phase changes)
+                if is_valid:
+                    state.counter_validated = True
+                
+                # Emit status update with latest KNN
+                state.recognition_status = f"{'✓' if is_valid else '✗'} {label} (d={distance:.1f})"
+                self._emit_status()
+            except Exception as e:
+                print(f"[BattleService] KNN quick check failed for {role}: {e}")
+
+        # Rate limit full AI processing (not KNN)
         if time.time() - state.last_gen_time < GENERATION_RATE_LIMIT_S:
             return
         

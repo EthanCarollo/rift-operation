@@ -17,8 +17,15 @@ class FightingState(BattleState):
         print(f"[BattleState] Entering FIGHTING")
         self.attack_ready = False # Lock flag for synchronized attack
         
+        # Reset counter validation flags for new phase
+        for role_state in self.service.roles.values():
+            role_state.counter_validated = False
+            role_state.last_output_image = None  # Clear cached images too
+        
         if not self.service.current_attack:
              self.service.current_attack = Config.get_next_attack(self.service.current_hp)
+        
+        print(f"[BattleState] Attack: {self.service.current_attack}, HP: {self.service.current_hp}")
         
         self.service.broadcast_state("FIGHTING", {
             "battle_boss_attack": self.service.current_attack,
@@ -105,21 +112,18 @@ class FightingState(BattleState):
                     print(f"[BattleService] Sent {role} to Rift Server")
 
             # --- SYNCHRONIZED ATTACK CHECK ---
-            # Check Dual Validation (Both sides must be valid)
-            current_valid = result.is_valid_counter
+            # Check Dual Validation (Both sides must have validated at some point)
+            current_valid = result.is_valid_counter or state.counter_validated
             
-            # Check other role
+            # Check other role using persistent flag
             other_role = 'nightmare' if role == 'dream' else 'dream'
             other_state = self.service.roles.get(other_role)
-            required = Config.ATTACK_TO_COUNTER_LABEL.get(self.service.current_attack)
             
-            other_valid = False
-            other_label = other_state.last_label if other_state else None
-            if other_state and other_state.last_label == required:
-                other_valid = True
+            # Use persistent counter_validated flag (not current last_label)
+            other_valid = other_state.counter_validated if other_state else False
             
             # Debug: Log sync check status
-            print(f"[BattleState] 🔍 SYNC ({role}): cur={current_valid}, oth={other_valid} (label={other_label}, need={required}), locked={getattr(self, 'attack_ready', False)}")
+            print(f"[BattleState] 🔍 SYNC ({role}): cur_valid={current_valid}, oth_valid={other_valid}, locked={getattr(self, 'attack_ready', False)}")
             
             # SYNCHRONIZED SUCCESS: Current Valid + Other Valid + Image Available
             # CRITICAL: Check attack_ready flag to prevent race condition (both roles might reach here)
