@@ -62,6 +62,14 @@ class WebsocketConfigFactory:
             reconnect_delay=10,
             ping_interval=60
         )
+    @staticmethod
+    def create_prod_stranger():
+        return WebsocketConfig(
+            server="ws://192.168.10.7:8002",
+            path="/ws",
+            reconnect_delay=10,
+            ping_interval=60
+        )
     
     @staticmethod
     def create_dev():
@@ -134,7 +142,7 @@ class ConfigFactory:
     def create_cudy_stranger_config():
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
-            websocket=WebsocketConfigFactory.create_prod(),
+            websocket=WebsocketConfigFactory.create_prod_stranger(),
             device_id="STRANGER-DREAM-SCRABBLE-ESP",
             debug_mode=True,
             heartbeat_interval=15
@@ -143,7 +151,7 @@ class ConfigFactory:
     def create_cudy_stranger_cosmo_config():
         return Config(
             wifi=WifiConfigFactory.create_cudy(),
-            websocket=WebsocketConfigFactory.create_prod(),
+            websocket=WebsocketConfigFactory.create_prod_stranger(),
             device_id="STRANGER-DREAM-COSMO-ESP",
             debug_mode=True,
             heartbeat_interval=15

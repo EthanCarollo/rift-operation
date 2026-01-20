@@ -67,16 +67,24 @@ const currentQuestion = computed<Question | null>(() => {
 /* Font face declarations - keeping global styles only */
 @font-face {
   font-family: 'Lineal';
-  src: url('/Lineal.otf') format('opentype');
-  font-weight: normal;
+  src: url('/assets/fonts/Lineal-Regular.ttf') format('truetype');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'Lineal';
-  src: url('/Lineal.otf') format('opentype');
-  font-weight: bold;
+  src: url('/assets/fonts/Lineal-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lineal';
+  src: url('/assets/fonts/Lineal-Bold.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }

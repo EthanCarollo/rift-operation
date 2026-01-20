@@ -1,7 +1,7 @@
 <template>
-    <div class="relative flex items-start justify-center w-[90vw] mx-auto">
+    <div class="relative flex items-start justify-center w-[80vw] mx-auto">
         <!-- Candy image background -->
-        <img src="/images/stranger/question-container-candy.png" alt="" class="relative w-full h-auto block" />
+        <img src="/images/stranger/candy.png" alt="" class="relative w-full h-auto block" />
 
         <!-- Content -->
         <div class="absolute inset-0 z-10 flex flex-col items-center px-[4vw] h-full justify-start text-center">
