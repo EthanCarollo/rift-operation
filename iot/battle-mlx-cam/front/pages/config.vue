@@ -412,6 +412,12 @@ function setRotation(role, angle) {
     console.log(`[Config] Rotation for ${role}:`, angle);
 }
 
+function setGrayscale(role, enabled) {
+    grayscales.value[role] = enabled;
+    socket.emit('update_grayscale', { role, enabled });
+    console.log(`[Config] Grayscale for ${role}:`, enabled);
+}
+
 function forceStartFight() {
     if (confirm("Force Start Fight? This will reset HP and start appearing phase.")) {
         socket.emit('force_start_fight', {});
@@ -441,6 +447,7 @@ function connect() {
         fetchDebugMode();
         fetchCrops();
         fetchRotations();
+        fetchGrayscales();
     });
 
     socket.on('disconnect', () => {
@@ -503,6 +510,13 @@ function connect() {
         if (data.role !== undefined) {
             console.log('[Config] Rotation updated:', data);
             rotations.value[data.role] = data.rotation;
+        }
+    });
+
+    socket.on('grayscale_updated', (data) => {
+        if (data.role !== undefined) {
+            console.log('[Config] Grayscale updated:', data);
+            grayscales.value[data.role] = data.enabled;
         }
     });
 
@@ -578,6 +592,19 @@ async function fetchRotations() {
         }
     } catch (e) {
         console.error('Failed to fetch rotations:', e);
+    }
+}
+
+async function fetchGrayscales() {
+    try {
+        const res = await fetch(`${backendUrl.value}/remote/grayscales`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.nightmare !== undefined) grayscales.value.nightmare = data.nightmare;
+            if (data.dream !== undefined) grayscales.value.dream = data.dream;
+        }
+    } catch (e) {
+        console.error('Failed to fetch grayscales:', e);
     }
 }
 
