@@ -39,7 +39,6 @@ class RiftOperationJsonData:
                 battle_drawing_dream_image=None,
                 battle_drawing_dream_recognised=None,
                 battle_drawing_nightmare_recognised=None,
-                battle_hit_confirmed=None,
                 battle_video_play=None,
                 battle_music_play=None,
                 battle_boss_hp=None,
@@ -88,9 +87,6 @@ class RiftOperationJsonData:
         self.battle_drawing_dream_image = battle_drawing_dream_image
         self.battle_drawing_dream_recognised = battle_drawing_dream_recognised
         self.battle_drawing_nightmare_recognised = battle_drawing_nightmare_recognised
-        self.battle_hit_confirmed = battle_hit_confirmed
-        self.battle_cage_nightmare = battle_cage_nightmare
-        self.battle_cage_dream = battle_cage_dream
         self.battle_video_play = battle_video_play
         self.battle_music_play = battle_music_play
         self.battle_boss_hp = battle_boss_hp

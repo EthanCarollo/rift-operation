@@ -5,6 +5,8 @@ try:
 except ImportError:
     raise
 
+import uasyncio as asyncio
+
 class OperatorHardware:
     def __init__(self, controller):
         self.controller = controller
@@ -54,11 +56,11 @@ class OperatorHardware:
         except Exception as e:
             self.logger.error(f"LED Prompt init failed: {e}")
 
-        # 3. LED Step 1 (GPIO 25)
+        # 3. LED Step 1 (GPIO 14) - Swapped with Step 3 due to wiring
         try:
-            self.led_step_1 = Pin(25, Pin.OUT)
+            self.led_step_1 = Pin(14, Pin.OUT)
             self.led_step_1.off()
-            self.logger.info("LED Step 1 initialized (GPIO 25)")
+            self.logger.info("LED Step 1 initialized (GPIO 14)")
         except Exception as e:
             self.logger.error(f"LED Step 1 init failed: {e}")
 
@@ -70,11 +72,11 @@ class OperatorHardware:
         except Exception as e:
             self.logger.error(f"LED Step 2 init failed: {e}")
 
-        # 5. LED Step 3 (GPIO 14)
+        # 5. LED Step 3 (GPIO 25) - Swapped with Step 1 due to wiring
         try:
-            self.led_step_3 = Pin(14, Pin.OUT)
+            self.led_step_3 = Pin(25, Pin.OUT)
             self.led_step_3.off()
-            self.logger.info("LED Step 3 initialized (GPIO 14)")
+            self.logger.info("LED Step 3 initialized (GPIO 25)")
         except Exception as e:
             self.logger.error(f"LED Step 3 init failed: {e}")
 
@@ -82,7 +84,6 @@ class OperatorHardware:
         """Start blinking LED Prompt"""
         if not self.blink_active:
             self.blink_active = True
-            import uasyncio as asyncio
             asyncio.create_task(self._blink_task())
 
     def stop_blink(self):
