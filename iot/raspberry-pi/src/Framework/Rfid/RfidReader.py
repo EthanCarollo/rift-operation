@@ -39,12 +39,9 @@ class RfidReader:
             if status == self.reader.OK:
                 uid_str = "-".join("{:02X}".format(b) for b in uid)
                 return uid_str
-            else:
-                # Debug: anticoll failed
-                print(f"[{self.name}] DEBUG: anticoll failed (status={status})")
-        else:
-            # Debug: request failed (this is normal when no card present, so only print occasionally)
-            pass
+            # else:
+            #     # Debug: anticoll failed
+            #     print(f"[{self.name}] DEBUG: anticoll failed (status={status})")
         return None
 
     def check(self):

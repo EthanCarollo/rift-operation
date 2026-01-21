@@ -89,12 +89,13 @@ struct RobotView: View {
             riftStepLog.append("[RECEIVED] launch_close_rift_step_\(currentStep) = true")
             print("Rift Step \(currentStep) Received!")
             
-            // Execute movement
+            // Execute movement (PULLEY MODE: No stop command to avoid auto-leveling)
             rob.forward(speed: 100)
             
-            // Stop after 15ms (perfect 1/3 closure)
+            // Wait 15ms then let it coast (no stop() to prevent stabilization)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.015) {
-                rob.stop()
+                // DO NOT CALL rob.stop() - it triggers auto-leveling
+                // The rover will maintain its position as a pulley
                 
                 // Log completed
                 if currentStep == 3 {

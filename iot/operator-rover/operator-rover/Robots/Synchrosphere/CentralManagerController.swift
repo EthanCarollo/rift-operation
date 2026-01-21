@@ -110,7 +110,8 @@ private extension CBPeripheral {
         guard let name = name else {
             return false
         }
-        return name.hasPrefix(deviceSelector.namePrefix)
+        // HARDCODED: Only connect to RV-7B4C
+        return name == "RV-7B4C"
     }
 }
 

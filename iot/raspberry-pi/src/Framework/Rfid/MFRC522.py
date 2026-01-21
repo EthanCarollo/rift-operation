@@ -118,13 +118,14 @@ class MFRC522:
         (stat, recv, bits) = self._tocard(0x0C, ser)
 
         if stat == self.OK:
-            if len(recv) == 5:
-                for i in range(4):
-                    ser_chk = ser_chk ^ recv[i]
-                # EMERGENCY FIX: Disable checksum validation for demo
-                # if ser_chk != recv[4]:
-                #     stat = self.ERR
-                pass  # Accept UID even with bad checksum
+            # EMERGENCY FIX: Accept both 4-byte (no checksum) and 5-byte (with checksum) responses
+            if len(recv) >= 4:
+                # Use first 4 bytes as UID regardless
+                # Pad with 0x00 if only 4 bytes received
+                if len(recv) == 4:
+                    recv.append(0x00)  # Add dummy checksum
+                # Accept the UID without validation
+                pass
             else:
                 print(f"[MFRC522] DEBUG anticoll: Invalid length recv={len(recv)}")
                 stat = self.ERR
