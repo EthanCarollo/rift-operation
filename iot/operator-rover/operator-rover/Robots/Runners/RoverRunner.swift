@@ -163,13 +163,13 @@ class RoverRunner {
                     // 2) PAPPE LOGIC (NO SWIFT HERE!)
                     //------------------------------------------------------
 
-                    // Move robot
+                    // Move robot (PULLEY MODE: Use Roll instead of RollForSeconds)
+                    // Roll is infinite and doesn't auto-stop, preventing stabilization
                     `if` { val.doRoll as Bool } then: {
-                        run(Syncs.RollForSeconds, [
+                        run(Syncs.Roll, [
                             val.cmdSpeed,
                             val.cmdHeading,
-                            val.cmdDir,
-                            val.cmdDuration
+                            val.cmdDir
                         ])
                     }
 

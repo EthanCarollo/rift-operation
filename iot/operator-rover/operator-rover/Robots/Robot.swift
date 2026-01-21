@@ -19,7 +19,7 @@ class Robot {
     private(set) var isConnected: Bool = false
     private(set) var batteryState: BatteryState = .unknown
     private(set) var lastSample: SensorSample = .empty
-    var heading: Int = 0
+    var heading: Int = 315  // Initial heading: 45° to the left (315° = -45°)
 
     // MARK: - Simple callbacks
 
