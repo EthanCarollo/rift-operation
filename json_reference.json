@@ -10,6 +10,8 @@
     "stranger_state": null,
     "stranger_recognized_name": null,
     "is_dark_cosmo_here": null,
+    "cosmo_called": null,
+    "dark_cosmo_called": null,
     "pinguin_micro": null,
     "pinguin_audio": null,
     "depth_state": null,

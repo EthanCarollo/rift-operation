@@ -148,6 +148,52 @@ async def broadcast_dark_cosmo_audio():
         if client in connected_clients:
             connected_clients.remove(client)
 
+async def broadcast_forced_audio(audio_filename: str, message_type: str = "forced_audio"):
+    """Broadcasts a specific audio file to Swift clients (used for cosmo_called/dark_cosmo_called).
+    Uses the same format as qa_answer so front-end handles it like natural detection."""
+    print(f"🎤 [FORCED AUDIO] Broadcasting '{audio_filename}' to {len(connected_clients)} clients")
+    if not connected_clients:
+        return
+    
+    # Load and encode the audio file
+    audio_base64 = None
+    try:
+        audio_path = os.path.join("audio", audio_filename)
+        print(f"📂 [FORCED AUDIO] Loading audio: {audio_path}")
+        if os.path.exists(audio_path):
+            with open(audio_path, "rb") as f:
+                file_content = f.read()
+                audio_base64 = base64.b64encode(file_content).decode('utf-8')
+                print(f"✅ [FORCED AUDIO] Audio encoded ({len(audio_base64)} chars)")
+        else:
+            print(f"❌ [FORCED AUDIO] Audio file missing: {audio_path}")
+            return
+    except Exception as e:
+        print(f"❌ [FORCED AUDIO] Error encoding audio: {e}")
+        return
+    
+    # Broadcast to all clients using qa_answer format (same as natural detection)
+    message = json.dumps({
+        "type": "qa_answer",
+        "answer": "Forced audio playback",
+        "confidence": 1.0,
+        "audio_base64": audio_base64,
+        "audio_file": audio_filename,
+        "time_ms": 0
+    })
+    
+    to_remove = []
+    for client in connected_clients:
+        try:
+            await client.send_text(message)
+        except Exception as e:
+            print(f"❌ [FORCED AUDIO] Failed to broadcast to client: {e}")
+            to_remove.append(client)
+            
+    for client in to_remove:
+        if client in connected_clients:
+            connected_clients.remove(client)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     stt_service.load_model()
@@ -196,6 +242,42 @@ async def connect_to_main_server():
                                 if is_dark_cosmo_here == True and SERVER_MODE == 'cosmo':
                                     print(f"🌙 [DARK COSMO] Detected! Broadcasting audio to Cosmo clients...")
                                     await broadcast_dark_cosmo_audio()
+                                
+                                # Handle cosmo_called (only for Cosmo mode) - sends first MP3 from audio_map
+                                cosmo_called = message.get("cosmo_called")
+                                if cosmo_called == True and SERVER_MODE == 'cosmo':
+                                    print(f"☀️ [COSMO CALLED] Force speaking triggered!")
+                                    # Load first audio from audio_map.json
+                                    try:
+                                        with open(COSMO_AUDIO_MAP, 'r') as f:
+                                            audio_map = json.load(f)
+                                            # Find first entry with a non-empty audio list
+                                            for phrase, audio_list in audio_map.items():
+                                                if audio_list and len(audio_list) > 0:
+                                                    first_audio = audio_list[0]
+                                                    print(f"☀️ [COSMO CALLED] Sending: {first_audio}")
+                                                    await broadcast_forced_audio(first_audio, "cosmo_called")
+                                                    break
+                                    except Exception as e:
+                                        print(f"❌ [COSMO CALLED] Error loading audio map: {e}")
+                                
+                                # Handle dark_cosmo_called (only for Dark Cosmo mode) - sends first MP3 from dark_audio_map
+                                dark_cosmo_called = message.get("dark_cosmo_called")
+                                if dark_cosmo_called == True and SERVER_MODE == 'dark_cosmo':
+                                    print(f"🌙 [DARK COSMO CALLED] Force speaking triggered!")
+                                    # Load first audio from dark_audio_map.json
+                                    try:
+                                        with open(DARK_COSMO_AUDIO_MAP, 'r') as f:
+                                            audio_map = json.load(f)
+                                            # Find first entry with a non-empty audio list
+                                            for phrase, audio_list in audio_map.items():
+                                                if audio_list and len(audio_list) > 0:
+                                                    first_audio = audio_list[0]
+                                                    print(f"🌙 [DARK COSMO CALLED] Sending: {first_audio}")
+                                                    await broadcast_forced_audio(first_audio, "dark_cosmo_called")
+                                                    break
+                                    except Exception as e:
+                                        print(f"❌ [DARK COSMO CALLED] Error loading audio map: {e}")
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             

@@ -11,6 +11,10 @@ from ..Network.RiftWebSocket import RiftWebSocket
 from ..Utils import ImageProcessor, ProcessingResult
 from ..Recognition.KNNRecognizer import KNNRecognizer
 
+# New OOP Classes
+from .RoleState import RoleState
+from .SyncManager import SyncManager
+
 from .BattleState.BattleState import BattleState
 from .BattleState.IdleState import IdleState
 from .BattleState.AppearingState import AppearingState
@@ -23,45 +27,27 @@ from .BattleState.CapturedState import CapturedState
 GENERATION_RATE_LIMIT_S = 2.0
 INITIAL_HP = 3  # 3-phase combat: BOUCLIER → PLUIE → LUNE
 
-class BattleRoleState:
-    """Manages state for one role (Dream/Nightmare)."""
-    def __init__(self, role: str):
-        self.role = role
-        self.last_gen_time = 0
-        self.recognition_status = "Waiting..."
-        self.last_label = None
-        self.prompt = None
-        self.processing = False
-        
-        # New result fields
-        self.knn_label = None
-        self.knn_distance = None
-        
-        # Crop settings (x, y, w, h) normalized
-        self.crop = None
-        # Rotation in degrees (0, 90, 180, 270)
-        self.rotation = 0
-        # Grayscale (black & white) filter
-        self.grayscale = False
-        
-        # Store last generated image [New]
-        self.last_output_image = None
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""
     
     def __init__(self):
+        # Player roles with clean OOP state management
         self.roles = {
-            'nightmare': BattleRoleState('nightmare'),
-            'dream': BattleRoleState('dream')
+            'nightmare': RoleState(role='nightmare'),
+            'dream': RoleState(role='dream')
         }
         
+        # Core services
         self.processor = ImageProcessor()
         self.ws = RiftWebSocket()
         self.knn = KNNRecognizer()
         
         self.running = False
         self.socketio = None
+        
+        # Sync manager for dual-side attack coordination (initialized after socketio)
+        self.sync_manager: Optional[SyncManager] = None
 
         # State tracking for edge detection
         self.last_hit_confirmed = False
@@ -69,13 +55,15 @@ class BattleService:
         # Game State
         self.current_hp = INITIAL_HP
         self.current_attack = None
-        self.state: BattleState = IdleState(self) # Initial State
+        self.state: BattleState = IdleState(self)
         
         self.ws.connect()
-        print("[BattleService] Initialized (State Pattern / Services)")
+        print("[BattleService] Initialized (OOP Refactor)")
     
     def set_socketio(self, socketio):
         self.socketio = socketio
+        # Initialize sync manager with socketio
+        self.sync_manager = SyncManager(self.roles, self.socketio)
 
     def change_state(self, new_state: BattleState):
         """Transition to a new state."""
@@ -204,6 +192,30 @@ class BattleService:
             encoded_crop = base64.b64encode(image_bytes).decode('utf-8')
             self.socketio.emit('debug_cropped_frame', {'role': role, 'frame': encoded_crop})
 
+        # ALWAYS run KNN to keep last_label updated (for SYNC check)
+        # This runs every frame, not rate-limited
+        if self.knn and self.current_attack:
+            try:
+                label, distance = self.knn.predict(image_bytes)
+                state.knn_label = label
+                state.knn_distance = distance
+                state.last_label = label
+                
+                # Check if valid counter
+                required = Config.ATTACK_TO_COUNTER_LABEL.get(self.current_attack)
+                is_valid = (label == required)
+                
+                # Set persistent flag when valid (stays True until phase changes)
+                if is_valid:
+                    state.counter_validated = True
+                
+                # Emit status update with latest KNN
+                state.recognition_status = f"{'✓' if is_valid else '✗'} {label} (d={distance:.1f})"
+                self._emit_status()
+            except Exception as e:
+                print(f"[BattleService] KNN quick check failed for {role}: {e}")
+
+        # Rate limit full AI processing (not KNN)
         if time.time() - state.last_gen_time < GENERATION_RATE_LIMIT_S:
             return
         
@@ -219,7 +231,7 @@ class BattleService:
             daemon=True
         ).start()
 
-    def _process_image_task(self, role: str, state: BattleRoleState, image_bytes: bytes):
+    def _process_image_task(self, role: str, state: RoleState, image_bytes: bytes):
         try:
             # Delegate entirely to the Current State
             self.state.on_image_task(role, state, image_bytes)

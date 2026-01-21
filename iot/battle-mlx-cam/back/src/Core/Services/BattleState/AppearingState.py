@@ -1,7 +1,7 @@
 import time
 from .BattleState import BattleState
 
-INITIAL_HP = 5
+INITIAL_HP = 3  # 3-phase combat: BOUCLIER → PLUIE → LUNE
 APPEARING_DURATION = 10.0
 
 class AppearingState(BattleState):

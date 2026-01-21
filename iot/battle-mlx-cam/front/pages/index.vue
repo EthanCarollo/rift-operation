@@ -35,49 +35,20 @@
                     ⚡ TEST ANIM
                 </button>
 
-                <!-- Narrative Text Overlay - Lower position, below top area -->
-                <div v-if="showNarrativeText"
-                    class="absolute top-[15%] left-0 right-0 z-20 flex justify-center pointer-events-none">
-                    <div class="bg-black/80 px-8 py-4 rounded-lg max-w-2xl text-center">
-                        <p class="text-white text-lg md:text-xl font-medium leading-relaxed animate-fade-in">
-                            {{ narrativeText }}
-                        </p>
-                    </div>
-                </div>
+                <!-- Narrative Text Overlay -->
+                <NarrativeOverlay :show="showNarrativeText" :text="narrativeText" />
 
                 <!-- Drawing Validation Feedback + Loading Bar -->
-                <div v-if="showDrawingFeedback || isGenerating"
-                    class="absolute bottom-[35%] left-1/2 transform -translate-x-1/2 z-30 transition-all duration-300">
-                    
-                    <!-- Validation Badge -->
-                    <div v-if="showDrawingFeedback && !isGenerating" class="px-6 py-3 rounded-full text-lg font-bold animate-bounce"
-                        :class="isDrawingValid ? 'bg-green-500 text-white' : 'bg-red-500/80 text-white'">
-                        {{ isDrawingValid ? '✓ Dessin validé !' : '✗ Essayez autre chose...' }}
-                    </div>
-                    
-                    <!-- Loading Bar for AI Generation -->
-                    <div v-if="isGenerating" class="flex flex-col items-center gap-3">
-                        <div class="text-white text-lg font-medium animate-pulse">🎨 Génération en cours...</div>
-                        <div class="w-64 h-2 bg-neutral-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 rounded-full animate-loading-bar"></div>
-                        </div>
-                    </div>
-                </div>
+                <DrawingFeedback 
+                    :show="showDrawingFeedback || isGenerating" 
+                    :is-valid="isDrawingValid" 
+                    :is-loading="isGenerating" />
 
                 <!-- Flying Generated Image Animation -->
-                <div v-if="flyingImage" ref="flyingImageRef"
-                    class="absolute z-40 fly-to-enemy pointer-events-none"
-                    :style="flyingImageStyle">
-                    <img :src="flyingImage" class="w-40 h-40 object-contain drop-shadow-2xl" />
-                </div>
+                <FlyingImage :image-src="flyingImage" />
 
                 <!-- Victory Typewriter Message -->
-                <div v-if="showVictoryMessage"
-                    class="absolute inset-0 z-50 flex items-center justify-center bg-black/80">
-                    <p class="text-green-400 text-2xl md:text-3xl font-medium text-center px-8 max-w-3xl">
-                        {{ displayedVictoryText }}
-                    </p>
-                </div>
+                <VictoryMessage :show="showVictoryMessage" :text="displayedVictoryText" />
             </div>
 
             <!-- BOTTOM: Camera Area (30%) - Always mounted, visibility controlled by showCamera -->
@@ -100,10 +71,18 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import { io } from 'socket.io-client';
+
+// Battle Components
 import BattleBoss from '~/components/battle/BattleBoss.vue';
 import BattleHUD from '~/components/battle/BattleHUD.vue';
+import NarrativeOverlay from '~/components/battle/NarrativeOverlay.vue';
+import DrawingFeedback from '~/components/battle/DrawingFeedback.vue';
+import FlyingImage from '~/components/battle/FlyingImage.vue';
+import VictoryMessage from '~/components/battle/VictoryMessage.vue';
+
+// Composables
 import { useBattleState } from '~/composables/useBattleState';
-import { BATTLE_NARRATIVE, ATTACK_NARRATIVE } from '~/utils/battleConstants';
+import { useBattleAnimation } from '~/composables/useBattleAnimation';
 
 // --- CONFIG ---
 const config = useRuntimeConfig();
@@ -156,7 +135,7 @@ const narrativeTimeout = ref(null);
 // Show narrative intro on APPEARING
 watch(battleState, (newState, oldState) => {
     if (newState === 'APPEARING' && oldState === 'IDLE') {
-        showNarrative(BATTLE_NARRATIVE.intro, 5000);
+        showNarrative(BATTLE_NARRATIVE.intro, 6000); // 6 seconds for intro
     }
 });
 
@@ -260,6 +239,11 @@ function triggerFlyingAnimation(imageSrc) {
         // After animation completes: clear image and trigger attack
         setTimeout(() => {
             flyingImage.value = null;
+            
+            // Clear generated preview images (they flew away!)
+            dreamDrawingImage.value = null;
+            nightmareDrawingImage.value = null;
+            
             console.log('[Battle] ⚔️ Animation complete! Triggering attack...');
             
             // Emit to backend to signal attack (Backend will handle HP/state)
@@ -323,9 +307,10 @@ const isEndState = computed(() => {
     return battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
 });
 
-// Show camera when NOT in IDLE, OR when debugMode is enabled
+// Show camera when NOT in IDLE/WEAKENED/CAPTURED, OR when debugMode is enabled
 const showCamera = computed(() => {
-    return battleState.value !== 'IDLE' || debugMode.value;
+    const isEndState = battleState.value === 'IDLE' || battleState.value === 'WEAKENED' || battleState.value === 'CAPTURED';
+    return !isEndState || debugMode.value;
 });
 
 // --- SOCKET CONNECTION FOR DEBUG MODE ---
