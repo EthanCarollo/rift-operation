@@ -80,13 +80,18 @@ class FightingState(BattleState):
         3. Update state with results
         4. If valid counter, mark validated and check for ULTRA COMBO
         5. If both sides validated, trigger attack_ready signal
+        
+        Note: BattleService handles rate limiting and processing flag before calling us.
         """
         sync = self.service.sync_manager
         
-        # Guard: Stop if attack already triggered or can't generate
+        # Guard: Stop if attack already triggered
         if sync and sync.is_locked:
+            print(f"[FightingState] ⚠️ Skipping {role} - attack already locked")
             return
-        if not state.can_generate:
+        
+        # Guard: Stop if this role already has a valid generated image
+        if state.valid_image_generated:
             return
 
         try:
