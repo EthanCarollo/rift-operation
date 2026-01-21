@@ -31,7 +31,7 @@ class RiftHardware:
         try:
             self.spi = spidev.SpiDev()
             self.spi.open(0, 0) # Bus 0, Device 0
-            self.spi.max_speed_hz = 1000000 
+            self.spi.max_speed_hz = 200000 
         except Exception as e:
             self.logger.error(f"SPI init failed: {e}")
             return
@@ -59,17 +59,34 @@ class RiftHardware:
         
         self.readers = []
         for cfg in configs:
-            try:
-                reader = RfidReader(
-                    self.spi, 
-                    cfg["cs"], 
-                    cfg["rst"], 
-                    self.delegate, 
-                    name=cfg["name"]
-                )
+            # EMERGENCY FIX: Retry initialization until we get a valid version
+            max_retries = 10
+            reader = None
+            for attempt in range(max_retries):
+                try:
+                    temp_reader = RfidReader(
+                        self.spi, 
+                        cfg["cs"], 
+                        cfg["rst"], 
+                        self.delegate, 
+                        name=cfg["name"]
+                    )
+                    # Check if version is acceptable (0x82, 0x91, 0x92)
+                    version = temp_reader.reader._rreg(0x37)
+                    if version in [0x82, 0x91, 0x92]:
+                        reader = temp_reader
+                        self.logger.info(f"{cfg['name']} initialized successfully (Version: 0x{version:02X}) after {attempt+1} attempts")
+                        break
+                    else:
+                        # Bad version, retry
+                        time.sleep(0.05)
+                except Exception as e:
+                    time.sleep(0.05)
+                    
+            if reader:
                 self.readers.append(reader)
-            except Exception as e:
-                self.logger.error(f"Failed to init {cfg['name']}: {e}")
+            else:
+                self.logger.warning(f"Failed to initialize {cfg['name']} after {max_retries} attempts - SKIPPING")
 
         self.logger.info(f"Initialized {len(self.readers)} RFID readers")
 

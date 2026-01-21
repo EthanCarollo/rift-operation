@@ -31,6 +31,15 @@ class RiftController(BaseController):
 
     async def process_message(self, message: str):
         """Delegate WebSocket messages to Workshop"""
+        try:
+            import json
+            data = json.loads(message)
+            if data.get("cmd") == "ping":
+                await self.send(json.dumps({"cmd": "pong"}))
+                return
+        except Exception:
+            pass
+
         await self.workshop.process_message(message)
 
     async def reset(self):

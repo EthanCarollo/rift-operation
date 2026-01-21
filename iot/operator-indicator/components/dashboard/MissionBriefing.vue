@@ -161,6 +161,15 @@ watch(() => props.status?.reset_system, (reset) => {
   }
 })
 
+// Force State Logic (Debug)
+watch(() => props.status?.force_briefing_state, (forceState) => {
+  if (forceState !== undefined && forceState !== null) {
+    briefingState.value = forceState
+    highestStateReached.value = forceState // Allow jumping back/forth
+    if (stateTimer) clearTimeout(stateTimer) // Stop any auto-advance
+  }
+})
+
 onUnmounted(() => {
   if (stateTimer) clearTimeout(stateTimer)
 })

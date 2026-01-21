@@ -17,46 +17,42 @@ class Controller:
         self.logger = logging.getLogger("Controller")
         logging.getLogger("websockets").setLevel(logging.ERROR)
         
-        self.websocket = None
-        self.uri = config.websocket.server + config.websocket.path
+        self.websockets = set()
         
         if config.debug_mode:
             self.logger.info("Debug mode enabled")
 
-    async def connect_websocket(self):
+    async def MaintainConnection(self, uri, port):
+        """Maintain a WebSocket connection to a specific URI"""
         while True:
             try:
-                self.logger.info(f"Connecting to WebSocket: {self.uri}")
+                self.logger.info(f"Connecting to : {uri}")
                 ssl_context = None
-                if self.uri.startswith("wss://"):
+                if uri.startswith("wss://"):
                     ssl_context = ssl.create_default_context()
                     ssl_context.check_hostname = False
                     ssl_context.verify_mode = ssl.CERT_NONE
                 
-                async with websockets.connect(self.uri, ssl=ssl_context) as websocket:
-                    self.websocket = websocket
-                    self.logger.info("WebSocket connected successfully")
-                    # Run listener and update loop concurrently
-                    await asyncio.gather(
-                        self.listen(),
-                        self.main_loop()
-                    )
+                async with websockets.connect(uri, ssl=ssl_context) as websocket:
+                    self.websockets.add(websocket)
+                    self.logger.info(f"Connected to port {port}")
+                    
+                    try:
+                        async for message in websocket:
+                            await self.process_message(message)
+                    except websockets.exceptions.ConnectionClosed:
+                        self.logger.warning(f"Connection lost on port {port}")
+                    finally:
+                        self.websockets.discard(websocket)
+            
             except Exception as e:
-                self.logger.error(f"WebSocket connection failed: {e}")
-                self.websocket = None
+                # self.logger.error(f"Connection failed on port {port}: {e}")
                 await asyncio.sleep(5)
 
-    async def listen(self):
-        try:
-            async for message in self.websocket:
-                await self.process_message(message)
-        except websockets.exceptions.ConnectionClosed:
-            self.logger.warning("WebSocket connection closed")
-
     async def main_loop(self):
-        while self.websocket:
-            if getattr(self.websocket, "closed", False) or getattr(self.websocket, "close_code", None) is not None:
-                break
+        """Main hardware update loop"""
+        self.logger.info("Starting Main Loop")
+        while True:
             try:
                 await self.update()
                 await asyncio.sleep(0.05)
@@ -69,23 +65,61 @@ class Controller:
             return
         try:
             data = json.loads(message)
-            # Remove this log to reduce noise
-            # self.logger.info(f"Received message: {data}")
             if data.get("cmd") == "ping":
                 await self.send(json.dumps({"cmd": "pong"}))
-
         except Exception as e:
             self.logger.error(f"Failed to process message: {e}")
 
     async def send(self, message):
-        if self.websocket:
-            await self.websocket.send(message)
+        """Broadcast message to all connected sockets"""
+        if not self.websockets:
+            return
+
+        # Create tasks for sending to all sockets
+        tasks = []
+        for ws in self.websockets:
+            tasks.append(asyncio.create_task(ws.send(message)))
+        
+        # We don't wait for them to finish to avoid blocking, 
+        # or we could use gather if we want confirmation. 
+        # Fire and forget is usually safer for broadcasting to avoid one slow client blocking others.
+        # But asyncio.gather with return_exceptions=True is also good.
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     async def update(self):
         raise NotImplementedError
 
     async def main(self):
-        await self.connect_websocket()
+        # Derive URIs for ports 8000, 8001, 8002
+        # Config has full URI: ws://192.168.10.7:8000/ws ("create_prod")
+        # We need to extract the base IP.
+        
+        original_uri = self.config.websocket.server # e.g. ws://192.168.10.7:8000
+        path = self.config.websocket.path # /ws
+        
+        # Simple parsing assumption: URI ends with :PORT
+        # If not, we assume default 8000.
+        
+        # robust extraction ?
+        # split by :
+        parts = original_uri.split(":")
+        # parts = ['ws', '//192.168.10.7', '8000']
+        
+        if len(parts) >= 3:
+            # Reconstruct base without port
+            base = f"{parts[0]}:{parts[1]}" # ws://192.168.10.7
+        else:
+            base = original_uri # Fallback
+            
+        ports = [8000, 8001, 8002]
+        tasks = [self.main_loop()]
+        
+        for p in ports:
+            uri = f"{base}:{p}{path}"
+            tasks.append(self.MaintainConnection(uri, p))
+            
+        await asyncio.gather(*tasks)
 
     # Compatibility methods to match EspController interface if needed
     @property
