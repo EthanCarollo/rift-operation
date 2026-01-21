@@ -132,7 +132,11 @@ export function useBattleState(debug = false) {
             dreamCounterValid.value = false;
             nightmareCounterValid.value = false;
         } else if (state === 'WEAKENED') {
-            // Victory - images already cleared at animation end
+            // Victory - stop music and clear images
+            log('WEAKENED: Victory! Stopping music');
+            if (hudRef.value) {
+                hudRef.value.pauseMusic();
+            }
         }
     }
 

@@ -8,25 +8,27 @@ from .HitState import HitState
 from .WeakenedState import WeakenedState
 
 if TYPE_CHECKING:
-    from ..BattleService import BattleRoleState
+    from ..RoleState import RoleState
 
 class FightingState(BattleState):
-    """Main combat loop. Handles KNN/AI."""
+    """Main combat loop. Handles KNN recognition and AI image generation."""
 
     def enter(self):
-        print(f"[BattleState] Entering FIGHTING")
-        self.attack_ready = False # Lock flag for synchronized attack
+        print("[FightingState] Entering FIGHTING")
         
-        # Reset counter validation flags for new phase
+        # Reset sync manager for new phase
+        if self.service.sync_manager:
+            self.service.sync_manager.reset()
+        
+        # Reset all role states for new attack phase
         for role_state in self.service.roles.values():
-            role_state.counter_validated = False
-            role_state.last_output_image = None  # Clear cached images too
-            role_state.valid_image_generated = False  # Allow new generation
+            role_state.reset_for_new_phase()
         
+        # Determine attack if not set
         if not self.service.current_attack:
-             self.service.current_attack = Config.get_next_attack(self.service.current_hp)
+            self.service.current_attack = Config.get_next_attack(self.service.current_hp)
         
-        print(f"[BattleState] Attack: {self.service.current_attack}, HP: {self.service.current_hp}")
+        print(f"[FightingState] Attack: {self.service.current_attack}, HP: {self.service.current_hp}")
         
         self.service.broadcast_state("FIGHTING", {
             "battle_boss_attack": self.service.current_attack,
@@ -68,128 +70,110 @@ class FightingState(BattleState):
             if remote_hp is not None and remote_hp != self.service.current_hp:
                 self.service.current_hp = remote_hp
 
-    def on_image_task(self, role: str, state: 'BattleRoleState', image_bytes: bytes):
-        """Core logic for processing images during fight."""
-        # STOP if already ready to attack (prevent new inferences)
-        if hasattr(self, 'attack_ready') and self.attack_ready:
-            return
+    def on_image_task(self, role: str, state: 'RoleState', image_bytes: bytes):
+        """
+        Core image processing logic during fight.
         
-        # STOP if this role already generated a valid image for current attack
-        if state.valid_image_generated:
+        Flow:
+        1. Check if we can process (not locked, not already generated)
+        2. Process image through ImageProcessor
+        3. Update state with results
+        4. If valid counter, mark validated and check for ULTRA COMBO
+        5. If both sides validated, trigger attack_ready signal
+        """
+        sync = self.service.sync_manager
+        
+        # Guard: Stop if attack already triggered or can't generate
+        if sync and sync.is_locked:
+            return
+        if not state.can_generate:
             return
 
         try:
-            print(f"[BattleService] ⚙️ Processing task for {role}...")
+            print(f"[FightingState] ⚙️ Processing {role}...")
             
-            # 1. Process via ImageProcessor
+            # 1. Process image via ImageProcessor
             result = self.service.processor.process_frame(image_bytes, self.service.current_attack)
             
-            # 2. Update Role State
-            state.knn_label = result.label
-            state.knn_distance = result.distance
-            state.last_label = result.label
-            state.recognition_status = result.status_message
+            # 2. Update role state with KNN results
+            state.update_knn_result(result.label, result.distance, result.status_message)
             state.prompt = result.prompt
-            
-            # Emit status update immediately
             self.service._emit_status()
             
             if result.should_skip:
                 return
 
-            # 3. Handle Generated Image (and check for Dual-Side Success)
+            # 3. Handle generated image
             if result.output_image:
-                # Save to state cache
-                state.last_output_image = result.output_image
+                state.cache_output_image(result.output_image)
                 
-                # Mark as generated if valid counter (prevent regeneration)
                 if result.is_valid_counter:
-                    state.valid_image_generated = True
-                    print(f"[BattleState] ✅ {role} locked - valid image generated, won't regenerate")
+                    state.mark_counter_validated()
+                    state.mark_image_generated()
                 
-                # Emit Output to Frontend (Preview)
-                if self.service.socketio:
-                    b64 = base64.b64encode(result.output_image).decode('utf-8')
-                    self.service.socketio.emit('output_frame', {
-                        'role': role,
-                        'frame': b64
-                    })
+                # Emit preview to frontend
+                self._emit_output_frame(role, result.output_image)
                 
-                # Send to Rift Server (Legacy/Proxy)
-                b64_rift = base64.b64encode(result.output_image).decode('utf-8')
-                extra = {f"battle_drawing_{role}_recognised": result.is_valid_counter}
-                if self.service.ws.send_image(b64_rift, role, extra):
-                    print(f"[BattleService] Sent {role} to Rift Server")
+                # Send to Rift Server
+                self._send_to_rift(role, result.output_image, result.is_valid_counter)
 
-            # --- SYNCHRONIZED ATTACK CHECK ---
-            # Check Dual Validation (Both sides must have validated at some point)
-            current_valid = result.is_valid_counter or state.counter_validated
-            
-            # Check other role using persistent flag
-            other_role = 'nightmare' if role == 'dream' else 'dream'
-            other_state = self.service.roles.get(other_role)
-            
-            # Use persistent counter_validated flag (not current last_label)
-            other_valid = other_state.counter_validated if other_state else False
-            
-            # Debug: Log sync check status
-            print(f"[BattleState] 🔍 SYNC ({role}): cur_valid={current_valid}, oth_valid={other_valid}, locked={getattr(self, 'attack_ready', False)}")
-            
-            # SYNCHRONIZED SUCCESS: Current Valid + Other Valid + Image Available
-            # CRITICAL: Check attack_ready flag to prevent race condition (both roles might reach here)
-            if current_valid and other_valid and not getattr(self, 'attack_ready', False):
-                 # We need an image for the animation. usage priority: Current New -> Current Cached -> Other Cached
-                 final_image = result.output_image or state.last_output_image or (other_state.last_output_image if other_state else None)
-                 
-                 if final_image:
-                     print(f"[BattleState] 🌟 ULTRA COMBO! Both sides valid & Image Ready. Locking inference.")
-                     self.attack_ready = True
-                     
-                     # Emit SIGNAL to Frontend to start Animation
-                     if self.service.socketio:
-                         b64_final = base64.b64encode(final_image).decode('utf-8')
-                         self.service.socketio.emit('attack_ready', {
-                             'role': role,
-                             'frame': b64_final,
-                             'label': result.label
-                         })
-                 else:
-                     print(f"[BattleState] Both valid but NO IMAGE ready yet. Waiting...")
-
-            # 4. Standard validation notification (non-locking)
+            # 4. Check for ULTRA COMBO (dual-side validation)
             if result.is_valid_counter:
-
-                if self.service.socketio:
-                    self.service.socketio.emit('counter_validated', {
-                        'role': role,
-                        'label': result.label,
-                        'attack': self.service.current_attack
-                    })
-
+                state.mark_counter_validated()
+                self._emit_counter_validated(role, result.label)
+            
+            if sync and sync.check_dual_validation(role, result.is_valid_counter):
+                final_image = sync.get_best_image(role, result.output_image)
+                if final_image:
+                    sync.trigger_attack_ready(role, final_image, result.label)
 
         except Exception as e:
-            print(f"[BattleService] Error processing {role}: {e}")
+            print(f"[FightingState] Error processing {role}: {e}")
             state.recognition_status = "❌ Error"
 
+    # --- HELPER METHODS ---
+    
+    def _emit_output_frame(self, role: str, image: bytes):
+        """Emit generated image preview to frontend."""
+        if self.service.socketio:
+            b64 = base64.b64encode(image).decode('utf-8')
+            self.service.socketio.emit('output_frame', {'role': role, 'frame': b64})
+    
+    def _send_to_rift(self, role: str, image: bytes, is_valid: bool):
+        """Send image to Rift Server."""
+        b64 = base64.b64encode(image).decode('utf-8')
+        extra = {f"battle_drawing_{role}_recognised": is_valid}
+        if self.service.ws.send_image(b64, role, extra):
+            print(f"[FightingState] Sent {role} to Rift Server")
+    
+    def _emit_counter_validated(self, role: str, label: str):
+        """Emit counter validation notification."""
+        if self.service.socketio:
+            self.service.socketio.emit('counter_validated', {
+                'role': role,
+                'label': label,
+                'attack': self.service.current_attack
+            })
 
     def trigger_attack(self):
-        if getattr(self, 'is_attacking', False):
-             print(f"[BattleState] ⚠️ Attack already in progress. Ignoring duplicate trigger.")
-             return
+        """Execute attack - decrement HP and transition state."""
+        sync = self.service.sync_manager
         
-        self.is_attacking = True
+        # Guard: Prevent double execution
+        if sync and not sync.start_attack():
+            return
         
         # Decrement HP
         old_hp = self.service.current_hp
         self.service.current_hp -= 1
         new_hp = self.service.current_hp
-        print(f"[BattleState] ⚔️ Attack! HP: {old_hp} → {new_hp}")
+        print(f"[FightingState] ⚔️ Attack! HP: {old_hp} → {new_hp}")
         
-        if self.service.current_hp <= 0:
-            print(f"[BattleState] 🏆 HP reached 0! Transitioning to WEAKENED")
+        # Transition based on remaining HP
+        if new_hp <= 0:
+            print("[FightingState] 🏆 HP reached 0! → WEAKENED")
             self.service.change_state(WeakenedState(self.service))
         else:
             next_attack = Config.get_next_attack(new_hp)
-            print(f"[BattleState] 🔄 Transitioning to HIT, next attack will be: {next_attack}")
+            print(f"[FightingState] 🔄 → HIT (next: {next_attack})")
             self.service.change_state(HitState(self.service))
-

@@ -11,6 +11,10 @@ from ..Network.RiftWebSocket import RiftWebSocket
 from ..Utils import ImageProcessor, ProcessingResult
 from ..Recognition.KNNRecognizer import KNNRecognizer
 
+# New OOP Classes
+from .RoleState import RoleState
+from .SyncManager import SyncManager
+
 from .BattleState.BattleState import BattleState
 from .BattleState.IdleState import IdleState
 from .BattleState.AppearingState import AppearingState
@@ -23,53 +27,27 @@ from .BattleState.CapturedState import CapturedState
 GENERATION_RATE_LIMIT_S = 2.0
 INITIAL_HP = 3  # 3-phase combat: BOUCLIER → PLUIE → LUNE
 
-class BattleRoleState:
-    """Manages state for one role (Dream/Nightmare)."""
-    def __init__(self, role: str):
-        self.role = role
-        self.last_gen_time = 0
-        self.recognition_status = "Waiting..."
-        self.last_label = None
-        self.prompt = None
-        self.processing = False
-        
-        # New result fields
-        self.knn_label = None
-        self.knn_distance = None
-        
-        # Crop settings (x, y, w, h) normalized
-        self.crop = None
-        # Rotation in degrees (0, 90, 180, 270)
-        self.rotation = 0
-        # Grayscale (black & white) filter
-        self.grayscale = False
-        
-        # Store last generated image [New]
-        self.last_output_image = None
-        
-        # Persistent flag: True once correct counter is detected for current attack
-        # Reset when attack phase changes
-        self.counter_validated = False
-        
-        # Flag: True once a valid counter image has been generated for this role
-        # Prevents re-generation until attack changes
-        self.valid_image_generated = False
 
 class BattleService:
     """Headless battle service managing AI processing and WebSocket."""
     
     def __init__(self):
+        # Player roles with clean OOP state management
         self.roles = {
-            'nightmare': BattleRoleState('nightmare'),
-            'dream': BattleRoleState('dream')
+            'nightmare': RoleState(role='nightmare'),
+            'dream': RoleState(role='dream')
         }
         
+        # Core services
         self.processor = ImageProcessor()
         self.ws = RiftWebSocket()
         self.knn = KNNRecognizer()
         
         self.running = False
         self.socketio = None
+        
+        # Sync manager for dual-side attack coordination (initialized after socketio)
+        self.sync_manager: Optional[SyncManager] = None
 
         # State tracking for edge detection
         self.last_hit_confirmed = False
@@ -77,13 +55,15 @@ class BattleService:
         # Game State
         self.current_hp = INITIAL_HP
         self.current_attack = None
-        self.state: BattleState = IdleState(self) # Initial State
+        self.state: BattleState = IdleState(self)
         
         self.ws.connect()
-        print("[BattleService] Initialized (State Pattern / Services)")
+        print("[BattleService] Initialized (OOP Refactor)")
     
     def set_socketio(self, socketio):
         self.socketio = socketio
+        # Initialize sync manager with socketio
+        self.sync_manager = SyncManager(self.roles, self.socketio)
 
     def change_state(self, new_state: BattleState):
         """Transition to a new state."""
