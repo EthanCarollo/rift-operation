@@ -148,6 +148,48 @@ async def broadcast_dark_cosmo_audio():
         if client in connected_clients:
             connected_clients.remove(client)
 
+async def broadcast_forced_audio(audio_filename: str, message_type: str = "forced_audio"):
+    """Broadcasts a specific audio file to Swift clients (used for cosmo_called/dark_cosmo_called)."""
+    print(f"🎤 [FORCED AUDIO] Broadcasting '{audio_filename}' to {len(connected_clients)} clients")
+    if not connected_clients:
+        return
+    
+    # Load and encode the audio file
+    audio_base64 = None
+    try:
+        audio_path = os.path.join("audio", audio_filename)
+        print(f"📂 [FORCED AUDIO] Loading audio: {audio_path}")
+        if os.path.exists(audio_path):
+            with open(audio_path, "rb") as f:
+                file_content = f.read()
+                audio_base64 = base64.b64encode(file_content).decode('utf-8')
+                print(f"✅ [FORCED AUDIO] Audio encoded ({len(audio_base64)} chars)")
+        else:
+            print(f"❌ [FORCED AUDIO] Audio file missing: {audio_path}")
+            return
+    except Exception as e:
+        print(f"❌ [FORCED AUDIO] Error encoding audio: {e}")
+        return
+    
+    # Broadcast to all clients
+    message = json.dumps({
+        "type": message_type,
+        "audio_base64": audio_base64,
+        "audio_file": audio_filename
+    })
+    
+    to_remove = []
+    for client in connected_clients:
+        try:
+            await client.send_text(message)
+        except Exception as e:
+            print(f"❌ [FORCED AUDIO] Failed to broadcast to client: {e}")
+            to_remove.append(client)
+            
+    for client in to_remove:
+        if client in connected_clients:
+            connected_clients.remove(client)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     stt_service.load_model()
@@ -196,6 +238,18 @@ async def connect_to_main_server():
                                 if is_dark_cosmo_here == True and SERVER_MODE == 'cosmo':
                                     print(f"🌙 [DARK COSMO] Detected! Broadcasting audio to Cosmo clients...")
                                     await broadcast_dark_cosmo_audio()
+                                
+                                # Handle cosmo_called (only for Cosmo mode)
+                                cosmo_called = message.get("cosmo_called")
+                                if cosmo_called and SERVER_MODE == 'cosmo':
+                                    print(f"☀️ [COSMO CALLED] Force playing audio: {cosmo_called}")
+                                    await broadcast_forced_audio(cosmo_called, "cosmo_called")
+                                
+                                # Handle dark_cosmo_called (only for Dark Cosmo mode)
+                                dark_cosmo_called = message.get("dark_cosmo_called")
+                                if dark_cosmo_called and SERVER_MODE == 'dark_cosmo':
+                                    print(f"🌙 [DARK COSMO CALLED] Force playing audio: {dark_cosmo_called}")
+                                    await broadcast_forced_audio(dark_cosmo_called, "dark_cosmo_called")
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             
