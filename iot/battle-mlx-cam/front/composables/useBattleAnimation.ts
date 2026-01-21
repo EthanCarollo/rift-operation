@@ -30,12 +30,12 @@ export function useBattleAnimation() {
     }
 
     function showIntroNarrative() {
-        showNarrative(BATTLE_NARRATIVE.intro, 6000);
+        showNarrative(BATTLE_NARRATIVE.intro, 8000); // Increased from 6000
     }
 
     function showAttackNarrative(attack: string) {
         if (attack && ATTACK_NARRATIVE[attack]) {
-            showNarrative(ATTACK_NARRATIVE[attack], 4000);
+            showNarrative(ATTACK_NARRATIVE[attack], 8000); // Increased from 4000
         }
     }
 

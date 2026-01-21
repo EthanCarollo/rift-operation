@@ -142,10 +142,11 @@
                 </div>
 
                 <!-- Last Capture Feedback + Undo -->
-                <div v-if="lastCapture" class="p-3 bg-neutral-800 rounded border border-neutral-700 flex justify-between items-center">
-                    <span><span class="text-green-400">✅ Added:</span> {{ lastCapture }}</span>
+                <div class="p-3 bg-neutral-800 rounded border border-neutral-700 flex justify-between items-center">
+                    <span v-if="lastCapture"><span class="text-green-400">✅ Added:</span> {{ lastCapture }}</span>
+                    <span v-else class="text-neutral-500">No recent capture</span>
                     <button @click="popLastSample" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">
-                        ↩️ Undo
+                        ↩️ Pop Last
                     </button>
                 </div>
             </div>

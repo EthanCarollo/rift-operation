@@ -67,6 +67,11 @@ class RoleState:
     
     def update_knn_result(self, label: str, distance: float, status: str) -> None:
         """Update KNN recognition results."""
+        # If label changes, clear previous generated image and validation
+        if label != self.knn_label:
+             self.last_output_image = None
+             self.valid_image_generated = False
+             
         self.knn_label = label
         self.knn_distance = distance
         self.last_label = label

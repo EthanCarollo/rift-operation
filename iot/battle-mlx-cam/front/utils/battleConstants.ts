@@ -18,8 +18,8 @@ export const BATTLE_MUSIC: Record<string, string | null> = {
     APPEARING: '/battle-workshop/music-battle-intro.mp3',
     FIGHTING: '/battle-workshop/music-battle-combat.mp3',
     HIT: null, // No music change, use SFX
-    WEAKENED: '/battle-workshop/music-battle-weakened.mp3',
-    CAPTURED: '/battle-workshop/music-battle-victory.mp3'
+    WEAKENED: null, // No music - just silence for dramatic effect
+    CAPTURED: null  // No victory music
 };
 // Sound effects
 export const BATTLE_SFX = {

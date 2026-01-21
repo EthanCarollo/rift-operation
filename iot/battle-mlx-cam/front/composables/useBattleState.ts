@@ -216,8 +216,13 @@ export function useBattleState(debug = false) {
         }
 
         // Sync Drawing
-        if (payload.battle_drawing_nightmare_image) nightmareDrawingImage.value = payload.battle_drawing_nightmare_image;
-        if (payload.battle_drawing_dream_image) dreamDrawingImage.value = payload.battle_drawing_dream_image;
+        // We explicitly check for undefined to allow null to clear the image
+        if (payload.battle_drawing_nightmare_image !== undefined) {
+             nightmareDrawingImage.value = payload.battle_drawing_nightmare_image;
+        }
+        if (payload.battle_drawing_dream_image !== undefined) {
+             dreamDrawingImage.value = payload.battle_drawing_dream_image;
+        }
     }
 
     // --- ACTIONS ---
