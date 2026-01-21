@@ -141,9 +141,12 @@
                     </button>
                 </div>
 
-                <!-- Last Capture Feedback -->
-                <div v-if="lastCapture" class="p-3 bg-neutral-800 rounded border border-neutral-700">
-                    <span class="text-green-400">✅ Added:</span> {{ lastCapture }}
+                <!-- Last Capture Feedback + Undo -->
+                <div v-if="lastCapture" class="p-3 bg-neutral-800 rounded border border-neutral-700 flex justify-between items-center">
+                    <span><span class="text-green-400">✅ Added:</span> {{ lastCapture }}</span>
+                    <button @click="popLastSample" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">
+                        ↩️ Undo
+                    </button>
                 </div>
             </div>
 
@@ -358,6 +361,24 @@ async function captureSample() {
         }
     } catch (e) {
         console.error('[Train] Failed to add sample:', e);
+    }
+}
+
+async function popLastSample() {
+    try {
+        const res = await fetch(`${backendUrl.value}/knn/pop_last`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            console.log('[Train] Popped sample:', data.removed);
+            lastCapture.value = null;  // Clear the feedback
+            await fetchSamples();
+        }
+    } catch (e) {
+        console.error('[Train] Failed to pop sample:', e);
     }
 }
 

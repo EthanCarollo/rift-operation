@@ -150,6 +150,17 @@ class KNNRecognizer(AbstractRecognizer):
         self.training_samples = [s for s in self.training_samples if s['label'] != label]
         self._save_samples()
         print(f"[KNNRecognizer] Deleted label '{label}' from {self.dataset_name}")
+
+    def pop_last_sample(self):
+        """Remove the most recently added sample. Returns the removed sample or None."""
+        if not self.training_samples:
+            print("[KNNRecognizer] No samples to pop")
+            return None
+        
+        removed = self.training_samples.pop()
+        self._save_samples()
+        print(f"[KNNRecognizer] Popped last sample '{removed.get('label')}' (Remaining: {len(self.training_samples)})")
+        return removed
         
     def get_counts(self):
         """Return count per label."""

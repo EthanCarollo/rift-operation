@@ -172,6 +172,16 @@ class BattleWebServer(AbstractWebServer):
                 return jsonify({'success': True})
             return jsonify({'error': 'Service not available'}), 500
 
+        @self.app.route('/knn/pop_last', methods=['POST'])
+        def pop_last_sample():
+            service = self._get_service()
+            if service and service.knn:
+                removed = service.knn.pop_last_sample()
+                if removed:
+                    return jsonify({'success': True, 'removed': removed.get('label')})
+                return jsonify({'success': False, 'error': 'No samples to pop'}), 400
+            return jsonify({'error': 'Service not available'}), 500
+
         # Remote Devices
         @self.app.route('/remote/devices', methods=['GET'])
         def get_remote_devices():
