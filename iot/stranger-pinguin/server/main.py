@@ -149,7 +149,8 @@ async def broadcast_dark_cosmo_audio():
             connected_clients.remove(client)
 
 async def broadcast_forced_audio(audio_filename: str, message_type: str = "forced_audio"):
-    """Broadcasts a specific audio file to Swift clients (used for cosmo_called/dark_cosmo_called)."""
+    """Broadcasts a specific audio file to Swift clients (used for cosmo_called/dark_cosmo_called).
+    Uses the same format as qa_answer so front-end handles it like natural detection."""
     print(f"🎤 [FORCED AUDIO] Broadcasting '{audio_filename}' to {len(connected_clients)} clients")
     if not connected_clients:
         return
@@ -171,11 +172,14 @@ async def broadcast_forced_audio(audio_filename: str, message_type: str = "force
         print(f"❌ [FORCED AUDIO] Error encoding audio: {e}")
         return
     
-    # Broadcast to all clients
+    # Broadcast to all clients using qa_answer format (same as natural detection)
     message = json.dumps({
-        "type": message_type,
+        "type": "qa_answer",
+        "answer": "Forced audio playback",
+        "confidence": 1.0,
         "audio_base64": audio_base64,
-        "audio_file": audio_filename
+        "audio_file": audio_filename,
+        "time_ms": 0
     })
     
     to_remove = []
