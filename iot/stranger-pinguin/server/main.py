@@ -239,17 +239,41 @@ async def connect_to_main_server():
                                     print(f"🌙 [DARK COSMO] Detected! Broadcasting audio to Cosmo clients...")
                                     await broadcast_dark_cosmo_audio()
                                 
-                                # Handle cosmo_called (only for Cosmo mode)
+                                # Handle cosmo_called (only for Cosmo mode) - sends first MP3 from audio_map
                                 cosmo_called = message.get("cosmo_called")
-                                if cosmo_called and SERVER_MODE == 'cosmo':
-                                    print(f"☀️ [COSMO CALLED] Force playing audio: {cosmo_called}")
-                                    await broadcast_forced_audio(cosmo_called, "cosmo_called")
+                                if cosmo_called == True and SERVER_MODE == 'cosmo':
+                                    print(f"☀️ [COSMO CALLED] Force speaking triggered!")
+                                    # Load first audio from audio_map.json
+                                    try:
+                                        with open(COSMO_AUDIO_MAP, 'r') as f:
+                                            audio_map = json.load(f)
+                                            # Find first entry with a non-empty audio list
+                                            for phrase, audio_list in audio_map.items():
+                                                if audio_list and len(audio_list) > 0:
+                                                    first_audio = audio_list[0]
+                                                    print(f"☀️ [COSMO CALLED] Sending: {first_audio}")
+                                                    await broadcast_forced_audio(first_audio, "cosmo_called")
+                                                    break
+                                    except Exception as e:
+                                        print(f"❌ [COSMO CALLED] Error loading audio map: {e}")
                                 
-                                # Handle dark_cosmo_called (only for Dark Cosmo mode)
+                                # Handle dark_cosmo_called (only for Dark Cosmo mode) - sends first MP3 from dark_audio_map
                                 dark_cosmo_called = message.get("dark_cosmo_called")
-                                if dark_cosmo_called and SERVER_MODE == 'dark_cosmo':
-                                    print(f"🌙 [DARK COSMO CALLED] Force playing audio: {dark_cosmo_called}")
-                                    await broadcast_forced_audio(dark_cosmo_called, "dark_cosmo_called")
+                                if dark_cosmo_called == True and SERVER_MODE == 'dark_cosmo':
+                                    print(f"🌙 [DARK COSMO CALLED] Force speaking triggered!")
+                                    # Load first audio from dark_audio_map.json
+                                    try:
+                                        with open(DARK_COSMO_AUDIO_MAP, 'r') as f:
+                                            audio_map = json.load(f)
+                                            # Find first entry with a non-empty audio list
+                                            for phrase, audio_list in audio_map.items():
+                                                if audio_list and len(audio_list) > 0:
+                                                    first_audio = audio_list[0]
+                                                    print(f"🌙 [DARK COSMO CALLED] Sending: {first_audio}")
+                                                    await broadcast_forced_audio(first_audio, "dark_cosmo_called")
+                                                    break
+                                    except Exception as e:
+                                        print(f"❌ [DARK COSMO CALLED] Error loading audio map: {e}")
                         except json.JSONDecodeError:
                             print(f"⚠️ [MAIN SERVER] Could not parse JSON: {message_str}")
                             
