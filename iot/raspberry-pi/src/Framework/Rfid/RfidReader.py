@@ -20,7 +20,8 @@ class RfidReader:
         self.delegate = delegate
         self._last_uid = None
         
-        self.check_connection()
+        # EMERGENCY FIX: Don't check connection here, done in RiftHardware retry loop
+        # self.check_connection()
 
     def check_connection(self):
         v = self.reader._rreg(0x37)
@@ -38,6 +39,12 @@ class RfidReader:
             if status == self.reader.OK:
                 uid_str = "-".join("{:02X}".format(b) for b in uid)
                 return uid_str
+            else:
+                # Debug: anticoll failed
+                print(f"[{self.name}] DEBUG: anticoll failed (status={status})")
+        else:
+            # Debug: request failed (this is normal when no card present, so only print occasionally)
+            pass
         return None
 
     def check(self):
