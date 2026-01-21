@@ -84,6 +84,7 @@ class RoverRunner {
                 "doRoll",
                 "doStop",
                 "doLED",
+                "doResetHeading",
                 "cmdDuration"
             ]) { val in
 
@@ -99,6 +100,7 @@ class RoverRunner {
                     val.doRoll = false
                     val.doStop = false
                     val.doLED = false
+                    val.doResetHeading = false
                     val.cmdDuration = 1
                 }
 
@@ -116,6 +118,7 @@ class RoverRunner {
                         val.doRoll = false
                         val.doStop = false
                         val.doLED = false
+                        val.doResetHeading = false
 
                         guard let cmd = self.pendingCommand else { return }
 
@@ -153,6 +156,9 @@ class RoverRunner {
                                 blue: color.b
                             )
                             val.doLED = true
+                            
+                        case .resetHeading:
+                            val.doResetHeading = true
                         }
 
                         // Consume command
@@ -185,6 +191,11 @@ class RoverRunner {
                         run(Syncs.SetMainLED, [
                             val.cmdLED
                         ])
+                    }
+                    
+                    // Reset heading
+                    `if` { val.doResetHeading as Bool } then: {
+                        run(Syncs.ResetHeading, [])
                     }
 
                     //------------------------------------------------------

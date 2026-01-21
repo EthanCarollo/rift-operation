@@ -48,4 +48,10 @@ final class Rover: Robot {
     override func setMainLED(color: RobotColor) {
         runner?.send(.setLED(color))
     }
+    
+    override func resetHeading() {
+        // Reset the rover's internal heading to current orientation
+        heading = 0
+        runner?.send(.resetHeading)
+    }
 }

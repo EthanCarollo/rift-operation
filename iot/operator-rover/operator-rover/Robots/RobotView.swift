@@ -89,13 +89,11 @@ struct RobotView: View {
             riftStepLog.append("[RECEIVED] launch_close_rift_step_\(currentStep) = true")
             print("Rift Step \(currentStep) Received!")
             
-            // Execute movement (PULLEY MODE: Roll command without auto-stop)
+            // Execute movement - just forward, no repositioning
             rob.forward(speed: 100)
             
-            // After 15ms, send zero-speed command to halt WITHOUT stabilization
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.015) {
-                // Send Roll with speed=0 to stop motion but keep orientation
-                // This prevents the auto-leveling that stop() triggers
+            // After 2.3s, stop movement (calibrated for 1/3 curtain closure)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
                 rob.forward(speed: 0)
                 
                 // Log completed
@@ -379,6 +377,15 @@ struct RobotView: View {
         // Connect hook
         rob.onConnect = {
             print("Connected!")
+            print("⚠️ POSITION THE ROVER VERTICALLY NOW! Calibrating in 3 seconds...")
+            
+            // Give user 3 seconds to position the rover vertically
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                // CRITICAL: Reset heading to calibrate current physical orientation as 0°
+                // This works even when rover is vertical!
+                rob.resetHeading()
+                print("✅ Heading calibrated - vertical position locked as reference!")
+            }
         }
 
         self.robot = rob

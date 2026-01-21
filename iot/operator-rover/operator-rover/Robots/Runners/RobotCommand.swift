@@ -15,4 +15,5 @@ enum RobotCommand {
     case turn(heading: Int, durationS: Int = 1)
     case stop
     case setLED(RobotColor)
+    case resetHeading
 }

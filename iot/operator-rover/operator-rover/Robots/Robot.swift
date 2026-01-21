@@ -64,6 +64,10 @@ class Robot {
     func setMainLED(color: RobotColor) {
         fatalError("setMainLED() must be overridden in the subclass")
     }
+    
+    func resetHeading() {
+        fatalError("resetHeading() must be overridden in the subclass")
+    }
 }
 
 // MARK: - Internal methods (for runners)
