@@ -231,7 +231,7 @@ class BattleService:
             daemon=True
         ).start()
 
-    def _process_image_task(self, role: str, state: BattleRoleState, image_bytes: bytes):
+    def _process_image_task(self, role: str, state: RoleState, image_bytes: bytes):
         try:
             # Delegate entirely to the Current State
             self.state.on_image_task(role, state, image_bytes)
