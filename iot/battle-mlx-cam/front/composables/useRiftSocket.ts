@@ -76,6 +76,23 @@ export const useRiftSocket = () => {
             }
         });
 
+        // Listen for direct image updates from BattleService (FightingState)
+        // This is critical for real-time validation feedback and clearing images
+        globalSocket.on('battle_image_update', (data: any) => {
+             if (data && data.role) {
+                 // Map to payload format expected by useBattleState
+                 const key = data.role === 'nightmare' 
+                     ? 'battle_drawing_nightmare_image' 
+                     : 'battle_drawing_dream_image';
+                 
+                 // Update lastPayload with the new image (or null)
+                 lastPayload.value = {
+                     ...lastPayload.value,
+                     [key]: data.image
+                 };
+             }
+        });
+
         // Also listen for direct 'rift_proxy_message' if we add that later
         globalSocket.on('rift_proxy_message', (data: any) => {
              lastPayload.value = data;
