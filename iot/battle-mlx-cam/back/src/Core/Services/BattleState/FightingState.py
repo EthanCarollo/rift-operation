@@ -34,6 +34,10 @@ class FightingState(BattleState):
             "battle_boss_attack": self.service.current_attack,
             "battle_boss_hp": self.service.current_hp
         })
+        
+        # Explicitly clear output frames on frontend
+        for role_name in self.service.roles:
+            self._emit_output_frame(role_name, None)
 
     def handle_monitor(self):
         # ... (unchanged) ...
@@ -138,11 +142,14 @@ class FightingState(BattleState):
 
     # --- HELPER METHODS ---
     
-    def _emit_output_frame(self, role: str, image: bytes):
+    def _emit_output_frame(self, role: str, image: Optional[bytes]):
         """Emit generated image preview to frontend."""
         if self.service.socketio:
-            b64 = base64.b64encode(image).decode('utf-8')
-            self.service.socketio.emit('output_frame', {'role': role, 'frame': b64})
+            encoded = None
+            if image:
+                import base64
+                encoded = base64.b64encode(image).decode('utf-8')
+            self.service.socketio.emit('battle_image_update', {'role': role, 'image': encoded})
     
     def _send_to_rift(self, role: str, image: bytes, is_valid: bool):
         """Send image to Rift Server."""
